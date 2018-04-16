@@ -1,0 +1,24 @@
+[package]
+name = "grin_miner_util"
+version = "0.2.0"
+authors = ["Grin Developers <mimblewimble@lists.launchpad.net>"]
+workspace = ".."
+publish = false
+
+[dependencies]
+backtrace = "0.3"
+byteorder = "1"
+lazy_static = "0.2"
+rand = "0.3"
+serde = "1"
+serde_derive = "1"
+slog = { version = "~2.1", features = ["max_level_trace", "release_max_level_trace"] }
+slog-term = "2.1"
+slog-async = "2.1"
+
+[dependencies.cuckoo_miner]
+git = "https://github.com/mimblewimble/cuckoo-miner"
+tag = "grin_integration_25"
+#uncomment this feature to enable cuda builds (cuda toolkit must be installed)
+#features=["build-cuda-plugins"]
+

@@ -1,0 +1,8 @@
+*.swp
+.DS_Store
+.grin*
+node*
+target
+Cargo.lock
+*.iml
+grin-miner.log
