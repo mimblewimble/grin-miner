@@ -24,6 +24,8 @@ extern crate serde_derive;
 extern crate serde_json;
 #[macro_use]
 extern crate slog;
+#[macro_use]
+extern crate lazy_static;
 
 use std::thread;
 use std::io::BufRead;
@@ -32,6 +34,7 @@ use std::net::TcpStream;
 use bufstream::BufStream;
 use config::GlobalConfig;
 use util::cuckoo_miner as cuckoo;
+pub mod plugin;
 
 use util::{init_logger, LOGGER};
 
@@ -231,12 +234,13 @@ pub fn mine_async(full_paths: Vec<&str>,
 }
 
 fn main() {
+	// Init configuration
 	let mut global_config = GlobalConfig::new(None).unwrap_or_else(|e| {
 		panic!("Error parsing config file: {}", e);
 	});
 	println!("Starting Grin-Miner from config file at: {}", 
 		global_config.config_file_path.unwrap().to_str().unwrap());
-	// initialise the logger
+	// Init logging
 	let log_conf = global_config
 		.members
 		.as_mut()
@@ -249,6 +253,11 @@ fn main() {
 
 	log_build_info();
 
+	// Init mining plugin configuration
+	let mut plugin_miner = plugin::PluginMiner::new();
+	plugin_miner.init(mining_config.clone());
+
+	// rest is POC stuff
 	let conn = TcpStream::connect(mining_config.stratum_server_addr).unwrap();
 	conn.set_nonblocking(true)
 		.expect("Failed to set TcpStream to non-blocking");
