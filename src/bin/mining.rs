@@ -17,19 +17,20 @@
 /// 
 
 use std::sync::mpsc;
+use util::LOGGER;
 
 use {plugin, types};
 
 pub struct Controller {
 	plugin_miner: plugin::PluginMiner,
-	rx: mpsc::Receiver<String>,
-	pub tx: mpsc::Sender<String>,
-	client_tx: Option<mpsc::Sender<String>>,
+	rx: mpsc::Receiver<types::MinerMessage>,
+	pub tx: mpsc::Sender<types::MinerMessage>,
+	client_tx: Option<mpsc::Sender<types::ClientMessage>>,
 }
 
 impl Controller {
 	pub fn new(pm: plugin::PluginMiner) -> Result<Controller, String> {
-		let (tx, rx) = mpsc::channel::<String>();
+		let (tx, rx) = mpsc::channel::<types::MinerMessage>();
 		Ok(Controller {
 			plugin_miner: pm,
 			rx: rx,
@@ -38,7 +39,7 @@ impl Controller {
 		})
 	}
 
-	pub fn set_client_tx(&mut self, client_tx: mpsc::Sender<String>) {
+	pub fn set_client_tx(&mut self, client_tx: mpsc::Sender<types::ClientMessage>) {
 		self.client_tx = Some(client_tx);
 	}
 	
@@ -46,6 +47,7 @@ impl Controller {
 	pub fn run(&mut self){
 		loop {
 			while let Some(message) = self.rx.try_iter().next() {
+				debug!(LOGGER, "Miner recieved message: {:?}", message);
 				/*match message {
 
 

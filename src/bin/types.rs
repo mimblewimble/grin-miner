@@ -16,8 +16,8 @@
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct JobTemplate {
-	difficulty: u64,
-	pre_pow: String,
+	pub difficulty: u64,
+	pub pre_pow: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -30,10 +30,10 @@ pub struct RpcRequest {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct RpcResponse {
-	id: String,
-	jsonrpc: String,
-	result: Option<String>,
-	error: Option<RpcError>,
+	pub id: String,
+	pub jsonrpc: String,
+	pub result: Option<String>,
+	pub error: Option<RpcError>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -59,14 +59,24 @@ pub struct SubmitParams {
 /// Types used for internal communication from stratum client to miner
 #[derive(Serialize, Deserialize, Debug)]
 pub enum MinerMessageType{
-	StartJob,
-
+	ReceivedJob,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct MinerMessage {
-	m_type: MinerMessageType,
-	difficulty: u64,
-	pre_pow: String,
-	
+	pub m_type: MinerMessageType,
+	pub difficulty: u64,
+	pub pre_pow: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub enum ClientMessageType{
+	FoundSolution,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct ClientMessage {
+	pub m_type: ClientMessageType,
+	pub difficulty: u64,
+	pub pre_pow: String,
 }
