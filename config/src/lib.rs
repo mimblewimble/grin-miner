@@ -30,4 +30,4 @@ extern crate grin_miner_util as util;
 pub mod config;
 pub mod types;
 
-pub use types::{ConfigError, ConfigMembers, GlobalConfig};
+pub use types::{ConfigError, ConfigMembers, GlobalConfig, MinerConfig};

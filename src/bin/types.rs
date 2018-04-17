@@ -16,6 +16,7 @@
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct JobTemplate {
+	pub height: u64,
 	pub difficulty: u64,
 	pub pre_pow: String,
 }
@@ -51,9 +52,9 @@ pub struct LoginParams {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct SubmitParams {
-	height: u64,
-	nonce: u64,
-	pow: Vec<u32>,
+	pub height: u64,
+	pub nonce: u64,
+	pub pow: Vec<u32>,
 }
 
 /// Types used for internal communication from stratum client to miner
@@ -65,6 +66,7 @@ pub enum MinerMessageType{
 #[derive(Serialize, Deserialize, Debug)]
 pub struct MinerMessage {
 	pub m_type: MinerMessageType,
+	pub height: u64,
 	pub difficulty: u64,
 	pub pre_pow: String,
 }
@@ -77,6 +79,7 @@ pub enum ClientMessageType{
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ClientMessage {
 	pub m_type: ClientMessageType,
-	pub difficulty: u64,
-	pub pre_pow: String,
+	pub height: u64,
+	pub nonce: u64,
+	pub pow: Vec<u32>,
 }

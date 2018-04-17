@@ -16,15 +16,18 @@
 //! stratum server
 
 use std::net::TcpStream;
-use std::{thread, time};
+use std;
+use std::{thread};
 use std::io::{ErrorKind, BufRead, Write};
 use std::sync::mpsc;
 
 use serde_json;
 use bufstream::BufStream;
+use time;
 
 use types;
 use util::LOGGER;
+
 
 #[derive(Debug)]
 pub enum Error {
@@ -100,18 +103,43 @@ impl Controller {
 		self.send_message(&req_str)
 	}
 
+	fn send_message_submit(&mut self, height: u64, nonce: u64, pow: Vec<u32>) -> Result<(), Error> {
+		let params = types::SubmitParams{
+			height: height,
+			nonce: nonce,
+			pow: pow,
+		};
+		let params = serde_json::to_string(&params).unwrap();
+		let req = types::RpcRequest {
+				id: self.last_request_id.to_string(),
+				jsonrpc: "2.0".to_string(),
+				method: "submit".to_string(),
+				params: Some(params),
+			};
+		let req_str = serde_json::to_string(&req).unwrap();
+		self.send_message(&req_str)
+	}
+
+	fn send_miner_job(&mut self, params:String) -> Result<(), Error>{
+		let params:types::JobTemplate = serde_json::from_str(&params).unwrap();
+		let miner_message = types::MinerMessage {
+			m_type: types::MinerMessageType::ReceivedJob,
+			height: params.height,
+			difficulty: params.difficulty,
+			pre_pow: params.pre_pow,
+		};
+		self.miner_tx.send(miner_message).unwrap();
+		Ok(())
+	}
+
 	pub fn handle_request(&mut self, req: types::RpcRequest) -> Result<(), Error> {
-	/*let (response, err) = match response.method {
-						"result" => {
-							debug!(LOGGER, "result matched: {:?}", response);
-							(response, true)
-						}
-						_ => {
-							let e = r#"{"code": -32601, "message": "Method not found"}"#;
-							let err = e.to_string();
-							(err, true)
-						}
-					};*/
+		debug!(LOGGER, "Received request type: {}", req.method);
+		let _ = match req.method.as_str() {
+			"job" => {
+				self.send_miner_job(req.params.unwrap())
+			}
+			_ => {Ok(())}
+		};
 		Ok(())
 	}
 
@@ -119,52 +147,66 @@ impl Controller {
 		debug!(LOGGER, "Received response with id: {}", res.id);
 		//TODO: this response needs to be matched up with the request somehow.. for the moment
 		//assume it's just a response to a get_job_template request
-		let params = res.result.unwrap();
-		let params:types::JobTemplate = serde_json::from_str(&params).unwrap();
-		let miner_message = types::MinerMessage {
-			m_type: types::MinerMessageType::ReceivedJob,
-			difficulty: params.difficulty,
-			pre_pow: params.pre_pow,
-		};
-		self.miner_tx.send(miner_message).unwrap();
-	
-		Ok(())
+		if res.result.is_some() {
+			self.send_miner_job(res.result.unwrap())
+		} else {
+			Ok(())
+		}
 	}
 
 	pub fn run(mut self) {
+		let server_read_interval = 1;
+		let mut next_server_read = time::get_time().sec + server_read_interval;
 		// Request the first job template
-		thread::sleep(time::Duration::from_secs(1));
+		thread::sleep(std::time::Duration::from_secs(1));
 		let _ = self.send_message_get_job_template();
 		
 		loop {
-			thread::sleep(time::Duration::from_secs(1));
-			match self.read_message() {
-				Some(m) => {
-					// figure out what kind of message,
-					// and dispatch appropriately
-					debug!(LOGGER, "Received message: {}", m);
-					// Is this a request?
-					let request:Result<types::RpcRequest, serde_json::Error> = serde_json::from_str(&m);
-					if let Ok(r) = request {
-						self.handle_request(r);
-						continue;
+			// read messages from server
+			if time::get_time().sec > next_server_read {
+				match self.read_message() {
+					Some(m) => {
+						// figure out what kind of message,
+						// and dispatch appropriately
+						debug!(LOGGER, "Received message: {}", m);
+						// Is this a request?
+						let request:Result<types::RpcRequest, serde_json::Error> = serde_json::from_str(&m);
+						if let Ok(r) = request {
+							self.handle_request(r);
+							continue;
+						}
+						// Is this a response?
+						let response:Result<types::RpcResponse, serde_json::Error> = serde_json::from_str(&m);
+						if let Ok(r) = response {
+							self.handle_response(r);
+							continue;
+						}
+						
+						error!(
+							LOGGER,
+							"Failed to parse JSON RPC: {}",
+							m,
+						);
+						
 					}
-					// Is this a response?
-					let response:Result<types::RpcResponse, serde_json::Error> = serde_json::from_str(&m);
-					if let Ok(r) = response {
-						self.handle_response(r);
-						continue;
-					}
-					
-					error!(
-						LOGGER,
-						"Failed to parse JSON RPC: {}",
-						m,
-					);
-					
+					None => {}
 				}
-				None => {}
+				next_server_read = time::get_time().sec + server_read_interval;
 			}
+
+			while let Some(message) = self.rx.try_iter().next() {
+				debug!(LOGGER, "Client recieved message from miner: {:?}", message);
+				let result = match message.m_type {
+					types::ClientMessageType::FoundSolution => {
+						self.send_message_submit(message.height, message.nonce, message.pow)
+					}
+				};
+				if let Err(e) = result {
+					error!(LOGGER, "Mining Controller Error {:?}", e);
+				}
+			}
+
+
 		}
 
 			

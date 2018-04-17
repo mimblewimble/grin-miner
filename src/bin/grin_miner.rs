@@ -99,10 +99,7 @@ fn main() {
 
 	log_build_info();
 
-	// Init mining plugin configuration
-	let mut plugin_miner = plugin::PluginMiner::new();
-	plugin_miner.init(mining_config.clone());
-	let mut mc = mining::Controller::new(plugin_miner).unwrap_or_else(|e| {
+	let mut mc = mining::Controller::new(mining_config.clone()).unwrap_or_else(|e| {
 		panic!("Error loading mining controller: {}", e);
 	});
 

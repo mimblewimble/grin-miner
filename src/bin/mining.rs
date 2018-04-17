@@ -17,25 +17,39 @@
 /// 
 
 use std::sync::mpsc;
+use time;
 use util::LOGGER;
+use config;
+
+use cuckoo::{CuckooPluginManager,
+	CuckooMinerSolution,
+	CuckooMinerJobHandle,
+	CuckooMinerError,
+	CuckooMiner};
 
 use {plugin, types};
 
 pub struct Controller {
-	plugin_miner: plugin::PluginMiner,
+	config: config::MinerConfig,
+	plugin_miner: Option<plugin::PluginMiner>,
+	job_handle: Option<CuckooMinerJobHandle>,
 	rx: mpsc::Receiver<types::MinerMessage>,
 	pub tx: mpsc::Sender<types::MinerMessage>,
 	client_tx: Option<mpsc::Sender<types::ClientMessage>>,
+	current_height: u64,
 }
 
 impl Controller {
-	pub fn new(pm: plugin::PluginMiner) -> Result<Controller, String> {
+	pub fn new(config: config::MinerConfig) -> Result<Controller, String> {
 		let (tx, rx) = mpsc::channel::<types::MinerMessage>();
 		Ok(Controller {
-			plugin_miner: pm,
+			config: config,
+			plugin_miner: None,
+			job_handle: None,
 			rx: rx,
 			tx: tx,
 			client_tx: None,
+			current_height: 0,
 		})
 	}
 
@@ -45,14 +59,137 @@ impl Controller {
 	
 	/// Run the mining controller
 	pub fn run(&mut self){
+		// how often to output stats
+		let stat_output_interval = 2;
+		let mut next_stat_output = time::get_time().sec + stat_output_interval;
+
 		loop {
 			while let Some(message) = self.rx.try_iter().next() {
 				debug!(LOGGER, "Miner recieved message: {:?}", message);
-				/*match message {
+				let result = match message.m_type {
+					types::MinerMessageType::ReceivedJob => {
+						if self.job_handle.is_some() {
+							self.job_handle.as_mut().unwrap().stop_jobs();
+						}
+						self.current_height = message.height;
+						self.start_job(30, &message.pre_pow)
+					}
+				};
+				if let Err(e) = result {
+					error!(LOGGER, "Mining Controller Error {:?}", e);
+				}
+			}
 
+			if time::get_time().sec > next_stat_output {
+				self.output_job_stats();
+				next_stat_output = time::get_time().sec + stat_output_interval;
+			}
 
-				}*/
+			let sol = self.check_solutions();
+			if sol.is_some(){
+				let sol = sol.unwrap();
+				let _ = self.client_tx.as_mut().unwrap().send(types::ClientMessage {
+					m_type: types::ClientMessageType::FoundSolution,
+					height: self.current_height,
+					nonce: sol.get_nonce_as_u64(),
+					pow: sol.solution_nonces.to_vec(),
+				});
 			}
 		}
+	}
+
+	/// Inner part of the mining loop for cuckoo-miner async mode
+	fn start_job(
+		&mut self,
+		cuckoo_size: usize,
+		pre_pow: &str,
+	) -> Result<(), CuckooMinerError> {
+		debug!(
+			LOGGER,
+			"Mining Cuckoo{} for height: {}",
+			cuckoo_size,
+			self.current_height,
+		);
+
+		// Init the miner
+		let mut plugin_miner = plugin::PluginMiner::new();
+		plugin_miner.init(self.config.clone());
+		self.plugin_miner = Some(plugin_miner);
+
+		// Start the miner working
+		let miner = self.plugin_miner.as_mut().unwrap().get_consumable();
+		self.job_handle = Some(miner.notify(1, &pre_pow, "", 0)?);
+		Ok(())
+	}
+
+	fn check_solutions(&mut self) -> Option<CuckooMinerSolution> {
+		if self.job_handle.is_none() {
+			return None;
+		}
+		let job_handle = self.job_handle.as_mut().unwrap();
+		if let Some(s) = job_handle.get_solution() {
+			debug!(
+				LOGGER,
+				"Found cuckoo solution! nonce {}",
+				s.get_nonce_as_u64(),
+			);
+			return Some(s);
+		}
+		None
+	}
+
+	fn output_job_stats(&mut self) {
+		if self.job_handle.is_none() {
+			return;
+		}
+		let mut sps_total = 0.0;
+		let plugin_miner = self.plugin_miner.as_mut().unwrap();
+		let job_handle = self.job_handle.as_mut().unwrap();
+		for i in 0..plugin_miner.loaded_plugin_count() {
+			let stats = job_handle.get_stats(i);
+			if let Ok(stat_vec) = stats {
+				for s in stat_vec {
+					if s.in_use == 0 {
+						continue;
+					}
+					let last_solution_time_secs =
+						s.last_solution_time as f64 / 1000000000.0;
+					let last_hashes_per_sec = 1.0 / last_solution_time_secs;
+					let status = match s.has_errored {
+						0 => "OK",
+						_ => "ERRORED",
+					};
+					debug!(
+						LOGGER,
+								"Mining: Plugin {} - Device {} ({}) Status: {} : Last Graph time: {}s; \
+						 Graphs per second: {:.*} - Total Attempts: {}",
+								i,
+						s.device_id,
+						s.device_name,
+						status,
+						last_solution_time_secs,
+						3,
+						last_hashes_per_sec,
+						s.iterations_completed
+					);
+					if last_hashes_per_sec.is_finite() {
+						sps_total += last_hashes_per_sec;
+					}
+				}
+			}
+		}
+		info!(
+			LOGGER,
+			"Mining: Cuckoo{} at {} gps (graphs per second)", 30, sps_total
+		);
+		/*if sps_total.is_finite() {
+			let mut mining_stats = mining_stats.write().unwrap();
+			mining_stats.combined_gps = sps_total;
+			let mut device_vec = vec![];
+			for i in 0..plugin_miner.loaded_plugin_count() {
+				device_vec.push(job_handle.get_stats(i).unwrap());
+			}
+			mining_stats.device_stats = Some(device_vec);
+		}*/
 	}
 }
