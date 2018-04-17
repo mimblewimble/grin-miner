@@ -145,9 +145,14 @@ impl Controller {
 
 	pub fn handle_response(&mut self, res: types::RpcResponse) -> Result<(), Error> {
 		debug!(LOGGER, "Received response with id: {}", res.id);
+		
 		//TODO: this response needs to be matched up with the request somehow.. for the moment
 		//assume it's just a response to a get_job_template request
 		if res.result.is_some() {
+			if res.result.as_ref().unwrap() == "ok" {
+				debug!(LOGGER, "Received OK response from server");
+				return Ok(());
+			}
 			self.send_miner_job(res.result.unwrap())
 		} else {
 			Ok(())
