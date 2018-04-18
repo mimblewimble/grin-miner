@@ -59,27 +59,15 @@ pub struct SubmitParams {
 
 /// Types used for internal communication from stratum client to miner
 #[derive(Serialize, Deserialize, Debug)]
-pub enum MinerMessageType{
-	ReceivedJob,
+pub enum MinerMessage{
+	// Height, difficulty, pre_pow
+	ReceivedJob(u64, u64, String),
+	Shutdown,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct MinerMessage {
-	pub m_type: MinerMessageType,
-	pub height: u64,
-	pub difficulty: u64,
-	pub pre_pow: String,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub enum ClientMessageType{
-	FoundSolution,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct ClientMessage {
-	pub m_type: ClientMessageType,
-	pub height: u64,
-	pub nonce: u64,
-	pub pow: Vec<u32>,
+pub enum ClientMessage{
+	// height, nonce, pow
+	FoundSolution(u64, u64, Vec<u32>),
+	Shutdown,
 }

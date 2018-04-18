@@ -16,7 +16,7 @@
 log_to_stdout = true
 
 # Log level for stdout: Critical, Error, Warning, Info, Debug, Trace
-stdout_log_level = "Debug"
+stdout_log_level = "Info"
 
 # Whether to log to a file
 log_to_file = true
@@ -38,8 +38,12 @@ log_file_append = true
 #will default to not mining.
 [mining]
 
+# whether to run the tui
+run_tui = true
+
 # listening grin stratum server url
 stratum_server_addr = "127.0.0.1:13416"
+
 #
 #The directory in which mining plugins are installed
 #if not specified, grin miner will look in the directory /deps relative

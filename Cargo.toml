@@ -13,6 +13,7 @@ name = "grin-miner"
 path = "src/bin/grin_miner.rs"
 
 [dependencies]
+backtrace = "0.3"
 blake2-rfc = "0.2"
 bufstream = "~0.1"
 lazy_static = "0.2"
@@ -25,6 +26,12 @@ time = "0.1"
 
 grin_miner_util = { path = "./util" }
 grin_miner_config = { path = "./config" }
+
+#temporary until cursive author publishes a new release
+[dependencies.cursive]
+git = "https://github.com/yeastplume/Cursive"
+tag = "grin_integration_1"
+
 
 [build-dependencies]
 built = "0.2"

@@ -16,16 +16,16 @@
 /// server, controls plugins and responds appropriately
 /// 
 
-use std::sync::mpsc;
+use std::sync::{mpsc, Arc, RwLock};
 use time;
 use util::LOGGER;
 use config;
+use stats;
 
-use cuckoo::{CuckooPluginManager,
+use cuckoo::{
 	CuckooMinerSolution,
 	CuckooMinerJobHandle,
-	CuckooMinerError,
-	CuckooMiner};
+	CuckooMinerError};
 
 use {plugin, types};
 
@@ -37,10 +37,16 @@ pub struct Controller {
 	pub tx: mpsc::Sender<types::MinerMessage>,
 	client_tx: Option<mpsc::Sender<types::ClientMessage>>,
 	current_height: u64,
+	current_network_diff: u64,
+	stats: Arc<RwLock<stats::MiningStats>>,
 }
 
 impl Controller {
-	pub fn new(config: config::MinerConfig) -> Result<Controller, String> {
+	pub fn new(config: config::MinerConfig, stats: Arc<RwLock<stats::MiningStats>>) -> Result<Controller, String> {
+		{
+			let mut stats_w = stats.write().unwrap();
+			stats_w.server_url = config.stratum_server_addr.clone();
+		}
 		let (tx, rx) = mpsc::channel::<types::MinerMessage>();
 		Ok(Controller {
 			config: config,
@@ -50,13 +56,15 @@ impl Controller {
 			tx: tx,
 			client_tx: None,
 			current_height: 0,
+			current_network_diff: 0,
+			stats: stats,
 		})
 	}
 
 	pub fn set_client_tx(&mut self, client_tx: mpsc::Sender<types::ClientMessage>) {
 		self.client_tx = Some(client_tx);
 	}
-	
+
 	/// Run the mining controller
 	pub fn run(&mut self){
 		// how often to output stats
@@ -66,13 +74,18 @@ impl Controller {
 		loop {
 			while let Some(message) = self.rx.try_iter().next() {
 				debug!(LOGGER, "Miner recieved message: {:?}", message);
-				let result = match message.m_type {
-					types::MinerMessageType::ReceivedJob => {
+				let result = match message {
+					types::MinerMessage::ReceivedJob(height, diff, pre_pow) => {
 						if self.job_handle.is_some() {
 							self.job_handle.as_mut().unwrap().stop_jobs();
 						}
-						self.current_height = message.height;
-						self.start_job(30, &message.pre_pow)
+						self.current_height = height;
+						self.current_network_diff = diff;
+						self.start_job(30, &pre_pow)
+					},
+					types::MinerMessage::Shutdown => {
+						self.stop_job();
+						return;
 					}
 				};
 				if let Err(e) = result {
@@ -88,12 +101,11 @@ impl Controller {
 			let sol = self.check_solutions();
 			if sol.is_some(){
 				let sol = sol.unwrap();
-				let _ = self.client_tx.as_mut().unwrap().send(types::ClientMessage {
-					m_type: types::ClientMessageType::FoundSolution,
-					height: self.current_height,
-					nonce: sol.get_nonce_as_u64(),
-					pow: sol.solution_nonces.to_vec(),
-				});
+				let _ = self.client_tx.as_mut().unwrap().send(types::ClientMessage::FoundSolution (
+					self.current_height,
+					sol.get_nonce_as_u64(),
+					sol.solution_nonces.to_vec(),
+				));
 			}
 		}
 	}
@@ -182,14 +194,24 @@ impl Controller {
 			LOGGER,
 			"Mining: Cuckoo{} at {} gps (graphs per second)", 30, sps_total
 		);
-		/*if sps_total.is_finite() {
-			let mut mining_stats = mining_stats.write().unwrap();
-			mining_stats.combined_gps = sps_total;
+		if sps_total.is_finite() {
+			let mut stats = self.stats.write().unwrap();
+			stats.combined_gps = sps_total;
+			stats.network_difficulty = self.current_network_diff;
+			stats.block_height = self.current_height;
+			stats.cuckoo_size = 30;
 			let mut device_vec = vec![];
 			for i in 0..plugin_miner.loaded_plugin_count() {
 				device_vec.push(job_handle.get_stats(i).unwrap());
 			}
-			mining_stats.device_stats = Some(device_vec);
-		}*/
+			stats.device_stats = Some(device_vec);
+		}
+	}
+
+	fn stop_job(&mut self){
+		if self.job_handle.is_none() {
+			return;
+		}
+		self.job_handle.as_mut().unwrap().stop_jobs();
 	}
 }

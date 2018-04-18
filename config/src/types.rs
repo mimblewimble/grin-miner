@@ -88,6 +88,9 @@ impl From<io::Error> for ConfigError {
 /// basic mining configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MinerConfig {
+	/// Whether to run the tui
+	pub run_tui: bool,
+
 	/// mining loop by adding a sleep to the thread
 	pub stratum_server_addr: String,
 
@@ -101,6 +104,7 @@ pub struct MinerConfig {
 impl Default for MinerConfig {
 	fn default() -> MinerConfig {
 		MinerConfig {
+			run_tui: false,
 			miner_plugin_dir: None,
 			miner_plugin_config: vec![],
 			stratum_server_addr: String::from("http://127.0.0.1:13416"),

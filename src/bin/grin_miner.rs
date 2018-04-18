@@ -26,25 +26,21 @@ extern crate serde_json;
 extern crate slog;
 #[macro_use]
 extern crate lazy_static;
+extern crate cursive;
+
+pub mod plugin;
+pub mod mining;
+pub mod client;
+pub mod types;
+pub mod stats;
+pub mod tui;
 
 use std::thread;
-use std::io::{BufRead, Write};
-use std::path::PathBuf;
-use std::net::TcpStream;
-use bufstream::BufStream;
+use std::sync::{mpsc, Arc, RwLock};
 use config::GlobalConfig;
 use util::cuckoo_miner as cuckoo;
 
-use cuckoo::{CuckooPluginManager,
-	CuckooPluginCapabilities,
-	//CuckooMinerSolution,
-	CuckooMinerConfig,
-	CuckooMiner};
-
-pub mod plugin;
-mod mining;
-pub mod client;
-mod types;
+use tui::ui;
 
 use util::{init_logger, LOGGER};
 
@@ -79,6 +75,28 @@ fn log_build_info() {
 	trace!(LOGGER, "{}", deps);
 }
 
+
+fn start_tui(
+	mc: Arc<RwLock<stats::MiningStats>>, 
+	client_tx: mpsc::Sender<types::ClientMessage>,
+	miner_tx: mpsc::Sender<types::MinerMessage>) {
+	// Run the UI controller.. here for now for simplicity to access
+	// everything it might need
+	println!("Starting Grin Miner in UI mode...");
+	let _ = thread::Builder::new()
+		.name("ui".to_string())
+		.spawn(move || {
+			let mut controller = ui::Controller::new().unwrap_or_else(|e| {
+				panic!("Error loading UI controller: {}", e);
+			});
+			controller.run(mc.clone());
+			// Shut down everything else on tui exit
+			let _ = client_tx.send(types::ClientMessage::Shutdown);
+			let _ = miner_tx.send(types::MinerMessage::Shutdown);
+			println!("Stopping mining plugins and exiting...");
+		});
+}
+
 fn main() {
 	// Init configuration
 	let mut global_config = GlobalConfig::new(None).unwrap_or_else(|e| {
@@ -87,25 +105,38 @@ fn main() {
 	println!("Starting Grin-Miner from config file at: {}", 
 		global_config.config_file_path.unwrap().to_str().unwrap());
 	// Init logging
-	let log_conf = global_config
+	let mut log_conf = global_config
 		.members
 		.as_mut()
 		.unwrap()
 		.logging
 		.clone()
 		.unwrap();
-	init_logger(Some(log_conf));
+
 	let mining_config = global_config.members.as_mut().unwrap().mining.clone();
+
+	if mining_config.run_tui {
+		log_conf.log_to_stdout = false;
+		log_conf.tui_running = Some(true);
+	}
+
+	init_logger(Some(log_conf));
 
 	log_build_info();
 
-	let mut mc = mining::Controller::new(mining_config.clone()).unwrap_or_else(|e| {
+	let stats = Arc::new(RwLock::new(stats::MiningStats::default()));
+
+	let mut mc = mining::Controller::new(mining_config.clone(), stats.clone()).unwrap_or_else(|e| {
 		panic!("Error loading mining controller: {}", e);
 	});
 
 	let cc = client::Controller::new(&mining_config.stratum_server_addr, mc.tx.clone()).unwrap_or_else(|e| {
 		panic!("Error loading stratum client controller: {:?}", e);
 	});
+
+	if mining_config.run_tui {
+		start_tui(stats.clone(), cc.tx.clone(), mc.tx.clone());
+	}
 
 	mc.set_client_tx(cc.tx.clone());
 

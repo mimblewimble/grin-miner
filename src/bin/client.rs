@@ -35,8 +35,7 @@ pub enum Error {
 }
 
 pub struct Controller {
-	id: u32,
-	server_url: String,
+	_id: u32,
 	stream: BufStream<TcpStream>,
 	rx: mpsc::Receiver<types::ClientMessage>,
 	pub tx: mpsc::Sender<types::ClientMessage>,
@@ -52,8 +51,7 @@ impl Controller {
 			Ok(conn) => {
 				let _ = conn.set_nonblocking(true);
 				Ok(Controller {
-						id: 0,
-						server_url: server_url.to_string(),
+						_id: 0,
 						stream: BufStream::new(conn),
 						tx: tx,
 						rx: rx,
@@ -122,12 +120,11 @@ impl Controller {
 
 	fn send_miner_job(&mut self, params:String) -> Result<(), Error>{
 		let params:types::JobTemplate = serde_json::from_str(&params).unwrap();
-		let miner_message = types::MinerMessage {
-			m_type: types::MinerMessageType::ReceivedJob,
-			height: params.height,
-			difficulty: params.difficulty,
-			pre_pow: params.pre_pow,
-		};
+		let miner_message = types::MinerMessage::ReceivedJob (
+			params.height,
+			params.difficulty,
+			params.pre_pow,
+		);
 		self.miner_tx.send(miner_message).unwrap();
 		Ok(())
 	}
@@ -177,13 +174,13 @@ impl Controller {
 						// Is this a request?
 						let request:Result<types::RpcRequest, serde_json::Error> = serde_json::from_str(&m);
 						if let Ok(r) = request {
-							self.handle_request(r);
+							let _ = self.handle_request(r);
 							continue;
 						}
 						// Is this a response?
 						let response:Result<types::RpcResponse, serde_json::Error> = serde_json::from_str(&m);
 						if let Ok(r) = response {
-							self.handle_response(r);
+							let _ = self.handle_response(r);
 							continue;
 						}
 						
@@ -201,10 +198,14 @@ impl Controller {
 
 			while let Some(message) = self.rx.try_iter().next() {
 				debug!(LOGGER, "Client recieved message from miner: {:?}", message);
-				let result = match message.m_type {
-					types::ClientMessageType::FoundSolution => {
-						self.send_message_submit(message.height, message.nonce, message.pow)
-					}
+				let result = match message {
+					types::ClientMessage::FoundSolution(height, nonce, pow) => {
+						self.send_message_submit(height, nonce, pow)
+					},
+					types::ClientMessage::Shutdown => {
+						//TODO: Inform server?
+						return;
+					},
 				};
 				if let Err(e) = result {
 					error!(LOGGER, "Mining Controller Error {:?}", e);
