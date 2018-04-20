@@ -125,7 +125,7 @@ impl Controller {
 		let req_str = serde_json::to_string(&req).unwrap();
 		{
 			let mut stats = self.stats.write().unwrap();
-			stats.client_stats.last_message_received=
+			stats.client_stats.last_message_sent =
 				format!("Last Message Sent: Get New Job");
 		}
 		self.send_message(&req_str)
@@ -224,7 +224,7 @@ impl Controller {
 			// Check our connection status, and try to correct if possible
 			if let None = self.stream {
 				if !was_disconnected {
-					self.send_miner_stop();
+					let _ = self.send_miner_stop();
 				}
 				was_disconnected = true;
 				if time::get_time().sec > next_server_retry {
@@ -257,6 +257,10 @@ impl Controller {
 						Ok(message) => {
 							match message {
 								Some(m) => {
+									{
+										let mut stats = self.stats.write().unwrap();
+										stats.client_stats.connected = true;
+									}
 									// figure out what kind of message,
 									// and dispatch appropriately
 									debug!(LOGGER, "Received message: {}", m);
