@@ -27,7 +27,7 @@ use cursive::traits::*;
 use tui::constants::*;
 use tui::types::*;
 
-use stats::MiningStats;
+use stats;
 use util::cuckoo_miner::CuckooMinerDeviceStats;
 use tui::table::{TableView, TableViewItem};
 
@@ -134,14 +134,17 @@ impl TUIStatusListener for TUIMiningView {
 		let status_view = LinearLayout::new(Orientation::Vertical)
 			.child(
 				LinearLayout::new(Orientation::Horizontal)
-					.child(TextView::new("  ").with_id("mining_server_status")),
+					.child(TextView::new("Connection Status: Starting...").with_id("mining_server_status")),
 			).child(
 				LinearLayout::new(Orientation::Horizontal)
-					.child(TextView::new("  ").with_id("mining_config_status")),
+					.child(TextView::new("Last Message Sent:  ").with_id("last_message_sent")),
+			).child(
+				LinearLayout::new(Orientation::Horizontal)
+					.child(TextView::new("Last Message Received:  ").with_id("last_message_received")),
 			)
 			.child(
 				LinearLayout::new(Orientation::Horizontal)
-					.child(TextView::new("  ").with_id("mining_status")),
+					.child(TextView::new("Mining Status: ").with_id("mining_status")),
 			)
 			.child(
 				LinearLayout::new(Orientation::Horizontal)
@@ -167,30 +170,35 @@ impl TUIStatusListener for TUIMiningView {
 	}
 
 	/// update
-	fn update(c: &mut Cursive, stats: Arc<RwLock<MiningStats>>) {
+	fn update(c: &mut Cursive, stats: Arc<RwLock<stats::Stats>>) {
 		let stats = stats.read().unwrap();
+		let client_stats = stats.client_stats.clone();
 		c.call_on_id("mining_server_status", |t: &mut TextView| {
-			t.set_content(format!("Connected to Grin server at: {}", stats.server_url));
+			t.set_content(stats.client_stats.connection_status.clone());
 		});
 	
 		let (basic_mining_status, basic_network_info) = {
-			if stats.combined_gps == 0.0 {
-				(
-					"Mining Status: Starting miner and awaiting first graph time...".to_string(),
-					" ".to_string(),
-				)
+			if stats.client_stats.connected {
+				if stats.mining_stats.combined_gps == 0.0 {
+					(
+						"Mining Status: Starting miner and awaiting first graph time...".to_string(),
+						" ".to_string(),
+					)
+				} else {
+					(
+						format!(
+							"Mining Status: Mining at height {} at {:.*} GPS",
+							stats.mining_stats.block_height, 4, stats.mining_stats.combined_gps
+						),
+						format!(
+							"Cuckoo {} - Network Difficulty {}",
+							stats.mining_stats.cuckoo_size,
+							stats.mining_stats.network_difficulty.to_string()
+						),
+					)
+				}
 			} else {
-				(
-					format!(
-						"Mining Status: Mining at height {} at {:.*} GPS",
-						stats.block_height, 4, stats.combined_gps
-					),
-					format!(
-						"Cuckoo {} - Network Difficulty {}",
-						stats.cuckoo_size,
-						stats.network_difficulty.to_string()
-					),
-				)
+				("Mining Status: Waiting for server".to_string(), "  ".to_string())
 			}
 		};
 		
@@ -202,18 +210,24 @@ impl TUIStatusListener for TUIMiningView {
 			t.set_content(basic_network_info);
 		});
 
-		let mining_stats = stats.clone();
+		c.call_on_id("last_message_sent", |t: &mut TextView| {
+			t.set_content(client_stats.last_message_sent.clone());
+		});
+		c.call_on_id("last_message_received", |t: &mut TextView| {
+			t.set_content(client_stats.last_message_received.clone());
+		});
+
+		let mining_stats = stats.mining_stats.clone();
 		let device_stats = mining_stats.device_stats;
 
-		if device_stats.is_none() {
-			return;
-		}
-
-		let device_stats = device_stats.unwrap();
 		let mut flattened_device_stats = vec![];
-		for p in device_stats.into_iter() {
-			for d in p.into_iter() {
-				flattened_device_stats.push(d);
+
+		if device_stats.is_some() {
+			let device_stats = device_stats.unwrap();
+			for p in device_stats.into_iter() {
+				for d in p.into_iter() {
+					flattened_device_stats.push(d);
+				}
 			}
 		}
 

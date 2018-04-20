@@ -37,6 +37,7 @@ pub mod tui;
 
 use std::thread;
 use std::sync::{mpsc, Arc, RwLock};
+use std::sync::atomic::{AtomicBool, Ordering};
 use config::GlobalConfig;
 use util::cuckoo_miner as cuckoo;
 
@@ -77,9 +78,10 @@ fn log_build_info() {
 
 
 fn start_tui(
-	mc: Arc<RwLock<stats::MiningStats>>, 
+	s: Arc<RwLock<stats::Stats>>, 
 	client_tx: mpsc::Sender<types::ClientMessage>,
-	miner_tx: mpsc::Sender<types::MinerMessage>) {
+	miner_tx: mpsc::Sender<types::MinerMessage>,
+	stop: Arc<AtomicBool>) {
 	// Run the UI controller.. here for now for simplicity to access
 	// everything it might need
 	println!("Starting Grin Miner in UI mode...");
@@ -89,11 +91,12 @@ fn start_tui(
 			let mut controller = ui::Controller::new().unwrap_or_else(|e| {
 				panic!("Error loading UI controller: {}", e);
 			});
-			controller.run(mc.clone());
+			controller.run(s.clone());
 			// Shut down everything else on tui exit
 			let _ = client_tx.send(types::ClientMessage::Shutdown);
 			let _ = miner_tx.send(types::MinerMessage::Shutdown);
 			println!("Stopping mining plugins and exiting...");
+			stop.store(true, Ordering::Relaxed);
 		});
 }
 
@@ -124,34 +127,50 @@ fn main() {
 
 	log_build_info();
 
-	let stats = Arc::new(RwLock::new(stats::MiningStats::default()));
+	let stats = Arc::new(RwLock::new(stats::Stats::default()));
 
 	let mut mc = mining::Controller::new(mining_config.clone(), stats.clone()).unwrap_or_else(|e| {
 		panic!("Error loading mining controller: {}", e);
 	});
 
-	let cc = client::Controller::new(&mining_config.stratum_server_addr, mc.tx.clone()).unwrap_or_else(|e| {
+	let cc = client::Controller::new(&mining_config.stratum_server_addr, mc.tx.clone(), stats.clone()).unwrap_or_else(|e| {
 		panic!("Error loading stratum client controller: {:?}", e);
 	});
 
+	let tui_stopped = Arc::new(AtomicBool::new(false));
+	let miner_stopped = Arc::new(AtomicBool::new(false));
+	let client_stopped = Arc::new(AtomicBool::new(false));
+
 	if mining_config.run_tui {
-		start_tui(stats.clone(), cc.tx.clone(), mc.tx.clone());
+		start_tui(stats.clone(), cc.tx.clone(), mc.tx.clone(), tui_stopped.clone());
+	} else {
+		tui_stopped.store(true, Ordering::Relaxed);
 	}
 
 	mc.set_client_tx(cc.tx.clone());
 
+	let miner_stopped_internal = miner_stopped.clone();
 	let _ = thread::Builder::new()
 		.name("mining_controller".to_string())
 		.spawn(move || {
 			mc.run();
+			miner_stopped_internal.store(true, Ordering::Relaxed);
 		});
 
+	let client_stopped_internal = client_stopped.clone();
 	let _ = thread::Builder::new()
 		.name("client_controller".to_string())
 		.spawn(move || {
 			cc.run();
+			client_stopped_internal.store(true, Ordering::Relaxed);
 		});
 
 	loop{
+		if miner_stopped.load(Ordering::Relaxed)
+				&& client_stopped.load(Ordering::Relaxed)
+				&& tui_stopped.load(Ordering::Relaxed) {
+			thread::sleep(std::time::Duration::from_millis(100));
+			break;
+		}
 	}
 }

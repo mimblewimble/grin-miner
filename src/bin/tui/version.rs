@@ -25,7 +25,7 @@ use cursive::traits::*;
 use tui::constants::*;
 use tui::types::*;
 
-use stats::MiningStats;
+use stats::Stats;
 use info_strings;
 
 /// Version view
@@ -45,5 +45,5 @@ impl TUIStatusListener for TUIVersionView {
 	}
 
 	/// update
-	fn update(_c: &mut Cursive, _stats: Arc<RwLock<MiningStats>>) {}
+	fn update(_c: &mut Cursive, _stats: Arc<RwLock<Stats>>) {}
 }

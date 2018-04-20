@@ -18,13 +18,13 @@ use std::sync::{Arc, RwLock};
 
 use cursive::Cursive;
 use cursive::view::View;
-use stats::MiningStats;
+use stats::Stats;
 
 /// Main message struct to communicate between the UI and
 /// the main process
 pub enum UIMessage {
 	/// Update mining status
-	UpdateStatus(Arc<RwLock<MiningStats>>),
+	UpdateStatus(Arc<RwLock<Stats>>),
 }
 
 /// Trait for a UI element that recieves status update messages
@@ -34,5 +34,5 @@ pub trait TUIStatusListener {
 	/// create the view, to return to the main UI controller
 	fn create() -> Box<View>;
 	/// Update according to status update contents
-	fn update(c: &mut Cursive, stats: Arc<RwLock<MiningStats>>);
+	fn update(c: &mut Cursive, stats: Arc<RwLock<Stats>>);
 }

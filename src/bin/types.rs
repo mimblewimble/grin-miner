@@ -62,6 +62,7 @@ pub struct SubmitParams {
 pub enum MinerMessage{
 	// Height, difficulty, pre_pow
 	ReceivedJob(u64, u64, String),
+	StopJob,
 	Shutdown,
 }
 

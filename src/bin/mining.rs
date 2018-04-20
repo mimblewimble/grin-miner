@@ -38,14 +38,14 @@ pub struct Controller {
 	client_tx: Option<mpsc::Sender<types::ClientMessage>>,
 	current_height: u64,
 	current_network_diff: u64,
-	stats: Arc<RwLock<stats::MiningStats>>,
+	stats: Arc<RwLock<stats::Stats>>,
 }
 
 impl Controller {
-	pub fn new(config: config::MinerConfig, stats: Arc<RwLock<stats::MiningStats>>) -> Result<Controller, String> {
+	pub fn new(config: config::MinerConfig, stats: Arc<RwLock<stats::Stats>>) -> Result<Controller, String> {
 		{
 			let mut stats_w = stats.write().unwrap();
-			stats_w.server_url = config.stratum_server_addr.clone();
+			stats_w.client_stats.server_url = config.stratum_server_addr.clone();
 		}
 		let (tx, rx) = mpsc::channel::<types::MinerMessage>();
 		Ok(Controller {
@@ -83,7 +83,12 @@ impl Controller {
 						self.current_network_diff = diff;
 						self.start_job(30, &pre_pow)
 					},
-					types::MinerMessage::Shutdown => {
+					types::MinerMessage::StopJob => {
+						self.stop_job();
+						debug!(LOGGER, "Stopping jobs");
+						return;
+					}types::MinerMessage::Shutdown => {
+						debug!(LOGGER, "Stopping jobs and Shutting down mining controller");
 						self.stop_job();
 						return;
 					}
@@ -196,15 +201,15 @@ impl Controller {
 		);
 		if sps_total.is_finite() {
 			let mut stats = self.stats.write().unwrap();
-			stats.combined_gps = sps_total;
-			stats.network_difficulty = self.current_network_diff;
-			stats.block_height = self.current_height;
-			stats.cuckoo_size = 30;
+			stats.mining_stats.combined_gps = sps_total;
+			stats.mining_stats.network_difficulty = self.current_network_diff;
+			stats.mining_stats.block_height = self.current_height;
+			stats.mining_stats.cuckoo_size = 30;
 			let mut device_vec = vec![];
 			for i in 0..plugin_miner.loaded_plugin_count() {
 				device_vec.push(job_handle.get_stats(i).unwrap());
 			}
-			stats.device_stats = Some(device_vec);
+			stats.mining_stats.device_stats = Some(device_vec);
 		}
 	}
 

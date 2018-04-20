@@ -81,7 +81,7 @@ impl UI {
 		let mut title_string = StyledString::new();
 		title_string.append(StyledString::styled(
 			format!("Grin Miner Version {}", built_info::PKG_VERSION),
-			Color::Dark(BaseColor::Green),
+			Color::Dark(BaseColor::Yellow),
 		));
 
 		let main_layer = LinearLayout::new(Orientation::Vertical)
@@ -160,7 +160,7 @@ impl Controller {
 		})
 	}
 	/// Run the controller
-	pub fn run(&mut self, stats: Arc<RwLock<stats::MiningStats>>) {
+	pub fn run(&mut self, stats: Arc<RwLock<stats::Stats>>) {
 		let stat_update_interval = 1;
 		let mut next_stat_update = time::get_time().sec + stat_update_interval;
 		while self.ui.step() {

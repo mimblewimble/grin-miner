@@ -22,8 +22,6 @@ use util;
 
 #[derive(Clone)]
 pub struct MiningStats {
-	/// Server we're connected to
-	pub server_url: String,
 	/// combined graphs per second
 	pub combined_gps: f64,
 	/// what block height we're mining at
@@ -39,12 +37,54 @@ pub struct MiningStats {
 impl Default for MiningStats {
 	fn default() -> MiningStats{
 		MiningStats{
-			server_url: "".to_string(),
 			combined_gps: 0.0,
 			block_height: 0,
 			network_difficulty: 0,
 			cuckoo_size: 0,
 			device_stats: None,
+		}
+	}
+}
+
+#[derive(Clone)]
+pub struct ClientStats {
+	/// Server we're connected to
+	pub server_url: String,
+	/// whether we're connected
+	pub connected: bool,
+	/// Connection status
+	pub connection_status: String,
+	/// Last message sent to server
+	pub last_message_sent: String,
+	/// Last response/command recieved from server
+	pub last_message_received: String,
+}
+
+impl Default for ClientStats {
+	fn default() -> ClientStats {
+		ClientStats {
+			server_url: "".to_string(),
+			connected: false,
+			connection_status: "Connection Status: Starting".to_string(),
+			last_message_sent: "Last Message Sent: None".to_string(),
+			last_message_received: "Last Message Received: None".to_string(),
+		}
+	}
+}
+
+#[derive(Clone)]
+pub struct Stats {
+	/// Client/networking stats
+	pub client_stats: ClientStats,
+	/// Mining stats
+	pub mining_stats: MiningStats,
+}
+
+impl Default for Stats {
+	fn default() -> Stats {
+		Stats {
+			client_stats: ClientStats::default(),
+			mining_stats: MiningStats::default(),
 		}
 	}
 }
