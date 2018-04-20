@@ -86,7 +86,7 @@ stratum_server_addr = "127.0.0.1:13416"
 [[mining.miner_plugin_config]]
 type_filter = "mean_compat_cpu"
 [mining.miner_plugin_config.device_parameters.0]
-NUM_THREADS = 1
+NUM_THREADS = 4
 
 #note lean_cpu currently has a bug which prevents it from
 #working with threads > 1
