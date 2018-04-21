@@ -222,7 +222,6 @@ impl Controller {
 					// XXX TODO:  Add thses status to the stats
 					let mut stats = self.stats.write().unwrap();
 					stats.client_stats.last_message_received = format!("Last Message Received: Accepted: {}, Rejected: {}, Stale: {}", st.accepted, st.rejected, st.stale);
-					// dont update last_message_received with good status response
 				} else {
 					let err = res.error.unwrap();
 					let mut stats = self.stats.write().unwrap();
