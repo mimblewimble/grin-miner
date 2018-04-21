@@ -32,6 +32,7 @@ pub struct RpcRequest {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct RpcResponse {
 	pub id: String,
+	pub method: String,
 	pub jsonrpc: String,
 	pub result: Option<String>,
 	pub error: Option<RpcError>,
@@ -55,6 +56,16 @@ pub struct SubmitParams {
 	pub height: u64,
 	pub nonce: u64,
 	pub pow: Vec<u32>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct WorkerStatus {
+        pub id: String,
+        pub height: u64,
+        pub difficulty: u64,
+        pub accepted: u64,
+        pub rejected: u64,
+        pub stale: u64,
 }
 
 /// Types used for internal communication from stratum client to miner

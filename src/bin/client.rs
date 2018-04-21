@@ -17,9 +17,9 @@
 
 use std::net::TcpStream;
 use std;
-use std::{thread};
-use std::io::{ErrorKind, BufRead, Write};
-use std::sync::{Arc, mpsc, RwLock};
+use std::thread;
+use std::io::{BufRead, ErrorKind, Write};
+use std::sync::{mpsc, Arc, RwLock};
 
 use serde_json;
 use bufstream::BufStream;
@@ -28,7 +28,6 @@ use time;
 use types;
 use util::LOGGER;
 use stats;
-
 
 #[derive(Debug)]
 pub enum Error {
@@ -47,31 +46,32 @@ pub struct Controller {
 }
 
 impl Controller {
-
-	pub fn new(server_url: &str, miner_tx: mpsc::Sender<types::MinerMessage>, stats: Arc<RwLock<stats::Stats>>) -> Result<Controller, Error> {
+	pub fn new(
+		server_url: &str,
+		miner_tx: mpsc::Sender<types::MinerMessage>,
+		stats: Arc<RwLock<stats::Stats>>,
+	) -> Result<Controller, Error> {
 		let (tx, rx) = mpsc::channel::<types::ClientMessage>();
 		Ok(Controller {
-				_id: 0,
-				server_url: server_url.to_string(),
-				stream: None,
-				tx: tx,
-				rx: rx,
-				miner_tx: miner_tx,
-				last_request_id: 0,
-				stats: stats,
-			})
+			_id: 0,
+			server_url: server_url.to_string(),
+			stream: None,
+			tx: tx,
+			rx: rx,
+			miner_tx: miner_tx,
+			last_request_id: 0,
+			stats: stats,
+		})
 	}
 
-	pub fn try_connect(&mut self) -> Result<(), Error>{
-		match TcpStream::connect(self.server_url.clone()){
+	pub fn try_connect(&mut self) -> Result<(), Error> {
+		match TcpStream::connect(self.server_url.clone()) {
 			Ok(conn) => {
 				let _ = conn.set_nonblocking(true);
 				self.stream = Some(BufStream::new(conn));
 				Ok(())
-			},
-			Err(e) => {
-				Err(Error::ConnectionError(format!("{}", e)))
 			}
+			Err(e) => Err(Error::ConnectionError(format!("{}", e))),
 		}
 	}
 
@@ -80,10 +80,10 @@ impl Controller {
 			return Err(Error::ConnectionError("broken pipe".to_string()));
 		}
 		let mut line = String::new();
-		match self.stream.as_mut().unwrap().read_line(&mut line){
+		match self.stream.as_mut().unwrap().read_line(&mut line) {
 			Ok(_) => {
 				// stream is not returning a proper error on disconnect
-				if line=="" {
+				if line == "" {
 					return Err(Error::ConnectionError("broken pipe".to_string()));
 				}
 				return Ok(Some(line));
@@ -95,10 +95,7 @@ impl Controller {
 				return Ok(None);
 			}
 			Err(e) => {
-				error!(
-					LOGGER,
-					"Communication error with stratum server: {}", e
-				);
+				error!(LOGGER, "Communication error with stratum server: {}", e);
 				return Err(Error::ConnectionError("broken pipe".to_string()));
 			}
 		}
@@ -109,65 +106,83 @@ impl Controller {
 			return Err(Error::ConnectionError(String::from("No server connection")));
 		}
 		debug!(LOGGER, "sending request: {}", message);
-		let _ = self.stream.as_mut().unwrap().write(message.as_bytes()).unwrap();
-		let _ = self.stream.as_mut().unwrap().write("\n".as_bytes()).unwrap();
+		let _ = self.stream
+			.as_mut()
+			.unwrap()
+			.write(message.as_bytes())
+			.unwrap();
+		let _ = self.stream
+			.as_mut()
+			.unwrap()
+			.write("\n".as_bytes())
+			.unwrap();
 		let _ = self.stream.as_mut().unwrap().flush().unwrap();
 		Ok(())
 	}
 
 	fn send_message_get_job_template(&mut self) -> Result<(), Error> {
 		let req = types::RpcRequest {
-				id: self.last_request_id.to_string(),
-				jsonrpc: "2.0".to_string(),
-				method: "getjobtemplate".to_string(),
-				params: None,
-			};
+			id: self.last_request_id.to_string(),
+			jsonrpc: "2.0".to_string(),
+			method: "getjobtemplate".to_string(),
+			params: None,
+		};
 		let req_str = serde_json::to_string(&req).unwrap();
 		{
 			let mut stats = self.stats.write().unwrap();
-			stats.client_stats.last_message_sent =
-				format!("Last Message Sent: Get New Job");
+			stats.client_stats.last_message_sent = format!("Last Message Sent: Get New Job");
 		}
 		self.send_message(&req_str)
 	}
 
+	fn send_message_get_status(&mut self) -> Result<(), Error> {
+		let req = types::RpcRequest {
+			id: self.last_request_id.to_string(),
+			jsonrpc: "2.0".to_string(),
+			method: "status".to_string(),
+			params: None,
+		};
+		let req_str = serde_json::to_string(&req).unwrap();
+		self.send_message(&req_str)
+	}
+
 	fn send_message_submit(&mut self, height: u64, nonce: u64, pow: Vec<u32>) -> Result<(), Error> {
-		let params_in = types::SubmitParams{
+		let params_in = types::SubmitParams {
 			height: height,
 			nonce: nonce,
 			pow: pow,
 		};
 		let params = serde_json::to_string(&params_in).unwrap();
 		let req = types::RpcRequest {
-				id: self.last_request_id.to_string(),
-				jsonrpc: "2.0".to_string(),
-				method: "submit".to_string(),
-				params: Some(params),
-			};
+			id: self.last_request_id.to_string(),
+			jsonrpc: "2.0".to_string(),
+			method: "submit".to_string(),
+			params: Some(params),
+		};
 		let req_str = serde_json::to_string(&req).unwrap();
 		{
 			let mut stats = self.stats.write().unwrap();
-			stats.client_stats.last_message_sent=
-				format!("Last Message Sent: Found block for height: {} - nonce: {}",
-					params_in.height, params_in.nonce);
-		}self.send_message(&req_str)
+			stats.client_stats.last_message_sent = format!(
+				"Last Message Sent: Found block for height: {} - nonce: {}",
+				params_in.height, params_in.nonce
+			);
+		}
+		self.send_message(&req_str)
 	}
 
-	fn send_miner_job(&mut self, params:String) -> Result<(), Error>{
-		let params:types::JobTemplate = serde_json::from_str(&params).unwrap();
-		let miner_message = types::MinerMessage::ReceivedJob (
-			params.height,
-			params.difficulty,
-			params.pre_pow,
-		);
+	fn send_miner_job(&mut self, job: types::JobTemplate) -> Result<(), Error> {
+		let miner_message =
+			types::MinerMessage::ReceivedJob(job.height, job.difficulty, job.pre_pow);
 		let mut stats = self.stats.write().unwrap();
-		stats.client_stats.last_message_received=
-			format!("Last Message Received: Start Job for Height: {}, Difficulty: {}", params.height, params.difficulty);
+		stats.client_stats.last_message_received = format!(
+			"Last Message Received: Start Job for Height: {}, Difficulty: {}",
+			job.height, job.difficulty
+		);
 		self.miner_tx.send(miner_message).unwrap();
 		Ok(())
 	}
 
-	fn send_miner_stop(&mut self) -> Result<(), Error>{
+	fn send_miner_stop(&mut self) -> Result<(), Error> {
 		let miner_message = types::MinerMessage::StopJob;
 		self.miner_tx.send(miner_message).unwrap();
 		Ok(())
@@ -177,49 +192,129 @@ impl Controller {
 		debug!(LOGGER, "Received request type: {}", req.method);
 		let _ = match req.method.as_str() {
 			"job" => {
-				self.send_miner_job(req.params.unwrap())
+				let job: types::JobTemplate = serde_json::from_str(&req.params.unwrap()).unwrap();
+				info!(LOGGER, "Got a new job: {:?}", job);
+				self.send_miner_job(job)
 			}
-			_ => {Ok(())}
+			_ => Ok(()),
 		};
 		Ok(())
 	}
 
 	pub fn handle_response(&mut self, res: types::RpcResponse) -> Result<(), Error> {
 		debug!(LOGGER, "Received response with id: {}", res.id);
-		
-		//TODO: this response needs to be matched up with the request somehow.. for the moment
-		//assume it's just a response to a get_job_template request
-		if res.result.is_some() {
-			if res.result.as_ref().unwrap() == "ok" {
-				debug!(LOGGER, "Received OK response from server");
-				{
+		match res.method.as_str() {
+			// "status" response can be used to further populate stats object
+			"status" => {
+				if res.result.is_some() {
+					let st: types::WorkerStatus =
+						serde_json::from_str(&res.result.unwrap()).unwrap();
+					info!(
+						LOGGER,
+						"Status for worker {} - Height: {}, Difficulty: {}, ({}/{}/{})",
+						st.id,
+						st.height,
+						st.difficulty,
+						st.accepted,
+						st.rejected,
+						st.stale
+					);
+				// XXX TODO:  Add thses status to the stats
+				// dont update last_message_received with good status response
+				} else {
+					let err = res.error.unwrap();
 					let mut stats = self.stats.write().unwrap();
-					stats.client_stats.last_message_received=
-						format!("Last Message Received: Ok");
+					stats.client_stats.last_message_received =
+						format!("Last Message Received: Failed to get status: {:?}", err);
+					error!(LOGGER, "Failed to get status: {:?}", err);
 				}
-				return Ok(());
+				()
 			}
-			self.send_miner_job(res.result.unwrap())
-		} else {
-			{
+			// "getjobtemplate" response gets sent to miners to work on
+			"getjobtemplate" => {
+				if res.result.is_some() {
+					let job: types::JobTemplate =
+						serde_json::from_str(&res.result.unwrap()).unwrap();
+					{
+						let mut stats = self.stats.write().unwrap();
+						stats.client_stats.last_message_received = format!(
+							"Last Message Received: Got job for block {} at difficulty {}",
+							job.height, job.difficulty
+						);
+					}
+					info!(
+						LOGGER,
+						"Got a job at height {} and difficulty {}", job.height, job.difficulty
+					);
+					let _ = self.send_miner_job(job);
+				} else {
+					let err = res.error.unwrap();
 					let mut stats = self.stats.write().unwrap();
-					stats.client_stats.last_message_received=
-						format!("Last Message Received: {:?}",
-						res.error.unwrap());
+					stats.client_stats.last_message_received = format!(
+						"Last Message Received: Failed to get job template: {:?}",
+						err
+					);
+					error!(LOGGER, "Failed to get a job template: {:?}", err);
+				}
+				()
 			}
-			Ok(())
+			// "submit" response
+			"submit" => {
+				if res.result.is_some() {
+					info!(LOGGER, "Solution Accepted!!");
+					let mut stats = self.stats.write().unwrap();
+					stats.client_stats.last_message_received =
+						format!("Last Message Received: Solution Accepted!!");
+				} else {
+					let err = res.error.unwrap();
+					let mut stats = self.stats.write().unwrap();
+					stats.client_stats.last_message_received = format!(
+						"Last Message Received: Failed to submit a solution: {:?}",
+						err
+					);
+					error!(LOGGER, "Failed to submit a solution: {:?}", err);
+				}
+				()
+			}
+			// "keepalive" response
+			"keepalive" => {
+				if res.result.is_some() {
+					// Nothing to do for keepalive "ok"
+					// dont update last_message_received with good keepalive response
+				} else {
+					let err = res.error.unwrap();
+					let mut stats = self.stats.write().unwrap();
+					stats.client_stats.last_message_received = format!(
+						"Last Message Received: Failed to request keepalive: {:?}",
+						err
+					);
+					error!(LOGGER, "Failed to request keepalive: {:?}", err);
+				}
+			}
+			// unknown method response
+			_ => {
+				let mut stats = self.stats.write().unwrap();
+				stats.client_stats.last_message_received =
+					format!("Last Message Received: Unknown Response: {:?}", res);
+				warn!(LOGGER, "Unknown Response: {:?}", res);
+				()
+			}
 		}
+
+		return Ok(());
 	}
 
 	pub fn run(mut self) {
 		let server_read_interval = 1;
 		let server_retry_interval = 5;
 		let mut next_server_read = time::get_time().sec + server_read_interval;
+		let status_interval = 30;
+		let mut next_status_request = time::get_time().sec + status_interval;
 		let mut next_server_retry = time::get_time().sec;
 		// Request the first job template
 		thread::sleep(std::time::Duration::from_secs(1));
 		let mut was_disconnected = true;
-		
+
 		loop {
 			// Check our connection status, and try to correct if possible
 			if let None = self.stream {
@@ -237,8 +332,10 @@ impl Controller {
 						stats.client_stats.connection_status = status;
 						stats.client_stats.connected = false;
 					} else {
-						let status = format!("Connection Status: Connected to Grin server at {}.",
-							self.server_url);
+						let status = format!(
+							"Connection Status: Connected to Grin server at {}.",
+							self.server_url
+						);
 						warn!(LOGGER, "{}", status);
 						let mut stats = self.stats.write().unwrap();
 						stats.client_stats.connection_status = status;
@@ -264,52 +361,56 @@ impl Controller {
 									// figure out what kind of message,
 									// and dispatch appropriately
 									debug!(LOGGER, "Received message: {}", m);
-									// Is this a request?
-									let request:Result<types::RpcRequest, serde_json::Error> = serde_json::from_str(&m);
-									if let Ok(r) = request {
-										let _ = self.handle_request(r);
+									// Deserialize to see what type of object it is
+									let v: serde_json::Value = serde_json::from_str(&m).unwrap();
+									// Is this a response or request?
+									if v["id"] == String::from("Stratum") {
+										// this is a request
+										let request: types::RpcRequest = serde_json::from_str(&m).unwrap();
+										let _ = self.handle_request(request);
+										continue;
+									} else {
+										// this is a response
+										let response: types::RpcResponse = serde_json::from_str(&m).unwrap();
+										let _ = self.handle_response(response);
 										continue;
 									}
-									// Is this a response?
-									let response:Result<types::RpcResponse, serde_json::Error> = serde_json::from_str(&m);
-									if let Ok(r) = response {
-										let _ = self.handle_response(r);
-										continue;
-									}
-								},
-								None => {},
+								}
+								None => {} // No messages from the server at this time
 							}
-						},
+						}
 						Err(e) => {
-							error!(
-								LOGGER,
-								"Error reading message: {:?}",
-								e,
-							);
-							self.stream=None;
+							error!(LOGGER, "Error reading message: {:?}", e);
+							self.stream = None;
 						}
 					}
 					next_server_read = time::get_time().sec + server_read_interval;
 				}
+
+				// Request a status message from the server
+				if time::get_time().sec > next_status_request {
+					let _ = self.send_message_get_status();
+					next_status_request = time::get_time().sec + status_interval;
+				}
 			}
 
+			// Talk to the cuckoo miner plugin
 			while let Some(message) = self.rx.try_iter().next() {
 				debug!(LOGGER, "Client recieved message: {:?}", message);
 				let result = match message {
 					types::ClientMessage::FoundSolution(height, nonce, pow) => {
 						self.send_message_submit(height, nonce, pow)
-					},
+					}
 					types::ClientMessage::Shutdown => {
 						//TODO: Inform server?
 						debug!(LOGGER, "Shutting down client controller");
 						return;
-					},
+					}
 				};
 				if let Err(e) = result {
 					error!(LOGGER, "Mining Controller Error {:?}", e);
 				}
 			}
-		}
-		
+		} // loop
 	}
 }
