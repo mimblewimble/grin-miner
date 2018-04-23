@@ -184,7 +184,7 @@ impl Controller {
 
 	fn send_miner_stop(&mut self) -> Result<(), Error> {
 		let miner_message = types::MinerMessage::StopJob;
-		self.miner_tx.send(miner_message).unwrap();
+		let _ = self.miner_tx.send(miner_message);
 		Ok(())
 	}
 
