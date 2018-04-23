@@ -8,9 +8,6 @@ At present, only mining plugins for linux-x86_64 and MacOS exist. This will likl
 
 - rust 1.24+ (use [rustup]((https://www.rustup.rs/))- i.e. `curl https://sh.rustup.rs -sSf | sh; source $HOME/.cargo/env`)
 - cmake 3.2+ (for [Cuckoo mining plugins]((https://github.com/mimblewimble/cuckoo-miner)))
-- rocksdb + libs for compiling rocksdb:
-  - clang (clanglib or clang-devel or libclang-dev)
-  - llvm (Fedora llvm-devel, Debian llvm-dev)
 - ncurses and libs (ncurses, ncursesw5)
 - zlib libs (zlib1g-dev or zlib-devel)
 - linux-headers (reported needed on Alpine linux)
