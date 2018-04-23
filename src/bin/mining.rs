@@ -135,7 +135,7 @@ impl Controller {
 
 		// Start the miner working
 		let miner = self.plugin_miner.as_mut().unwrap().get_consumable();
-		self.job_handle = Some(miner.notify(1, &pre_pow, "", 0)?);
+		self.job_handle = Some(miner.notify(1, &pre_pow, "", self.current_network_diff)?);
 		Ok(())
 	}
 
