@@ -178,7 +178,7 @@ impl Controller {
 			"Last Message Received: Start Job for Height: {}, Difficulty: {}",
 			job.height, job.difficulty
 		);
-		self.miner_tx.send(miner_message).unwrap();
+		let _ = self.miner_tx.send(miner_message);
 		Ok(())
 	}
 
