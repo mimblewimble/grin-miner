@@ -1,2 +1,2 @@
 # grin-miner
-Standalone miner for grin
+A standalone mining implementation intended for mining Grin against a running Grin node. For information on how to build and run grin-miner, please see the [build docs](/doc/build.md)
