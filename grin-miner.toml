@@ -34,8 +34,6 @@ log_file_append = true
 ### MINING CLIENT CONFIGURATION       ###
 #########################################
 
-#Mining details. This section is optional. If it's not here, the server
-#will default to not mining.
 [mining]
 
 # whether to run the tui
@@ -44,7 +42,6 @@ run_tui = true
 # listening grin stratum server url
 stratum_server_addr = "127.0.0.1:13416"
 
-#
 #The directory in which mining plugins are installed
 #if not specified, grin miner will look in the directory /deps relative
 #to the executable
@@ -55,15 +52,8 @@ stratum_server_addr = "127.0.0.1:13416"
 ### CUCKOO MINER PLUGIN CONFIGURATION ###
 #########################################
 
-# These entries configure instances of cuckoo miner
-# plugins if the 'use_cuckoo_miner' value above is
-# set to 'true'.
-#
 # Multiple plugins can be specified, (e.g. a cpu
-# miner and a gpu miner running in parallel). However,
-# if 'use_async_mode' above is set to 'false', only
-# the first plugin specified will be used for mining
-# in single-threaded mode
+# miner and a gpu miner running in parallel)
 
 # You'll likely get the best performance using a
 # single GPU plugin and single CPU plugin in parallel
