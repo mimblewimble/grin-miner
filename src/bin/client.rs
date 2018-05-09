@@ -37,6 +37,8 @@ pub enum Error {
 pub struct Controller {
 	_id: u32,
 	server_url: String,
+	server_login: Option<String>,
+	server_password: Option<String>,
 	stream: Option<BufStream<TcpStream>>,
 	rx: mpsc::Receiver<types::ClientMessage>,
 	pub tx: mpsc::Sender<types::ClientMessage>,
@@ -48,6 +50,8 @@ pub struct Controller {
 impl Controller {
 	pub fn new(
 		server_url: &str,
+		server_login: Option<String>,
+		server_password: Option<String>,
 		miner_tx: mpsc::Sender<types::MinerMessage>,
 		stats: Arc<RwLock<stats::Stats>>,
 	) -> Result<Controller, Error> {
@@ -55,6 +59,8 @@ impl Controller {
 		Ok(Controller {
 			_id: 0,
 			server_url: server_url.to_string(),
+			server_login: server_login,
+			server_password: server_password,
 			stream: None,
 			tx: tx,
 			rx: rx,
@@ -131,6 +137,37 @@ impl Controller {
 		{
 			let mut stats = self.stats.write().unwrap();
 			stats.client_stats.last_message_sent = format!("Last Message Sent: Get New Job");
+		}
+		self.send_message(&req_str)
+	}
+
+	fn send_login(&mut self) -> Result<(), Error> {
+		// only send the login request if a login string is configured
+		let login_str = match self.server_login.clone() {
+			None => "".to_string(),
+			Some(server_login) => server_login.clone(),
+		};
+		if login_str == "" {
+			return Ok(());
+		}
+		let password_str = match self.server_password.clone() {
+			None => "".to_string(),
+			Some(server_password) => server_password.clone(),
+		};
+		let params = format!(
+			"{}{:?}{}{:?}{}",
+			"{\"login\":", login_str, ",\"pass\":", password_str, ",\"agent\":\"grin-miner\"}"
+		);
+		let req = types::RpcRequest {
+			id: self.last_request_id.to_string(),
+			jsonrpc: "2.0".to_string(),
+			method: "login".to_string(),
+			params: Some(params.to_string()),
+		};
+		let req_str = serde_json::to_string(&req).unwrap();
+		{
+			let mut stats = self.stats.write().unwrap();
+			stats.client_stats.last_message_sent = format!("Last Message Sent: Login");
 		}
 		self.send_message(&req_str)
 	}
@@ -219,9 +256,12 @@ impl Controller {
 						st.rejected,
 						st.stale
 					);
-					// XXX TODO:  Add thses status to the stats
+					// Add these status to the stats
 					let mut stats = self.stats.write().unwrap();
-					stats.client_stats.last_message_received = format!("Last Message Received: Accepted: {}, Rejected: {}, Stale: {}", st.accepted, st.rejected, st.stale);
+					stats.client_stats.last_message_received = format!(
+						"Last Message Received: Accepted: {}, Rejected: {}, Stale: {}",
+						st.accepted, st.rejected, st.stale
+					);
 				} else {
 					let err = res.error.unwrap();
 					let mut stats = self.stats.write().unwrap();
@@ -292,6 +332,18 @@ impl Controller {
 					error!(LOGGER, "Failed to request keepalive: {:?}", err);
 				}
 			}
+			// "login" response
+			"login" => {
+				if res.result.is_some() {
+					// Nothing to do for login "ok"
+					// dont update last_message_received with good login response
+				} else {
+					// This is a fatal error
+					let err = res.error.unwrap();
+					error!(LOGGER, "Failed to log in: {:?}", err);
+					panic!("Failed to log in to stratum server: {:?}", err);
+				}
+			}
 			// unknown method response
 			_ => {
 				let mut stats = self.stats.write().unwrap();
@@ -346,6 +398,7 @@ impl Controller {
 			} else {
 				// get new job template
 				if was_disconnected {
+					let _ = self.send_login();
 					let _ = self.send_message_get_job_template();
 					was_disconnected = false;
 				}
