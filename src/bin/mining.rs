@@ -18,6 +18,7 @@
 
 use std::sync::{mpsc, Arc, RwLock};
 use time;
+use std::{self, thread};
 use util::LOGGER;
 use config;
 use stats;
@@ -112,6 +113,7 @@ impl Controller {
 					sol.solution_nonces.to_vec(),
 				));
 			}
+			thread::sleep(std::time::Duration::from_millis(100));
 		}
 	}
 
