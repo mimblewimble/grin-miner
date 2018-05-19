@@ -48,7 +48,6 @@ stratum_server_addr = "127.0.0.1:13416"
 # password for the stratum server (if required)
 #stratum_server_password = "x"
 
-#
 #The directory in which mining plugins are installed
 #if not specified, grin miner will look in the directory /deps relative
 #to the executable
