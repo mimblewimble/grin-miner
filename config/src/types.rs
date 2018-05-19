@@ -94,6 +94,12 @@ pub struct MinerConfig {
 	/// mining loop by adding a sleep to the thread
 	pub stratum_server_addr: String,
 
+	/// login for the stratum server
+	pub stratum_server_login: Option<String>,
+
+	/// password for the stratum server
+	pub stratum_server_password: Option<String>,
+
 	/// plugin dir
 	pub miner_plugin_dir: Option<String>,
 
@@ -108,6 +114,8 @@ impl Default for MinerConfig {
 			miner_plugin_dir: None,
 			miner_plugin_config: vec![],
 			stratum_server_addr: String::from("http://127.0.0.1:13416"),
+			stratum_server_login: None,
+			stratum_server_password: None,
 		}
 	}
 }
