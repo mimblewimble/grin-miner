@@ -18,6 +18,7 @@
 
 use std::sync::{mpsc, Arc, RwLock};
 use time;
+use std::{self, thread};
 use util::LOGGER;
 use config;
 use stats;
@@ -84,9 +85,9 @@ impl Controller {
 						self.start_job(30, &pre_pow)
 					},
 					types::MinerMessage::StopJob => {
-						self.stop_job();
 						debug!(LOGGER, "Stopping jobs");
-						return;
+						self.stop_job();
+						Ok(())
 					}types::MinerMessage::Shutdown => {
 						debug!(LOGGER, "Stopping jobs and Shutting down mining controller");
 						self.stop_job();
@@ -112,6 +113,7 @@ impl Controller {
 					sol.solution_nonces.to_vec(),
 				));
 			}
+			thread::sleep(std::time::Duration::from_millis(100));
 		}
 	}
 

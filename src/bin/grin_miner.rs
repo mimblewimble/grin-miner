@@ -179,5 +179,6 @@ fn main() {
 			thread::sleep(std::time::Duration::from_millis(100));
 			break;
 		}
+		thread::sleep(std::time::Duration::from_millis(100));
 	}
 }

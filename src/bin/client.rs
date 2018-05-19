@@ -465,6 +465,7 @@ impl Controller {
 					error!(LOGGER, "Mining Controller Error {:?}", e);
 				}
 			}
+			thread::sleep(std::time::Duration::from_millis(100));
 		} // loop
 	}
 }
