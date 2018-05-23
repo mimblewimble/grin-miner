@@ -104,7 +104,7 @@ NUM_THREADS = 4
 #   (nvcc should be in your PATH)
 #   Wrong gcc? install gcc-5 g++-5; export CC=`which gcc-5`; # then build
 #2) Uncomment the 'build-cuda-plugin' feature
-#   in pow/Cargo.toml
+#   in util/Cargo.toml
 #
 #Parameters can be set per device, as below. In sync mode
 #device 0 is currently the only device used. In async mode
