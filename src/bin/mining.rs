@@ -74,12 +74,10 @@ impl Controller {
 
 		loop {
 			while let Some(message) = self.rx.try_iter().next() {
-				debug!(LOGGER, "Miner recieved message: {:?}", message);
+				debug!(LOGGER, "Miner received message: {:?}", message);
 				let result = match message {
 					types::MinerMessage::ReceivedJob(height, diff, pre_pow) => {
-						if self.job_handle.is_some() {
-							self.job_handle.as_mut().unwrap().stop_jobs();
-						}
+						self.stop_job();
 						self.current_height = height;
 						self.current_network_diff = diff;
 						self.start_job(30, &pre_pow)
