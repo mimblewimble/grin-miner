@@ -79,10 +79,10 @@ stratum_server_addr = "127.0.0.1:13416"
 #NUM_THREADS = 1
 
 #As above, but for older processors
-[[mining.miner_plugin_config]]
-type_filter = "mean_compat_cpu"
-[mining.miner_plugin_config.device_parameters.0]
-NUM_THREADS = 4
+#[[mining.miner_plugin_config]]
+#type_filter = "mean_compat_cpu"
+#[mining.miner_plugin_config.device_parameters.0]
+#NUM_THREADS = 4
 
 #note lean_cpu currently has a bug which prevents it from
 #working with threads > 1
@@ -115,7 +115,7 @@ NUM_THREADS = 4
 #[[mining.miner_plugin_config]]
 #type_filter = "cuda"
 #[mining.miner_plugin_config.device_parameters.0]
-#USE_DEVICE = 1
+#USE_DEVICE = 0
 
 # Below are advanced optional per-device tweakable params
 
@@ -133,6 +133,26 @@ NUM_THREADS = 4
 #RENAME_1_STAGE2_TPB = 128
 #TRIM_3_TPB = 32
 #RENAME_3_TPB = 8
+
+#[mining.miner_plugin_config.device_parameters.1]
+#USE_DEVICE = 1
+
+#[mining.miner_plugin_config.device_parameters.2]
+#USE_DEVICE = 1
+
+#Meaner CUDA Miner
+#[[mining.miner_plugin_config]]
+#type_filter = "cuda_meaner"
+#[mining.miner_plugin_config.device_parameters.0]
+#USE_DEVICE = 1
+
+# Below are advanced optional per-device tweakable params
+
+#N_TRIMS = 176
+#GENA_BLOCKS = 128
+#TAIL_TPB = 1024
+#RECOVER_BLOCKS = 1024
+#RECOVER_TPB = 1024
 
 #[mining.miner_plugin_config.device_parameters.1]
 #USE_DEVICE = 1
