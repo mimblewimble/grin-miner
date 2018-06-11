@@ -26,8 +26,8 @@ pub struct MiningStats {
 	pub combined_gps: f64,
 	/// what block height we're mining at
 	pub block_height: u64,
-	/// current network difficulty we're working on
-	pub network_difficulty: u64,
+	/// current target for share difficulty we're working on
+	pub target_difficulty: u64,
 	/// cuckoo size used for mining
 	pub cuckoo_size: u16,
 	/// Individual device status from Cuckoo-Miner
@@ -39,7 +39,7 @@ impl Default for MiningStats {
 		MiningStats{
 			combined_gps: 0.0,
 			block_height: 0,
-			network_difficulty: 0,
+			target_difficulty: 0,
 			cuckoo_size: 0,
 			device_stats: None,
 		}

@@ -191,9 +191,9 @@ impl TUIStatusListener for TUIMiningView {
 							stats.mining_stats.block_height, 4, stats.mining_stats.combined_gps
 						),
 						format!(
-							"Cuckoo {} - Network Difficulty {}",
+							"Cuckoo {} - Target Share Difficulty {}",
 							stats.mining_stats.cuckoo_size,
-							stats.mining_stats.network_difficulty.to_string()
+							stats.mining_stats.target_difficulty.to_string()
 						),
 					)
 				}
