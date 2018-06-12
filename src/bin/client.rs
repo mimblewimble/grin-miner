@@ -200,7 +200,7 @@ impl Controller {
 		{
 			let mut stats = self.stats.write().unwrap();
 			stats.client_stats.last_message_sent = format!(
-				"Last Message Sent: Found block for height: {} - nonce: {}",
+				"Last Message Sent: Found share for height: {} - nonce: {}",
 				params_in.height, params_in.nonce
 			);
 		}
