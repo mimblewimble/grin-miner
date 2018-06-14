@@ -38,7 +38,7 @@ pub struct Controller {
 	pub tx: mpsc::Sender<types::MinerMessage>,
 	client_tx: Option<mpsc::Sender<types::ClientMessage>>,
 	current_height: u64,
-	current_network_diff: u64,
+	current_target_diff: u64,
 	stats: Arc<RwLock<stats::Stats>>,
 }
 
@@ -57,7 +57,7 @@ impl Controller {
 			tx: tx,
 			client_tx: None,
 			current_height: 0,
-			current_network_diff: 0,
+			current_target_diff: 0,
 			stats: stats,
 		})
 	}
@@ -79,7 +79,7 @@ impl Controller {
 					types::MinerMessage::ReceivedJob(height, diff, pre_pow) => {
 						self.stop_job();
 						self.current_height = height;
-						self.current_network_diff = diff;
+						self.current_target_diff = diff;
 						self.start_job(30, &pre_pow)
 					},
 					types::MinerMessage::StopJob => {
@@ -135,7 +135,7 @@ impl Controller {
 
 		// Start the miner working
 		let miner = self.plugin_miner.as_mut().unwrap().get_consumable();
-		self.job_handle = Some(miner.notify(1, &pre_pow, "", self.current_network_diff)?);
+		self.job_handle = Some(miner.notify(1, &pre_pow, "", self.current_target_diff)?);
 		Ok(())
 	}
 
@@ -202,7 +202,7 @@ impl Controller {
 		if sps_total.is_finite() {
 			let mut stats = self.stats.write().unwrap();
 			stats.mining_stats.combined_gps = sps_total;
-			stats.mining_stats.network_difficulty = self.current_network_diff;
+			stats.mining_stats.target_difficulty = self.current_target_diff;
 			stats.mining_stats.block_height = self.current_height;
 			stats.mining_stats.cuckoo_size = 30;
 			let mut device_vec = vec![];
