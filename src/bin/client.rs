@@ -245,7 +245,7 @@ impl Controller {
 			"status" => {
 				if res.result.is_some() {
 					let st: types::WorkerStatus =
-						serde_json::from_str(&res.result.unwrap()).unwrap();
+						serde_json::from_value(res.result.unwrap()).unwrap();
 					info!(
 						LOGGER,
 						"Status for worker {} - Height: {}, Difficulty: {}, ({}/{}/{})",
@@ -275,7 +275,7 @@ impl Controller {
 			"getjobtemplate" => {
 				if res.result.is_some() {
 					let job: types::JobTemplate =
-						serde_json::from_str(&res.result.unwrap()).unwrap();
+						serde_json::from_value(res.result.unwrap()).unwrap();
 					{
 						let mut stats = self.stats.write().unwrap();
 						stats.client_stats.last_message_received = format!(

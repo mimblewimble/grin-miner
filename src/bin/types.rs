@@ -36,7 +36,7 @@ pub struct RpcResponse {
 	pub id: String,
 	pub method: String,
 	pub jsonrpc: String,
-	pub result: Option<String>,
+	pub result: Option<Value>,
 	pub error: Option<Value>,
 }
 
