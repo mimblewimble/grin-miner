@@ -15,19 +15,19 @@
 //! Client network controller, controls requests and responses from the
 //! stratum server
 
-use std::net::TcpStream;
 use std;
-use std::thread;
 use std::io::{BufRead, ErrorKind, Write};
+use std::net::TcpStream;
 use std::sync::{mpsc, Arc, RwLock};
+use std::thread;
 
-use serde_json;
 use bufstream::BufStream;
+use serde_json;
 use time;
 
+use stats;
 use types;
 use util::LOGGER;
-use stats;
 
 #[derive(Debug)]
 pub enum Error {
@@ -420,12 +420,14 @@ impl Controller {
 									// Is this a response or request?
 									if v["id"] == String::from("Stratum") {
 										// this is a request
-										let request: types::RpcRequest = serde_json::from_str(&m).unwrap();
+										let request: types::RpcRequest =
+											serde_json::from_str(&m).unwrap();
 										let _ = self.handle_request(request);
 										continue;
 									} else {
 										// this is a response
-										let response: types::RpcResponse = serde_json::from_str(&m).unwrap();
+										let response: types::RpcResponse =
+											serde_json::from_str(&m).unwrap();
 										let _ = self.handle_response(response);
 										continue;
 									}
