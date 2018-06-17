@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+use serde_json::Value;
+
 /// Types used for stratum
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -26,7 +28,7 @@ pub struct RpcRequest {
 	pub id: String,
 	pub jsonrpc: String,
 	pub method: String,
-	pub params: Option<String>,
+	pub params: Option<Value>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -34,8 +36,8 @@ pub struct RpcResponse {
 	pub id: String,
 	pub method: String,
 	pub jsonrpc: String,
-	pub result: Option<String>,
-	pub error: Option<RpcError>,
+	pub result: Option<Value>,
+	pub error: Option<Value>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]

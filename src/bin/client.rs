@@ -15,19 +15,19 @@
 //! Client network controller, controls requests and responses from the
 //! stratum server
 
-use std::net::TcpStream;
 use std;
-use std::thread;
 use std::io::{BufRead, ErrorKind, Write};
+use std::net::TcpStream;
 use std::sync::{mpsc, Arc, RwLock};
+use std::thread;
 
-use serde_json;
 use bufstream::BufStream;
+use serde_json;
 use time;
 
+use stats;
 use types;
 use util::LOGGER;
-use stats;
 
 #[derive(Debug)]
 pub enum Error {
@@ -162,7 +162,7 @@ impl Controller {
 			id: self.last_request_id.to_string(),
 			jsonrpc: "2.0".to_string(),
 			method: "login".to_string(),
-			params: Some(params.to_string()),
+			params: Some(serde_json::to_value(&params).unwrap()),
 		};
 		let req_str = serde_json::to_string(&req).unwrap();
 		{
@@ -194,7 +194,7 @@ impl Controller {
 			id: self.last_request_id.to_string(),
 			jsonrpc: "2.0".to_string(),
 			method: "submit".to_string(),
-			params: Some(params),
+			params: Some(serde_json::from_str(&params).unwrap()),
 		};
 		let req_str = serde_json::to_string(&req).unwrap();
 		{
@@ -229,7 +229,7 @@ impl Controller {
 		debug!(LOGGER, "Received request type: {}", req.method);
 		let _ = match req.method.as_str() {
 			"job" => {
-				let job: types::JobTemplate = serde_json::from_str(&req.params.unwrap()).unwrap();
+				let job: types::JobTemplate = serde_json::from_value(req.params.unwrap()).unwrap();
 				info!(LOGGER, "Got a new job: {:?}", job);
 				self.send_miner_job(job)
 			}
@@ -245,7 +245,7 @@ impl Controller {
 			"status" => {
 				if res.result.is_some() {
 					let st: types::WorkerStatus =
-						serde_json::from_str(&res.result.unwrap()).unwrap();
+						serde_json::from_value(res.result.unwrap()).unwrap();
 					info!(
 						LOGGER,
 						"Status for worker {} - Height: {}, Difficulty: {}, ({}/{}/{})",
@@ -275,7 +275,7 @@ impl Controller {
 			"getjobtemplate" => {
 				if res.result.is_some() {
 					let job: types::JobTemplate =
-						serde_json::from_str(&res.result.unwrap()).unwrap();
+						serde_json::from_value(res.result.unwrap()).unwrap();
 					{
 						let mut stats = self.stats.write().unwrap();
 						stats.client_stats.last_message_received = format!(
@@ -420,12 +420,14 @@ impl Controller {
 									// Is this a response or request?
 									if v["id"] == String::from("Stratum") {
 										// this is a request
-										let request: types::RpcRequest = serde_json::from_str(&m).unwrap();
+										let request: types::RpcRequest =
+											serde_json::from_str(&m).unwrap();
 										let _ = self.handle_request(request);
 										continue;
 									} else {
 										// this is a response
-										let response: types::RpcResponse = serde_json::from_str(&m).unwrap();
+										let response: types::RpcResponse =
+											serde_json::from_str(&m).unwrap();
 										let _ = self.handle_response(response);
 										continue;
 									}
