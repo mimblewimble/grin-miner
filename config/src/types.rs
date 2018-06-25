@@ -103,6 +103,10 @@ pub struct MinerConfig {
 	/// plugin dir
 	pub miner_plugin_dir: Option<String>,
 
+	/// whether to hash the whole header sent to the plugin
+	/// (for testnet2 and previous compatibility)
+	pub hash_header: Option<bool>,
+
 	/// Cuckoo miner plugin configuration, one for each plugin
 	pub miner_plugin_config: Vec<CuckooMinerPluginConfig>,
 }
@@ -116,6 +120,7 @@ impl Default for MinerConfig {
 			stratum_server_addr: String::from("http://127.0.0.1:13416"),
 			stratum_server_login: None,
 			stratum_server_password: None,
+			hash_header: None,
 		}
 	}
 }

@@ -54,6 +54,11 @@ stratum_server_addr = "127.0.0.1:13416"
 
 #miner_plugin_dir = "target/debug/plugins"
 
+# temporary, for testnet 2 compatibility
+# t2 or less : set to true (default)
+# t3 or greater : set to false
+#hash_header = false
+
 #########################################
 ### CUCKOO MINER PLUGIN CONFIGURATION ###
 #########################################
