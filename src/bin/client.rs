@@ -154,15 +154,16 @@ impl Controller {
 			None => "".to_string(),
 			Some(server_password) => server_password.clone(),
 		};
-		let params = format!(
-			"{}{:?}{}{:?}{}",
-			"{\"login\":", login_str, ",\"pass\":", password_str, ",\"agent\":\"grin-miner\"}"
-		);
+		let params = types::LoginParams {
+			login: login_str,
+			pass: password_str,
+			agent: "grin-miner".to_string(),
+		};
 		let req = types::RpcRequest {
 			id: self.last_request_id.to_string(),
 			jsonrpc: "2.0".to_string(),
 			method: "login".to_string(),
-			params: Some(serde_json::to_value(&params).unwrap()),
+			params: Some(serde_json::to_value(params).unwrap()),
 		};
 		let req_str = serde_json::to_string(&req).unwrap();
 		{

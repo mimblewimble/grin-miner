@@ -48,9 +48,9 @@ pub struct RpcError {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct LoginParams {
-	login: String,
-	pass: String,
-	agent: String,
+	pub login: String,
+	pub pass: String,
+	pub agent: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
