@@ -18,7 +18,8 @@ slog-async = "2.1"
 
 [dependencies.cuckoo_miner]
 git = "https://github.com/mimblewimble/cuckoo-miner"
-tag = "grin_integration_29"
+tag = "grin_integration_30"
+#path = "../../cuckoo-miner"
 #uncomment this feature to enable cuda builds (cuda toolkit must be installed)
 #features=["build-cuda-plugins"]
 
