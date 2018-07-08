@@ -449,23 +449,23 @@ impl Controller {
 					let _ = self.send_message_get_status();
 					next_status_request = time::get_time().sec + status_interval;
 				}
-			}
 
-			// Talk to the cuckoo miner plugin
-			while let Some(message) = self.rx.try_iter().next() {
-				debug!(LOGGER, "Client recieved message: {:?}", message);
-				let result = match message {
-					types::ClientMessage::FoundSolution(height, nonce, pow) => {
-						self.send_message_submit(height, nonce, pow)
+				// Talk to the cuckoo miner plugin
+				while let Some(message) = self.rx.try_iter().next() {
+					debug!(LOGGER, "Client recieved message: {:?}", message);
+					let result = match message {
+						types::ClientMessage::FoundSolution(height, nonce, pow) => {
+							self.send_message_submit(height, nonce, pow)
+						}
+						types::ClientMessage::Shutdown => {
+							//TODO: Inform server?
+							debug!(LOGGER, "Shutting down client controller");
+							return;
+						}
+					};
+					if let Err(e) = result {
+						error!(LOGGER, "Mining Controller Error {:?}", e);
 					}
-					types::ClientMessage::Shutdown => {
-						//TODO: Inform server?
-						debug!(LOGGER, "Shutting down client controller");
-						return;
-					}
-				};
-				if let Err(e) = result {
-					error!(LOGGER, "Mining Controller Error {:?}", e);
 				}
 			}
 			thread::sleep(std::time::Duration::from_millis(100));
