@@ -21,5 +21,5 @@ git = "https://github.com/mimblewimble/cuckoo-miner"
 tag = "grin_integration_31"
 #path = "../../cuckoo-miner"
 #uncomment this feature to enable cuda builds (cuda toolkit must be installed)
-#features=["build-cuda-plugins"]
+features=["build-cuda-plugins"]
 
