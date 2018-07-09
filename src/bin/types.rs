@@ -76,14 +76,14 @@ pub struct WorkerStatus {
 #[derive(Serialize, Deserialize, Debug)]
 pub enum MinerMessage{
 	// Height, difficulty, pre_pow
-	ReceivedJob(u64, u64, String),
+	ReceivedJob(u64, u64, u64, String),
 	StopJob,
 	Shutdown,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub enum ClientMessage{
-	// height, nonce, pow
-	FoundSolution(u64, u64, Vec<u32>),
+	// height, job_id, nonce, pow
+	FoundSolution(u64, u64, u64, Vec<u32>),
 	Shutdown,
 }
