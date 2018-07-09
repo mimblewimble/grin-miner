@@ -292,7 +292,6 @@ impl Controller {
 						LOGGER,
 						"Got a job at height {} and difficulty {}", job.height, job.difficulty
 					);
-					warn!(LOGGER, "Setting job id from template {}", job.job_id);
 					self.job_id = job.job_id;
 					let _ = self.send_miner_job(job);
 				} else {
