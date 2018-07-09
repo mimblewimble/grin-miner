@@ -45,6 +45,7 @@ pub struct Controller {
 	miner_tx: mpsc::Sender<types::MinerMessage>,
 	last_request_id: u32,
 	stats: Arc<RwLock<stats::Stats>>,
+	job_id: u64,
 }
 
 impl Controller {
@@ -67,6 +68,7 @@ impl Controller {
 			miner_tx: miner_tx,
 			last_request_id: 0,
 			stats: stats,
+			job_id: 0,
 		})
 	}
 
@@ -187,6 +189,7 @@ impl Controller {
 	fn send_message_submit(&mut self, height: u64, nonce: u64, pow: Vec<u32>) -> Result<(), Error> {
 		let params_in = types::SubmitParams {
 			height: height,
+			job_id: self.job_id,
 			nonce: nonce,
 			pow: pow,
 		};
@@ -232,6 +235,7 @@ impl Controller {
 			"job" => {
 				let job: types::JobTemplate = serde_json::from_value(req.params.unwrap()).unwrap();
 				info!(LOGGER, "Got a new job: {:?}", job);
+				self.job_id = job.job_id;
 				self.send_miner_job(job)
 			}
 			_ => Ok(()),
@@ -288,6 +292,8 @@ impl Controller {
 						LOGGER,
 						"Got a job at height {} and difficulty {}", job.height, job.difficulty
 					);
+					warn!(LOGGER, "Setting job id from template {}", job.job_id);
+					self.job_id = job.job_id;
 					let _ = self.send_miner_job(job);
 				} else {
 					let err = res.error.unwrap();
