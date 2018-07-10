@@ -38,6 +38,7 @@ pub struct Controller {
 	pub tx: mpsc::Sender<types::MinerMessage>,
 	client_tx: Option<mpsc::Sender<types::ClientMessage>>,
 	current_height: u64,
+	current_job_id: u64,
 	current_target_diff: u64,
 	stats: Arc<RwLock<stats::Stats>>,
 }
@@ -57,6 +58,7 @@ impl Controller {
 			tx: tx,
 			client_tx: None,
 			current_height: 0,
+			current_job_id: 0,
 			current_target_diff: 0,
 			stats: stats,
 		})
@@ -76,9 +78,10 @@ impl Controller {
 			while let Some(message) = self.rx.try_iter().next() {
 				debug!(LOGGER, "Miner received message: {:?}", message);
 				let result = match message {
-					types::MinerMessage::ReceivedJob(height, diff, pre_pow) => {
+					types::MinerMessage::ReceivedJob(height, job_id, diff, pre_pow) => {
 						self.stop_job();
 						self.current_height = height;
+						self.current_job_id = job_id;
 						self.current_target_diff = diff;
 						self.start_job(30, &pre_pow)
 					},
@@ -107,6 +110,7 @@ impl Controller {
 				let sol = sol.unwrap();
 				let _ = self.client_tx.as_mut().unwrap().send(types::ClientMessage::FoundSolution (
 					self.current_height,
+					self.current_job_id,
 					sol.get_nonce_as_u64(),
 					sol.solution_nonces.to_vec(),
 				));

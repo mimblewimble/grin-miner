@@ -184,9 +184,10 @@ impl Controller {
 		self.send_message(&req_str)
 	}
 
-	fn send_message_submit(&mut self, height: u64, nonce: u64, pow: Vec<u32>) -> Result<(), Error> {
+	fn send_message_submit(&mut self, height: u64, job_id: u64, nonce: u64, pow: Vec<u32>) -> Result<(), Error> {
 		let params_in = types::SubmitParams {
 			height: height,
+			job_id: job_id,
 			nonce: nonce,
 			pow: pow,
 		};
@@ -210,7 +211,7 @@ impl Controller {
 
 	fn send_miner_job(&mut self, job: types::JobTemplate) -> Result<(), Error> {
 		let miner_message =
-			types::MinerMessage::ReceivedJob(job.height, job.difficulty, job.pre_pow);
+			types::MinerMessage::ReceivedJob(job.height, job.job_id, job.difficulty, job.pre_pow);
 		let mut stats = self.stats.write().unwrap();
 		stats.client_stats.last_message_received = format!(
 			"Last Message Received: Start Job for Height: {}, Difficulty: {}",
@@ -303,10 +304,10 @@ impl Controller {
 			// "submit" response
 			"submit" => {
 				if res.result.is_some() {
-					info!(LOGGER, "Solution Accepted!!");
+					info!(LOGGER, "Share Accepted!!");
 					let mut stats = self.stats.write().unwrap();
 					stats.client_stats.last_message_received =
-						format!("Last Message Received: Solution Accepted!!");
+						format!("Last Message Received: Share Accepted!!");
 				} else {
 					let err = res.error.unwrap();
 					let mut stats = self.stats.write().unwrap();
@@ -455,8 +456,8 @@ impl Controller {
 			while let Some(message) = self.rx.try_iter().next() {
 				debug!(LOGGER, "Client recieved message: {:?}", message);
 				let result = match message {
-					types::ClientMessage::FoundSolution(height, nonce, pow) => {
-						self.send_message_submit(height, nonce, pow)
+					types::ClientMessage::FoundSolution(height, job_id, nonce, pow) => {
+						self.send_message_submit(height, job_id, nonce, pow)
 					}
 					types::ClientMessage::Shutdown => {
 						//TODO: Inform server?

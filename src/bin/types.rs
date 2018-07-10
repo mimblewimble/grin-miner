@@ -19,6 +19,7 @@ use serde_json::Value;
 #[derive(Serialize, Deserialize, Debug)]
 pub struct JobTemplate {
 	pub height: u64,
+	pub job_id: u64,
 	pub difficulty: u64,
 	pub pre_pow: String,
 }
@@ -56,6 +57,7 @@ pub struct LoginParams {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct SubmitParams {
 	pub height: u64,
+        pub job_id: u64,
 	pub nonce: u64,
 	pub pow: Vec<u32>,
 }
@@ -74,14 +76,14 @@ pub struct WorkerStatus {
 #[derive(Serialize, Deserialize, Debug)]
 pub enum MinerMessage{
 	// Height, difficulty, pre_pow
-	ReceivedJob(u64, u64, String),
+	ReceivedJob(u64, u64, u64, String),
 	StopJob,
 	Shutdown,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub enum ClientMessage{
-	// height, nonce, pow
-	FoundSolution(u64, u64, Vec<u32>),
+	// height, job_id, nonce, pow
+	FoundSolution(u64, u64, u64, Vec<u32>),
 	Shutdown,
 }
