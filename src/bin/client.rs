@@ -308,6 +308,12 @@ impl Controller {
 					let mut stats = self.stats.write().unwrap();
 					stats.client_stats.last_message_received =
 						format!("Last Message Received: Share Accepted!!");
+					let result = serde_json::to_string(&res.result).unwrap();
+					if result.contains("blockfound") {
+						info!(LOGGER, "Block Found!!");
+						stats.client_stats.last_message_received =
+						format!("Last Message Received: Block Found!!");
+					}
 				} else {
 					let err = res.error.unwrap();
 					let mut stats = self.stats.write().unwrap();
