@@ -101,7 +101,7 @@ NUM_THREADS = 4
 #
 # Note! 4+ GB GPU cards only!
 #   Tweak the MEM_GB parameter according to how much RAM your
-#   card has
+#   card has (valid values are 4,5 or 7)
 #   Docs: https://github.com/tromp/cuckoo/blob/master/GPU.md
 #
 #Can currently be used only in Production (30) Mode
@@ -123,7 +123,8 @@ NUM_THREADS = 4
 #USE_DEVICE = 0
 
 # Below are advanced optional per-device tweakable params
-#MEM_GB = 7
+# Valid options for MEM_GB are 4,5 and 7
+#MEM_GB = 7 
 #N_TRIMS = 176
 #GEN_A_BLOCKS = 4096
 #GEN_A_TPB = 256
