@@ -100,7 +100,8 @@ NUM_THREADS = 4
 #CUDA Miner
 #
 # Note! 4+ GB GPU cards only!
-#   If you have 6GB GPU RAM, set N_BLOCKS = 128
+#   Tweak the MEM_GB parameter according to how much RAM your
+#   card has
 #   Docs: https://github.com/tromp/cuckoo/blob/master/GPU.md
 #
 #Can currently be used only in Production (30) Mode
@@ -111,8 +112,7 @@ NUM_THREADS = 4
 #2) Uncomment the 'build-cuda-plugin' feature
 #   in util/Cargo.toml
 #
-#Parameters can be set per device, as below. In sync mode
-#device 0 is currently the only device used. In async mode
+#Parameters can be set per device, as below.
 #device 0 is used by default, and all other devices are
 #disabled unless explicitly enabled by setting the 'USE_DEVICE'
 #param to 1 on each device, as demonstrated below.
@@ -123,38 +123,12 @@ NUM_THREADS = 4
 #USE_DEVICE = 0
 
 # Below are advanced optional per-device tweakable params
-
-#N_TRIMS = 256
-#N_BLOCKS = 128
-#GENU_BLOCKS = 128
-#GENU_TPB = 8
-#GENV_STAGE1_TPB = 32
-#GENV_STAGE2_TPB = 128
-#TRIM_STAGE1_TPB = 32
-#TRIM_STAGE2_TPB = 128
-#RENAME_0_STAGE1_TPB = 32
-#RENAME_0_STAGE2_TPB = 64
-#RENAME_1_STAGE1_TPB = 32
-#RENAME_1_STAGE2_TPB = 128
-#TRIM_3_TPB = 32
-#RENAME_3_TPB = 8
-
-#[mining.miner_plugin_config.device_parameters.1]
-#USE_DEVICE = 1
-
-#[mining.miner_plugin_config.device_parameters.2]
-#USE_DEVICE = 1
-
-#Meaner CUDA Miner
-#[[mining.miner_plugin_config]]
-#type_filter = "cuda_meaner"
-#[mining.miner_plugin_config.device_parameters.0]
-#USE_DEVICE = 1
-
-# Below are advanced optional per-device tweakable params
-
+#MEM_GB = 7
 #N_TRIMS = 176
-#GENA_BLOCKS = 128
+#GEN_A_BLOCKS = 4096
+#GEN_A_TPB = 256
+#GEN_B_TPB = 128
+#TRIM_TPB = 512
 #TAIL_TPB = 1024
 #RECOVER_BLOCKS = 1024
 #RECOVER_TPB = 1024
