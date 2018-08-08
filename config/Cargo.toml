@@ -9,5 +9,6 @@ publish = false
 serde = "1"
 serde_derive = "1"
 toml = "0.4"
+dirs = "1.0"
 
 grin_miner_util = { path = "../util" }

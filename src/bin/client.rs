@@ -460,7 +460,7 @@ impl Controller {
 
 			// Talk to the cuckoo miner plugin
 			while let Some(message) = self.rx.try_iter().next() {
-				debug!(LOGGER, "Client recieved message: {:?}", message);
+				debug!(LOGGER, "Client received message: {:?}", message);
 				let result = match message {
 					types::ClientMessage::FoundSolution(height, job_id, nonce, pow) => {
 						self.send_message_submit(height, job_id, nonce, pow)

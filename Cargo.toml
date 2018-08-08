@@ -4,6 +4,7 @@ version = "0.3.0"
 authors = ["Grin Developers <mimblewimble@lists.launchpad.net>"]
 publish = false
 build = "src/build/build.rs"
+autobins = false
 
 [workspace]
 members = ["config", "util"]
