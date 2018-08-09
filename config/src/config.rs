@@ -24,6 +24,8 @@ use types::MinerConfig;
 use util::LoggingConfig;
 use types::{ConfigError, ConfigMembers, GlobalConfig};
 
+extern crate dirs;
+
 /// The default file name to use when trying to derive
 /// the config file location
 
@@ -72,7 +74,7 @@ impl GlobalConfig {
 			return Ok(());
 		}
 		// Then look in {user_home}/.grin
-		let config_path = env::home_dir();
+		let config_path = dirs::home_dir();
 		if let Some(mut p) = config_path {
 			p.push(GRIN_HOME);
 			p.push(CONFIG_FILE_NAME);

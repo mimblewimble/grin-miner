@@ -56,7 +56,7 @@ pub struct ClientStats {
 	pub connection_status: String,
 	/// Last message sent to server
 	pub last_message_sent: String,
-	/// Last response/command recieved from server
+	/// Last response/command received from server
 	pub last_message_received: String,
 }
 
