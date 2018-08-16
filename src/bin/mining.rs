@@ -187,11 +187,12 @@ impl Controller {
 					};
 					debug!(
 						LOGGER,
-								"Mining: Plugin {} - Device {} ({}) Status: {} : Last Graph time: {}s; \
+								"Mining: Plugin {} - Device {} ({}) at Cuckoo{} - Status: {} : Last Graph time: {}s; \
 						 Graphs per second: {:.*} - Total Attempts: {}",
 								i,
 						s.device_id,
 						s.device_name,
+						s.cuckoo_size,
 						status,
 						last_solution_time_secs,
 						3,

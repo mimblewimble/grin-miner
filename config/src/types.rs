@@ -26,6 +26,9 @@ pub struct CuckooMinerPluginConfig {
 	/// The type of plugin to load (i.e. filters on filename)
 	pub type_filter: String,
 
+	/// Cuckoo size for the plugin
+	pub cuckoo_size: u8,
+
 	/// device params
 	pub device_parameters: Option<HashMap<String, HashMap<String, u32>>>,
 }
@@ -34,6 +37,7 @@ impl Default for CuckooMinerPluginConfig {
 	fn default() -> CuckooMinerPluginConfig {
 		CuckooMinerPluginConfig {
 			type_filter: String::new(),
+			cuckoo_size: 30,
 			device_parameters: None,
 		}
 	}

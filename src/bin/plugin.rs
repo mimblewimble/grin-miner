@@ -106,11 +106,11 @@ impl PluginMiner {
 			panic!("Unable to load plugin directory... Please check configuration values");
 		}
 
-		let sz = 30;
-
 		let mut cuckoo_configs = Vec::new();
 		let mut index = 0;
 		for f in plugin_vec_filters {
+			let l = miner_config.clone().miner_plugin_config;
+			let sz = l[index].cuckoo_size;
 			// So this is built dynamically based on the plugin implementation
 			// type and the consensus sizeshift
 			let filter = format!("{}_{}", f, sz);
@@ -127,7 +127,6 @@ impl PluginMiner {
 				caps[0].full_path.clone()
 			);
 			config.plugin_full_path = caps[0].full_path.clone();
-			let l = miner_config.clone().miner_plugin_config;
 			if let Some(dp) = l[index].device_parameters.clone() {
 				for (device, param_map) in dp.into_iter() {
 					for (param_name, param_value) in param_map.into_iter() {
