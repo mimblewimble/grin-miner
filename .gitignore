@@ -3,6 +3,5 @@
 .grin*
 node*
 target
-Cargo.lock
 *.iml
 grin-miner.log
