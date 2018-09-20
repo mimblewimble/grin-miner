@@ -31,7 +31,11 @@ grin_miner_config = { path = "./config" }
 [dependencies.cursive]
 git = "https://github.com/yeastplume/Cursive"
 tag = "grin_integration_1"
-
+optional = true
 
 [build-dependencies]
 built = "0.2"
+
+[features]
+default = ["tui"]
+tui = ["cursive"]

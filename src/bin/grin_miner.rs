@@ -26,6 +26,8 @@ extern crate serde_json;
 extern crate slog;
 #[macro_use]
 extern crate lazy_static;
+
+#[cfg(feature="tui")]
 extern crate cursive;
 
 pub mod plugin;
@@ -33,15 +35,15 @@ pub mod mining;
 pub mod client;
 pub mod types;
 pub mod stats;
+
+#[cfg(feature="tui")]
 pub mod tui;
 
 use std::thread;
-use std::sync::{mpsc, Arc, RwLock};
+use std::sync::{Arc, RwLock};
 use std::sync::atomic::{AtomicBool, Ordering};
 use config::GlobalConfig;
 use util::cuckoo_miner as cuckoo;
-
-use tui::ui;
 
 use util::{init_logger, LOGGER};
 
@@ -76,28 +78,37 @@ fn log_build_info() {
 	trace!(LOGGER, "{}", deps);
 }
 
+#[cfg(feature="tui")]
+mod with_tui {
+	use std::sync::{mpsc, Arc, RwLock};
+	use std::sync::atomic::{AtomicBool, Ordering};
+	use std::thread;
+	use types;
+	use stats;
+	use tui::ui;
 
-fn start_tui(
-	s: Arc<RwLock<stats::Stats>>, 
-	client_tx: mpsc::Sender<types::ClientMessage>,
-	miner_tx: mpsc::Sender<types::MinerMessage>,
-	stop: Arc<AtomicBool>) {
-	// Run the UI controller.. here for now for simplicity to access
-	// everything it might need
-	println!("Starting Grin Miner in UI mode...");
-	let _ = thread::Builder::new()
-		.name("ui".to_string())
-		.spawn(move || {
-			let mut controller = ui::Controller::new().unwrap_or_else(|e| {
-				panic!("Error loading UI controller: {}", e);
+	pub fn start_tui(
+		s: Arc<RwLock<stats::Stats>>,
+		client_tx: mpsc::Sender<types::ClientMessage>,
+		miner_tx: mpsc::Sender<types::MinerMessage>,
+		stop: Arc<AtomicBool>) {
+		// Run the UI controller.. here for now for simplicity to access
+		// everything it might need
+		println!("Starting Grin Miner in UI mode...");
+		let _ = thread::Builder::new()
+			.name("ui".to_string())
+			.spawn(move || {
+				let mut controller = ui::Controller::new().unwrap_or_else(|e| {
+					panic!("Error loading UI controller: {}", e);
+				});
+				controller.run(s.clone());
+				// Shut down everything else on tui exit
+				let _ = client_tx.send(types::ClientMessage::Shutdown);
+				let _ = miner_tx.send(types::MinerMessage::Shutdown);
+				println!("Stopping mining plugins and exiting...");
+				stop.store(true, Ordering::Relaxed);
 			});
-			controller.run(s.clone());
-			// Shut down everything else on tui exit
-			let _ = client_tx.send(types::ClientMessage::Shutdown);
-			let _ = miner_tx.send(types::MinerMessage::Shutdown);
-			println!("Stopping mining plugins and exiting...");
-			stop.store(true, Ordering::Relaxed);
-		});
+	}
 }
 
 fn main() {
@@ -118,7 +129,7 @@ fn main() {
 
 	let mining_config = global_config.members.as_mut().unwrap().mining.clone();
 
-	if mining_config.run_tui {
+	if cfg!(feature = "tui") && mining_config.run_tui {
 		log_conf.log_to_stdout = false;
 		log_conf.tui_running = Some(true);
 	}
@@ -149,7 +160,11 @@ fn main() {
 	let client_stopped = Arc::new(AtomicBool::new(false));
 
 	if mining_config.run_tui {
-		start_tui(stats.clone(), cc.tx.clone(), mc.tx.clone(), tui_stopped.clone());
+		#[cfg(feature="tui")]
+		with_tui::start_tui(stats.clone(), cc.tx.clone(), mc.tx.clone(), tui_stopped.clone());
+
+		#[cfg(not(feature="tui"))]
+		warn!(LOGGER, "Grin-miner was built with TUI support disabled!");
 	} else {
 		tui_stopped.store(true, Ordering::Relaxed);
 	}
