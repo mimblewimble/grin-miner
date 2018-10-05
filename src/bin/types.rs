@@ -57,7 +57,8 @@ pub struct LoginParams {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct SubmitParams {
 	pub height: u64,
-        pub job_id: u64,
+	pub job_id: u64,
+	pub cuckoo_size: u32,
 	pub nonce: u64,
 	pub pow: Vec<u32>,
 }
@@ -83,7 +84,7 @@ pub enum MinerMessage{
 
 #[derive(Serialize, Deserialize, Debug)]
 pub enum ClientMessage{
-	// height, job_id, nonce, pow
-	FoundSolution(u64, u64, u64, Vec<u32>),
+	// height, job_id, cuckoo_size, nonce, pow
+	FoundSolution(u64, u64, u32, u64, Vec<u32>),
 	Shutdown,
 }

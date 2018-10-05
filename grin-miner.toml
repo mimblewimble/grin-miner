@@ -86,20 +86,18 @@ hash_header = false
 #NUM_THREADS = 8
 
 # As above, but for older processors
-[[mining.miner_plugin_config]]
-cuckoo_size = 30
-type_filter = "mean_compat_cpu"
-[mining.miner_plugin_config.device_parameters.0]
-NUM_THREADS = 4
+#[[mining.miner_plugin_config]]
+#cuckoo_size = 29
+#type_filter = "cuckatoo_lean_cpu"
+#[mining.miner_plugin_config.device_parameters.0]
+#NUM_THREADS = 4
 
-#note lean_cpu currently has a bug which prevents it from
-#working with threads > 1
 
 #[[mining.miner_plugin_config]]
-#cuckoo_size = 30
-#type_filter = "lean_cpu"
-#[mining.miner_plugin_config.device_parameters.0]
-#NUM_THREADS = 1
+cuckoo_size = 29
+type_filter = "cuckatoo_lean_cpu"
+[mining.miner_plugin_config.device_parameters.0]
+NUM_THREADS = 4
 
 #CUDA Miner
 #
@@ -122,8 +120,8 @@ NUM_THREADS = 4
 #param to 1 on each device, as demonstrated below.
 
 #[[mining.miner_plugin_config]]
-#cuckoo_size = 30
-#type_filter = "cuda"
+#cuckoo_size = 29
+#type_filter = "cuckatoo_cuda"
 
 #[mining.miner_plugin_config.device_parameters.0]
 #USE_DEVICE = 1

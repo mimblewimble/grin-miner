@@ -83,7 +83,7 @@ impl Controller {
 						self.current_height = height;
 						self.current_job_id = job_id;
 						self.current_target_diff = diff;
-						self.start_job(30, &pre_pow)
+						self.start_job(&pre_pow)
 					},
 					types::MinerMessage::StopJob => {
 						debug!(LOGGER, "Stopping jobs");
@@ -111,6 +111,7 @@ impl Controller {
 				let _ = self.client_tx.as_mut().unwrap().send(types::ClientMessage::FoundSolution (
 					self.current_height,
 					self.current_job_id,
+					sol.cuckoo_size,
 					sol.get_nonce_as_u64(),
 					sol.solution_nonces.to_vec(),
 				));
@@ -122,13 +123,11 @@ impl Controller {
 	/// Inner part of the mining loop for cuckoo-miner async mode
 	fn start_job(
 		&mut self,
-		cuckoo_size: usize,
 		pre_pow: &str,
 	) -> Result<(), CuckooMinerError> {
 		debug!(
 			LOGGER,
-			"Mining Cuckoo{} for height: {}",
-			cuckoo_size,
+			"Mining Cuck(at)oo for height: {}",
 			self.current_height,
 		);
 
@@ -187,7 +186,7 @@ impl Controller {
 					};
 					debug!(
 						LOGGER,
-								"Mining: Plugin {} - Device {} ({}) at Cuckoo{} - Status: {} : Last Graph time: {}s; \
+								"Mining: Plugin {} - Device {} ({}) at Cuck(at)oo{} - Status: {} : Last Graph time: {}s; \
 						 Graphs per second: {:.*} - Total Attempts: {}",
 								i,
 						s.device_id,
@@ -207,14 +206,13 @@ impl Controller {
 		}
 		info!(
 			LOGGER,
-			"Mining: Cuckoo{} at {} gps (graphs per second)", 30, sps_total
+			"Mining: Cuck(at)oo at {} gps (graphs per second)", sps_total
 		);
 		if sps_total.is_finite() {
 			let mut stats = self.stats.write().unwrap();
 			stats.mining_stats.combined_gps = sps_total;
 			stats.mining_stats.target_difficulty = self.current_target_diff;
 			stats.mining_stats.block_height = self.current_height;
-			stats.mining_stats.cuckoo_size = 30;
 			let mut device_vec = vec![];
 			for i in 0..plugin_miner.loaded_plugin_count() {
 				device_vec.push(job_handle.get_stats(i).unwrap());

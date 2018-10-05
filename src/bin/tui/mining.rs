@@ -33,9 +33,10 @@ use tui::table::{TableView, TableViewItem};
 
 #[derive(Copy, Clone, PartialEq, Eq, Hash)]
 enum MiningDeviceColumn {
-	PluginId,
+	Plugin,
 	DeviceId,
 	DeviceName,
+	CuckooSize,
 	InUse,
 	ErrorStatus,
 	LastGraphTime,
@@ -45,9 +46,10 @@ enum MiningDeviceColumn {
 impl MiningDeviceColumn {
 	fn _as_str(&self) -> &str {
 		match *self {
-			MiningDeviceColumn::PluginId => "Plugin ID",
+			MiningDeviceColumn::Plugin => "Plugin",
 			MiningDeviceColumn::DeviceId => "Device ID",
 			MiningDeviceColumn::DeviceName => "Name",
+			MiningDeviceColumn::CuckooSize => "Graph Size",
 			MiningDeviceColumn::InUse => "In Use",
 			MiningDeviceColumn::ErrorStatus => "Status",
 			MiningDeviceColumn::LastGraphTime => "Last Graph Time",
@@ -60,9 +62,10 @@ impl TableViewItem<MiningDeviceColumn> for CuckooMinerDeviceStats {
 	fn to_column(&self, column: MiningDeviceColumn) -> String {
 		let last_solution_time_secs = self.last_solution_time as f64 / 1000000000.0;
 		match column {
-			MiningDeviceColumn::PluginId => String::from("TBD"),
+			MiningDeviceColumn::Plugin => self.plugin_name.clone().unwrap(),
 			MiningDeviceColumn::DeviceId => self.device_id.clone(),
 			MiningDeviceColumn::DeviceName => self.device_name.clone(),
+			MiningDeviceColumn::CuckooSize => self.cuckoo_size.clone(),
 			MiningDeviceColumn::InUse => match self.in_use {
 				1 => String::from("Yes"),
 				_ => String::from("No"),
@@ -89,9 +92,10 @@ impl TableViewItem<MiningDeviceColumn> for CuckooMinerDeviceStats {
 		let last_solution_time_secs_other = other.last_solution_time as f64 / 1000000000.0;
 		let gps_other = 1.0 / last_solution_time_secs_other;
 		match column {
-			MiningDeviceColumn::PluginId => Ordering::Equal,
+			MiningDeviceColumn::Plugin => self.plugin_name.cmp(&other.plugin_name),
 			MiningDeviceColumn::DeviceId => self.device_id.cmp(&other.device_id),
 			MiningDeviceColumn::DeviceName => self.device_name.cmp(&other.device_name),
+			MiningDeviceColumn::CuckooSize => self.cuckoo_size.cmp(&other.cuckoo_size),
 			MiningDeviceColumn::InUse => self.in_use.cmp(&other.in_use),
 			MiningDeviceColumn::ErrorStatus => self.has_errored.cmp(&other.has_errored),
 			MiningDeviceColumn::LastGraphTime => {
@@ -111,18 +115,21 @@ impl TUIStatusListener for TUIMiningView {
 
 		let table_view =
 			TableView::<CuckooMinerDeviceStats, MiningDeviceColumn>::new()
-				.column(MiningDeviceColumn::PluginId, "Plugin ID", |c| {
-					c.width_percent(10)
+				.column(MiningDeviceColumn::Plugin, "Plugin", |c| {
+					c.width_percent(15)
 				})
 				.column(MiningDeviceColumn::DeviceId, "Device ID", |c| {
 					c.width_percent(10)
 				})
 				.column(MiningDeviceColumn::DeviceName, "Device Name", |c| {
-					c.width_percent(20)
+					c.width_percent(15)
 				})
-				.column(MiningDeviceColumn::InUse, "In Use", |c| c.width_percent(10))
+				.column(MiningDeviceColumn::CuckooSize, "Size", |c| {
+					c.width_percent(5)
+				})
+				.column(MiningDeviceColumn::InUse, "In Use", |c| c.width_percent(5))
 				.column(MiningDeviceColumn::ErrorStatus, "Status", |c| {
-					c.width_percent(10)
+					c.width_percent(5)
 				})
 				.column(MiningDeviceColumn::LastGraphTime, "Graph Time", |c| {
 					c.width_percent(10)
@@ -191,8 +198,7 @@ impl TUIStatusListener for TUIMiningView {
 							stats.mining_stats.block_height, 4, stats.mining_stats.combined_gps
 						),
 						format!(
-							"Cuckoo {} - Target Share Difficulty {}",
-							stats.mining_stats.cuckoo_size,
+							"Cuck(at)oo - Target Share Difficulty {}",
 							stats.mining_stats.target_difficulty.to_string()
 						),
 					)

@@ -184,10 +184,11 @@ impl Controller {
 		self.send_message(&req_str)
 	}
 
-	fn send_message_submit(&mut self, height: u64, job_id: u64, nonce: u64, pow: Vec<u32>) -> Result<(), Error> {
+	fn send_message_submit(&mut self, height: u64, job_id: u64, cuckoo_size: u32, nonce: u64, pow: Vec<u32>) -> Result<(), Error> {
 		let params_in = types::SubmitParams {
 			height: height,
 			job_id: job_id,
+			cuckoo_size: cuckoo_size,
 			nonce: nonce,
 			pow: pow,
 		};
@@ -462,8 +463,8 @@ impl Controller {
 			while let Some(message) = self.rx.try_iter().next() {
 				debug!(LOGGER, "Client received message: {:?}", message);
 				let result = match message {
-					types::ClientMessage::FoundSolution(height, job_id, nonce, pow) => {
-						self.send_message_submit(height, job_id, nonce, pow)
+					types::ClientMessage::FoundSolution(height, job_id, cuckoo_size, nonce, pow) => {
+						self.send_message_submit(height, job_id, cuckoo_size, nonce, pow)
 					}
 					types::ClientMessage::Shutdown => {
 						//TODO: Inform server?
