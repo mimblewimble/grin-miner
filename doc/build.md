@@ -43,7 +43,7 @@ A successful build gets you:
  - `target/debug/grin-miner` - the main grin binary
  - `target/debug/plugins/*` - mining plugins
 
-Make sure you always run grin-miner it within a directory that contains a
+Make sure you always run grin-miner within a directory that contains a
 `grin-miner.toml` configuration file.
 
 While testing, put the grin-miner binary on your path like this:
