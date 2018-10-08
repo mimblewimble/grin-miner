@@ -12,7 +12,7 @@ At present, only mining plugins for linux-x86_64 and MacOS exist. This will likl
 - zlib libs (zlib1g-dev or zlib-devel)
 - linux-headers (reported needed on Alpine linux)
 
-And a [running Grin node](https://github.com/mimblewimble/grin/blob/master/doc/build.md) to mine into!
+And a [running Grin node](https://github.com/mimblewimble/grin/blob/master/doc/build.md) to mine into! Building this Grin node will have already taken care of all the requirements needed to build the miner.
 
 ## Build steps
 
