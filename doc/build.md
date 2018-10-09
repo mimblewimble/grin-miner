@@ -2,7 +2,7 @@
 
 ## Supported Platforms
 
-At present, only mining plugins for linux-x86_64 and MacOS exist. This will likley change over time as the community creates more solvers for different platforms.
+At present, only mining plugins for linux-x86_64 and MacOS exist. This will likely change over time as the community creates more solvers for different platforms.
 
 ## Requirements
 
