@@ -59,9 +59,9 @@ stratum_server_addr = "127.0.0.1:13416"
 # t3 or greater : set to false
 hash_header = false
 
-#########################################
-### CUCKOO MINER PLUGIN CONFIGURATION ###
-#########################################
+#############################################
+### CUCK(AT)OO MINER PLUGIN CONFIGURATION ###
+#############################################
 
 # Multiple plugins can be specified, (e.g. a cpu
 # miner and a gpu miner running in parallel)
@@ -79,25 +79,25 @@ hash_header = false
 # older processors. In this case, use mean_compat_cpu
 # instead
 
-#[[mining.miner_plugin_config]]
-#cuckoo_size = 30
-#type_filter = "mean_cpu"
-#[mining.miner_plugin_config.device_parameters.0]
-#NUM_THREADS = 8
+[[mining.miner_plugin_config]]
+cuckoo_size = 29
+type_filter = "cuckatoo_mean_compat_cpu"
+[mining.miner_plugin_config.device_parameters.0]
+NUM_THREADS = 4
 
-# As above, but for older processors
+# As above, but for processors supporting avx2
+#[[mining.miner_plugin_config]]
+#cuckoo_size = 29
+#type_filter = "cuckatoo_mean_cpu"
+#[mining.miner_plugin_config.device_parameters.0]
+#NUM_THREADS = 4
+
+# LEAN
 #[[mining.miner_plugin_config]]
 #cuckoo_size = 29
 #type_filter = "cuckatoo_lean_cpu"
 #[mining.miner_plugin_config.device_parameters.0]
 #NUM_THREADS = 4
-
-
-#[[mining.miner_plugin_config]]
-cuckoo_size = 29
-type_filter = "cuckatoo_lean_cpu"
-[mining.miner_plugin_config.device_parameters.0]
-NUM_THREADS = 4
 
 #CUDA Miner
 #
