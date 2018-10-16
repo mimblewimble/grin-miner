@@ -136,14 +136,9 @@ impl Controller {
 		plugin_miner.init(self.config.clone());
 		self.plugin_miner = Some(plugin_miner);
 
-		let mut hash_header = true;
-		if self.config.hash_header == Some(false) {
-			hash_header = false;
-		}
-
 		// Start the miner working
 		let miner = self.plugin_miner.as_mut().unwrap().get_consumable();
-		self.job_handle = Some(miner.notify(1, &pre_pow, "", self.current_target_diff, hash_header)?);
+		self.job_handle = Some(miner.notify(1, &pre_pow, "", self.current_target_diff, false)?);
 		Ok(())
 	}
 
