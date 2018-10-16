@@ -36,7 +36,7 @@ enum MiningDeviceColumn {
 	Plugin,
 	DeviceId,
 	DeviceName,
-	CuckooSize,
+	EdgeBits,
 	InUse,
 	ErrorStatus,
 	LastGraphTime,
@@ -49,7 +49,7 @@ impl MiningDeviceColumn {
 			MiningDeviceColumn::Plugin => "Plugin",
 			MiningDeviceColumn::DeviceId => "Device ID",
 			MiningDeviceColumn::DeviceName => "Name",
-			MiningDeviceColumn::CuckooSize => "Graph Size",
+			MiningDeviceColumn::EdgeBits => "Graph Size",
 			MiningDeviceColumn::InUse => "In Use",
 			MiningDeviceColumn::ErrorStatus => "Status",
 			MiningDeviceColumn::LastGraphTime => "Last Graph Time",
@@ -65,7 +65,7 @@ impl TableViewItem<MiningDeviceColumn> for CuckooMinerDeviceStats {
 			MiningDeviceColumn::Plugin => self.plugin_name.clone().unwrap(),
 			MiningDeviceColumn::DeviceId => self.device_id.clone(),
 			MiningDeviceColumn::DeviceName => self.device_name.clone(),
-			MiningDeviceColumn::CuckooSize => self.cuckoo_size.clone(),
+			MiningDeviceColumn::EdgeBits => self.cuckoo_size.clone(),
 			MiningDeviceColumn::InUse => match self.in_use {
 				1 => String::from("Yes"),
 				_ => String::from("No"),
@@ -95,7 +95,7 @@ impl TableViewItem<MiningDeviceColumn> for CuckooMinerDeviceStats {
 			MiningDeviceColumn::Plugin => self.plugin_name.cmp(&other.plugin_name),
 			MiningDeviceColumn::DeviceId => self.device_id.cmp(&other.device_id),
 			MiningDeviceColumn::DeviceName => self.device_name.cmp(&other.device_name),
-			MiningDeviceColumn::CuckooSize => self.cuckoo_size.cmp(&other.cuckoo_size),
+			MiningDeviceColumn::EdgeBits => self.cuckoo_size.cmp(&other.cuckoo_size),
 			MiningDeviceColumn::InUse => self.in_use.cmp(&other.in_use),
 			MiningDeviceColumn::ErrorStatus => self.has_errored.cmp(&other.has_errored),
 			MiningDeviceColumn::LastGraphTime => {
@@ -124,7 +124,7 @@ impl TUIStatusListener for TUIMiningView {
 				.column(MiningDeviceColumn::DeviceName, "Device Name", |c| {
 					c.width_percent(15)
 				})
-				.column(MiningDeviceColumn::CuckooSize, "Size", |c| {
+				.column(MiningDeviceColumn::EdgeBits, "Size", |c| {
 					c.width_percent(5)
 				})
 				.column(MiningDeviceColumn::InUse, "In Use", |c| c.width_percent(5))

@@ -110,7 +110,7 @@ impl PluginMiner {
 		let mut index = 0;
 		for f in plugin_vec_filters {
 			let l = miner_config.clone().miner_plugin_config;
-			let sz = l[index].cuckoo_size;
+			let sz = l[index].edge_bits;
 			// So this is built dynamically based on the plugin implementation
 			// type and the consensus sizeshift
 			let filter = format!("{}_{}", f, sz);
