@@ -40,7 +40,7 @@ log_file_append = true
 run_tui = true
 
 # listening grin stratum server url
-stratum_server_addr = "10.20.40.66:13416"
+stratum_server_addr = "127.0.0.1:13416"
 
 # login for the stratum server (if required)
 #stratum_server_login = "http://192.168.1.100:13415"
@@ -53,11 +53,6 @@ stratum_server_addr = "10.20.40.66:13416"
 #to the executable
 
 #miner_plugin_dir = "target/debug/plugins"
-
-# temporary, for testnet 2 compatibility
-# t2 or less : set to true (default)
-# t3 or greater : set to false
-hash_header = false
 
 #############################################
 ### CUCK(AT)OO MINER PLUGIN CONFIGURATION ###
