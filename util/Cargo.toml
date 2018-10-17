@@ -1,6 +1,6 @@
 [package]
 name = "grin_miner_util"
-version = "0.2.0"
+version = "0.4.0"
 authors = ["Grin Developers <mimblewimble@lists.launchpad.net>"]
 workspace = ".."
 publish = false
@@ -22,4 +22,5 @@ tag = "grin_integration_39"
 #path = "../../cuckoo-miner"
 #uncomment this feature to enable cuda builds (cuda toolkit must be installed)
 #features=["build-cuda-plugins"]
+
 
