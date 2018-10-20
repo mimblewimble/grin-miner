@@ -40,7 +40,7 @@ log_file_append = true
 run_tui = true
 
 # listening grin stratum server url
-stratum_server_addr = "127.0.0.1:13416"
+stratum_server_addr = "10.20.40.66:13416"
 
 # login for the stratum server (if required)
 #stratum_server_login = "http://192.168.1.100:13415"
@@ -74,11 +74,11 @@ stratum_server_addr = "127.0.0.1:13416"
 # older processors. In this case, use mean_compat_cpu
 # instead
 
-[[mining.miner_plugin_config]]
-edge_bits = 29
-type_filter = "cuckatoo_mean_compat_cpu"
-[mining.miner_plugin_config.device_parameters.0]
-NUM_THREADS = 4
+#[mining.miner_plugin_config]]
+#edge_bits = 29
+#type_filter = "cuckatoo_mean_compat_cpu"
+#[mining.miner_plugin_config.device_parameters.0]
+#NUM_THREADS = 4
 
 # As above, but for processors supporting avx2
 #[[mining.miner_plugin_config]]
@@ -114,9 +114,9 @@ NUM_THREADS = 4
 #disabled unless explicitly enabled by setting the 'USE_DEVICE'
 #param to 1 on each device, as demonstrated below.
 
-#[[mining.miner_plugin_config]]
-#edge_bits = 29
-#type_filter = "cuckatoo_cuda"
+[[mining.miner_plugin_config]]
+edge_bits = 29
+type_filter = "cuckatoo_cuda"
 
 #[mining.miner_plugin_config.device_parameters.0]
 #USE_DEVICE = 1

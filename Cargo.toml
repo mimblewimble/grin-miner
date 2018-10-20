@@ -26,12 +26,12 @@ time = "0.1"
 
 grin_miner_util = { path = "./util" }
 grin_miner_config = { path = "./config" }
+cuckoo_miner = { path = "./cuckoo-miner" }
 
 #temporary until cursive author publishes a new release
 [dependencies.cursive]
 git = "https://github.com/yeastplume/Cursive"
 tag = "grin_integration_1"
-
 
 [build-dependencies]
 built = "0.2"
