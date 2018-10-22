@@ -18,7 +18,7 @@
 //! miner modules. These functions are meant for internal cuckoo-miner crates,
 //! and will not be exposed to other projects including the cuckoo-miner crate.
 
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 
 use libc::*;
 use libloading;
@@ -152,11 +152,11 @@ pub struct PluginLibrary {
 	///The full file path to the plugin loaded by this instance
 	pub lib_full_path: String,
 
-	loaded_library: Mutex<libloading::Library>,
-	cuckoo_create_solver_ctx: Mutex<CuckooCreateSolverCtx>,
-	cuckoo_destroy_solver_ctx: Mutex<CuckooDestroySolverCtx>,
-	cuckoo_run_solver: Mutex<CuckooRunSolver>,
-	cuckoo_stop_solver: Mutex<CuckooStopSolver>,
+	loaded_library: Arc<Mutex<libloading::Library>>,
+	cuckoo_create_solver_ctx: Arc<Mutex<CuckooCreateSolverCtx>>,
+	cuckoo_destroy_solver_ctx: Arc<Mutex<CuckooDestroySolverCtx>>,
+	cuckoo_run_solver: Arc<Mutex<CuckooRunSolver>>,
+	cuckoo_stop_solver: Arc<Mutex<CuckooStopSolver>>,
 }
 
 impl PluginLibrary {
@@ -189,30 +189,30 @@ impl PluginLibrary {
 					let cuckoo_create_solver_ctx: libloading::Symbol<
 						CuckooCreateSolverCtx,
 					> = loaded_library.get(b"create_solver_ctx\0").unwrap();
-					Mutex::new(*cuckoo_create_solver_ctx.into_raw())
+					Arc::new(Mutex::new(*cuckoo_create_solver_ctx.into_raw()))
 				},
 
 				cuckoo_destroy_solver_ctx: {
 					let cuckoo_destroy_solver_ctx: libloading::Symbol<
 						CuckooDestroySolverCtx,
 					> = loaded_library.get(b"destroy_solver_ctx\0").unwrap();
-					Mutex::new(*cuckoo_destroy_solver_ctx.into_raw())
+					Arc::new(Mutex::new(*cuckoo_destroy_solver_ctx.into_raw()))
 				},
 
 				cuckoo_run_solver: {
 					let cuckoo_run_solver: libloading::Symbol<CuckooRunSolver> =
 						loaded_library.get(b"run_solver\0").unwrap();
-					Mutex::new(*cuckoo_run_solver.into_raw())
+					Arc::new(Mutex::new(*cuckoo_run_solver.into_raw()))
 				},
 
 				cuckoo_stop_solver: {
 					let cuckoo_stop_solver: libloading::Symbol<
 						CuckooStopSolver,
 					> = loaded_library.get(b"stop_solver\0").unwrap();
-					Mutex::new(*cuckoo_stop_solver.into_raw())
+					Arc::new(Mutex::new(*cuckoo_stop_solver.into_raw()))
 				},
 
-				loaded_library: Mutex::new(loaded_library),
+				loaded_library: Arc::new(Mutex::new(loaded_library)),
 			};
 
 			return Ok(ret_val);
@@ -290,4 +290,16 @@ impl PluginLibrary {
 		let call_ref = self.cuckoo_stop_solver.lock().unwrap();
 		unsafe { call_ref() }
 	}
+
+	/// Get an instance of the stop function, to allow it to run in another thread
+	pub fn get_stop_solver_instance(&self) -> Arc<Mutex<CuckooStopSolver>> {
+		self.cuckoo_stop_solver.clone()
+	}
+
+	/// Stop solver from a "detached" instance
+	pub fn stop_solver_from_instance(inst: Arc<Mutex<CuckooStopSolver>>) {
+		let call_ref = inst.lock().unwrap();
+		unsafe { call_ref() }
+	}
+
 }

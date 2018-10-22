@@ -26,6 +26,7 @@ use byteorder::{ByteOrder, BigEndian};
 use blake2::blake2b::Blake2b;
 use env_logger;
 
+use cuckoo_sys::ffi::{PluginLibrary, SolverStats};
 use error::error::CuckooMinerError;
 use miner::miner::{CuckooMinerJobHandle, CuckooMinerSolution, SolverInstance};
 
@@ -55,6 +56,10 @@ pub struct JobSharedData {
 
 	/// Output solutions
 	pub solutions: Vec<CuckooMinerSolution>,
+
+	/// Current stats
+	pub stats: Vec<SolverStats>,
+
 }
 
 impl Default for JobSharedData {
@@ -65,18 +70,20 @@ impl Default for JobSharedData {
 			post_nonce: String::from(""),
 			difficulty: 0,
 			solutions: Vec::new(),
+			stats: vec![],
 		}
 	}
 }
 
 impl JobSharedData {
-	pub fn new(job_id: u32, pre_nonce: &str, post_nonce: &str, difficulty: u64) -> JobSharedData {
+	pub fn new(job_id: u32, pre_nonce: &str, post_nonce: &str, difficulty: u64, num_solvers: usize) -> JobSharedData {
 		JobSharedData {
 			job_id: job_id,
 			pre_nonce: String::from(pre_nonce),
 			post_nonce: String::from(post_nonce),
 			difficulty: difficulty,
 			solutions: Vec::new(),
+			stats: vec![SolverStats::default(); num_solvers],
 		}
 	}
 }
@@ -125,6 +132,7 @@ impl Delegator {
 				pre_nonce,
 				post_nonce,
 				difficulty,
+				solvers.len(),
 			))),
 			control_data: Arc::new(RwLock::new(JobControlData::default())),
 			solvers: solvers,
@@ -132,9 +140,27 @@ impl Delegator {
 	}
 
 	/// Solver's instance of a thread
-	fn solver_thread(mut solver: SolverInstance, shared_data: JobSharedDataType, control_data: JobControlDataType) {
-		let ctx = solver.lib.create_solver_ctx(&mut solver.config.params);
+	fn solver_thread(mut solver: SolverInstance, instance: usize, shared_data: JobSharedDataType, control_data: JobControlDataType) {
 
+		// "Detach" a stop function from the solver, to let us keep a control thread going
+		let stop_fn = solver.lib.get_stop_solver_instance();
+		let ctrl_data = control_data.clone();
+		// monitor whether to send a stop signal to the solver, which should
+		// end the current solve attempt below
+		let stop_handle = thread::spawn(move || {
+			loop {
+				let s = ctrl_data.read().unwrap();
+				if s.stop_flag {
+					PluginLibrary::stop_solver_from_instance(stop_fn.clone());
+					break;
+				}
+				//avoid busy wait 
+				let sleep_dur = time::Duration::from_millis(100);
+				thread::sleep(sleep_dur);
+			}
+		});
+
+		let ctx = solver.lib.create_solver_ctx(&mut solver.config.params);
 		loop {
 			let header_pre = shared_data.read().unwrap().pre_nonce.clone();
 			let header_post = shared_data.read().unwrap().pre_nonce.clone();
@@ -148,20 +174,30 @@ impl Delegator {
 				&mut solver.solutions,
 				&mut solver.stats,
 			);
-			println!("Ran the solver!");
+			let mut s = shared_data.write().unwrap();
+			s.stats[instance] = solver.stats.clone();
+			let c = control_data.read().unwrap();
+			if c.stop_flag {
+				break;
+			}
 		}
+
+		let _ = stop_handle.join();
+		solver.lib.destroy_solver_ctx(ctx);
+
 	}
 
 	/// Starts the job loop, and initialises the internal plugin
-	pub fn start_job_loop(self, hash_header: bool) -> Result<CuckooMinerJobHandle, CuckooMinerError> {
+	pub fn start_job_loop(self) -> Result<CuckooMinerJobHandle, CuckooMinerError> {
 		let _ = env_logger::init();
-
+		let mut i = 0;
 		for s in self.solvers {
 			let shared_data = self.shared_data.clone();
 			let control_data = self.control_data.clone();
 			thread::spawn(move || {
-				let result = Delegator::solver_thread(s, shared_data, control_data);
+				let _ = Delegator::solver_thread(s, i, shared_data, control_data);
 			});
+			i += 1;
 		}
 
 		Ok(CuckooMinerJobHandle {
@@ -169,7 +205,6 @@ impl Delegator {
 			control_data: self.control_data,
 		})
 	}
-
 
 	/// The main job loop. Pushes hashes to the plugin and reads solutions
 	/// from the queue, putting them into the job's output queue. Continues

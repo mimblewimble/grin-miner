@@ -311,20 +311,14 @@ impl CuckooMinerJobHandle {
 	/// error occurred
 
 	pub fn get_stats(&self) -> Result<Vec<SolverStats>, CuckooMinerError> {
-		let  result:Vec<SolverStats> = vec![];
-		/*println!("SOLVER LEN: {}", self.solvers.len());
-		for s in self.solvers.iter() {
-			let s_lock = s.read().unwrap();
-			result.push(s_lock.stats.clone());
-		}*/
-		Ok(result)
+		let s = self.shared_data.read().unwrap();
+		Ok(s.stats.clone())
 	}
 
 	/// #Description
 	///
 	/// Stops the current job, and signals for the loaded plugin to stop
-	/// processing and perform any cleanup it needs to do. Blocks until
-	/// the jobs have completed
+	/// processing and perform any cleanup it needs to do.
 	///
 	/// #Returns
 	///
@@ -337,16 +331,6 @@ impl CuckooMinerJobHandle {
 			r.stop_flag = true;
 		}
 		debug!("Stop jobs flag set");
-		loop {
-			{
-				let r = self.control_data.read().unwrap();
-				if r.has_stopped {
-					break;
-				}
-			}
-			thread::sleep(time::Duration::from_millis(5));
-		}
-		debug!("All jobs have stopped");
 	}
 
 }
@@ -451,11 +435,10 @@ impl CuckooMiner {
 		post_nonce: &str, // Post-nonce portion of header
 		difficulty: u64, /* The target difficulty, only sols greater than this difficulty will
 		                  * be returned. */
-		hash_header: bool, // (Temporary) Whether to hash the header before sending (true for testnet2 and earlier)
 	) -> Result<CuckooMinerJobHandle, CuckooMinerError> {
 
 		//Note this gives up the plugin to the job thread
 		self.delegator = Some(Delegator::new(job_id, pre_nonce, post_nonce, difficulty, self.solvers));
-		Ok(self.delegator.unwrap().start_job_loop(hash_header).unwrap())
+		Ok(self.delegator.unwrap().start_job_loop().unwrap())
 	}
 }

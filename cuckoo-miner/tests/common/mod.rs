@@ -227,7 +227,7 @@ pub fn mine_async_for_duration(configs: &Vec<PluginConfig>, duration_in_seconds:
 
 		// these always get consumed after a notify
 		let miner = CuckooMiner::new(configs.clone()).expect("");
-		let job_handle = miner.notify(1, SAMPLE_GRIN_PRE_HEADER_1, SAMPLE_GRIN_POST_HEADER_1, 0, false).unwrap();
+		let job_handle = miner.notify(1, SAMPLE_GRIN_PRE_HEADER_1, SAMPLE_GRIN_POST_HEADER_1, 0).unwrap();
 
 		loop {
 			if let Some(s) = job_handle.get_solution() {
