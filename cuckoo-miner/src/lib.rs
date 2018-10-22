@@ -48,7 +48,7 @@ extern crate libc;
 extern crate glob;
 
 mod error;
-//mod miner;
+mod miner;
 //mod manager;
 mod config;
 mod cuckoo_sys;
@@ -56,10 +56,8 @@ mod cuckoo_sys;
 pub use cuckoo_sys::ffi::{PluginLibrary, SolverCtx, SolverParams, SolverStats, SolverSolutions};
 pub use config::types::PluginConfig;
 pub use error::error::CuckooMinerError;
-//pub use manager::manager::{CuckooPluginManager, CuckooPluginCapabilities};
+pub use miner::miner::{CuckooMiner};
 
 //pub use miner::miner::{CuckooMinerConfig, CuckooMiner, CuckooMinerSolution, CuckooMinerJobHandle,
 //                CuckooMinerDeviceStats};
-
-//pub use manager::manager::{CuckooPluginManager, CuckooPluginCapabilities};
 

@@ -16,8 +16,20 @@
 
 //! Common values and functions that can be used in all mining tests
 
-/*extern crate cuckoo_miner as cuckoo;
+extern crate cuckoo_miner as cuckoo;
 extern crate time;
+
+use std;
+use self::cuckoo::{CuckooMiner, PluginConfig};
+
+// Grin Pre and Post headers, into which a nonce is to be insterted for mutation
+pub const SAMPLE_GRIN_PRE_HEADER_1:&str = "00000000000000118e0fe6bcfaa76c6795592339f27b6d330d8f9c4ac8e86171a66357d1\
+    d0fce808000000005971f14f0000000000000000000000000000000000000000000000000000000000000000\
+    3e1fcdd453ce51ffbb16dd200aeb9ef7375aec196e97094868428a7325e4a19b00";
+
+pub const SAMPLE_GRIN_POST_HEADER_1:&str = "010a020364";
+
+/*extern crate time;
 extern crate rand;
 
 use std::path::PathBuf;
@@ -190,23 +202,15 @@ pub fn mine_sync_for_duration(full_path:&str, duration_in_seconds: i64, params:O
 			i+=1;
 		}
 	}
-}
+}*/
 
 // Helper function, tests a particular miner implementation against a known set
-pub fn mine_async_for_duration(full_paths: Vec<&str>, duration_in_seconds: i64, 
-	params:Option<SolverParams>) {
-	let mut config_vec=Vec::new();
-	for p in full_paths.into_iter() {
-		let mut config = PluginConfig::default();
-		config.name = String::from(p);
-		config.device_parameters = params.clone();
-		config_vec.push(config);
-	}
-
+pub fn mine_async_for_duration(configs: &Vec<PluginConfig>, duration_in_seconds: i64) {
 	let stat_check_interval = 3;
 	let mut deadline = time::get_time().sec + duration_in_seconds;
 	let mut next_stat_check = time::get_time().sec + stat_check_interval;
-	let mut stats_updated=false;
+	let mut stats_updated = false;
+
 	//for CI testing on slower servers
 	//if we're trying to quit and there are no stats yet, keep going for a bit
 	let mut extra_time=false;
@@ -216,13 +220,13 @@ pub fn mine_async_for_duration(full_paths: Vec<&str>, duration_in_seconds: i64,
 
 		println!("Test mining for {} seconds, looking for difficulty > 0", duration_in_seconds);
 		let mut i=0;
-		for c in config_vec.clone().into_iter(){
+		for c in configs.clone().into_iter(){
 			println!("Plugin {}: {}", i, c.name);
 			i+=1;
 		}
 
 		// these always get consumed after a notify
-		let miner = CuckooMiner::new(config_vec.clone()).expect("");
+		let miner = CuckooMiner::new(configs.clone()).expect("");
 		let job_handle = miner.notify(1, SAMPLE_GRIN_PRE_HEADER_1, SAMPLE_GRIN_POST_HEADER_1, 0, false).unwrap();
 
 		loop {
@@ -233,31 +237,19 @@ pub fn mine_async_for_duration(full_paths: Vec<&str>, duration_in_seconds: i64,
 			}
 			if time::get_time().sec >= next_stat_check {
 				let mut sps_total=0.0;
-				for index in 0..config_vec.len() {
-					let stats_vec=job_handle.get_stats(index);
-					if let Err(e) = stats_vec {
-						panic!("Error getting stats: {:?}", e);
+				let stats_vec=job_handle.get_stats();
+				for s in stats_vec.unwrap().into_iter() {
+					let last_solution_time_secs = s.last_solution_time as f64 / 1000000000.0;
+					let last_hashes_per_sec = 1.0 / last_solution_time_secs;
+					println!("Plugin 0 - Device {} ({}) at Cuckoo{} - Last Graph time: {}; Graphs per second: {:.*}", 
+					s.device_id, s.device_name[0], s.edge_bits, last_solution_time_secs, 3, last_hashes_per_sec);
+					if last_hashes_per_sec.is_finite() {
+						sps_total+=last_hashes_per_sec;
 					}
-					for s in stats_vec.unwrap().into_iter() {
-						if s.in_use == 0 {continue;}
-						let status = match s.has_errored {
-							0 => "OK",
-							_ => "ERRORED", 
-						};
-						let last_solution_time_secs = s.last_solution_time as f64 / 1000000000.0;
-						let last_hashes_per_sec = 1.0 / last_solution_time_secs;
-						println!("Plugin 0 - Device {} ({}) at Cuckoo{} - Status: {} - Last Graph time: {}; Graphs per second: {:.*} \
-						- Total Attempts {}", 
-						s.device_id, s.device_name, s.cuckoo_size, status, last_solution_time_secs, 3, last_hashes_per_sec,
-						s.iterations_completed);
-						if last_hashes_per_sec.is_finite() {
-							sps_total+=last_hashes_per_sec;
-						}
-						if last_solution_time_secs > 0.0 {
-							stats_updated = true;
-						}
-						i+=1;
+					if last_solution_time_secs > 0.0 {
+						stats_updated = true;
 					}
+					i+=1;
 				}
 				println!("Total solutions per second: {}", sps_total);
 				next_stat_check = time::get_time().sec + stat_check_interval;
@@ -279,11 +271,9 @@ pub fn mine_async_for_duration(full_paths: Vec<&str>, duration_in_seconds: i64,
 			//avoid busy wait 
 			let sleep_dur = std::time::Duration::from_millis(100);
 			std::thread::sleep(sleep_dur);
-
+			if stats_updated && extra_time {
+				break;
+			}
 		}
-		if stats_updated && extra_time {
-			break;
-		}
+	}
 }
-	assert!(stats_updated==true);
-}*/

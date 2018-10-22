@@ -26,49 +26,121 @@ use libloading;
 use error::error::CuckooMinerError;
 
 pub const PROOFSIZE: usize = 42;
+pub const MAX_DEVICE_NAME_LEN: usize = 256;
+pub const MAX_SOLS: usize = 4;
 
 /// A solver context, opaque reference to C++ type underneath
 #[derive(Clone, Debug)]
-#[repr(C)]
-pub struct SolverCtx(c_int);
+pub enum SolverCtx {}
 
+/// Common parameters for a solver
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[repr(C)]
 pub struct SolverParams {
-	pub num_threads: uint32_t,
-	pub num_trims: uint32_t,
-	pub cuda_device_id: uint32_t,
-	// etc
+	/// threads
+	pub nthreads: uint32_t,
+	/// trims
+	pub ntrims: uint32_t,
+	/// Whether to show cycle (should be true to get solutions)
+	pub showcycle: bool,
+	/// allrounds
+	pub allrounds: bool,
+	/// whether to apply the nonce to the header, or leave as is,
+	/// letting caller mutate nonce
+	pub mutate_nonce: bool,
 }
 
-#[derive(Clone, Debug)]
+impl Default for SolverParams {
+	fn default() -> SolverParams {
+		SolverParams {
+			nthreads: 0,
+			ntrims: 0,
+			showcycle: true,
+			allrounds: false,
+			mutate_nonce: false,
+		}
+	}
+}
+
+/// Common stats collected by solvers
+#[derive(Clone)]
 #[repr(C)]
 pub struct SolverStats {
+	/// device Id
 	pub device_id: uint32_t,
+	/// graph size
 	pub edge_bits: uint32_t,
-	pub device_name: *const c_uchar,
-	pub device_name_len: *const uint32_t,
+	/// device name
+	pub device_name: [c_uchar; MAX_DEVICE_NAME_LEN],
+	/// last solution start time
 	pub last_start_time: uint64_t,
+	/// last solution end time
 	pub last_end_time: uint64_t,
+	/// last solution elapsed time
 	pub last_solution_time: uint64_t,
 }
 
+impl Default for SolverStats {
+	fn default() -> SolverStats {
+		SolverStats {
+			device_id: 0,
+			edge_bits: 0,
+			device_name: [0; MAX_DEVICE_NAME_LEN],
+			last_start_time: 0,
+			last_end_time: 0,
+			last_solution_time: 0,
+		}
+	}
+}
+
+/// A single solution
 #[repr(C)]
-pub struct SolverSolutions {
-	//TODO: Multiple solution struct layout
+#[derive(Clone, Copy)]
+pub struct Solution {
 	pub nonce: uint64_t,
 	pub proof: [uint64_t; PROOFSIZE],
 }
 
+impl Default for Solution {
+	fn default() -> Solution {
+		Solution {
+			nonce: 0,
+			proof: [0u64; PROOFSIZE],
+		}
+	}
+}
+
+/// All solutions returned
+#[derive(Clone, Copy)]
+#[repr(C)]
+pub struct SolverSolutions {
+	/// graph size
+	pub edge_bits: u32,
+	/// number of solutions
+	pub num_sols: u32,
+	/// solutions themselves
+	pub sols: [Solution; MAX_SOLS],
+}
+
+impl Default for SolverSolutions {
+	fn default() -> SolverSolutions {
+		SolverSolutions {
+			edge_bits: 0,
+			num_sols: 0,
+			sols: [Solution::default(); MAX_SOLS],
+		}
+	}
+}
+
 // Type definitions corresponding to each function that the plugin/solver implements
-type CuckooCreateSolverCtx = unsafe extern "C" fn() -> SolverCtx;
+type CuckooCreateSolverCtx = unsafe extern "C" fn(*mut SolverParams) -> *mut SolverCtx;
 type CuckooDestroySolverCtx = unsafe extern "C" fn(*mut SolverCtx);
 type CuckooRunSolver = unsafe extern "C" fn(
 	*mut SolverCtx,       // Solver context
-	*const SolverParams,  // Solver parameters
 	*const c_uchar,       // header
 	uint32_t,             // header length
-	*const uint64_t,      // nonce
+	uint64_t,             // nonce
+	uint32_t,             // range
 	*mut SolverSolutions, // reference to any found solutions
 	*mut SolverStats,     // solver stats
 ) -> uint32_t;
@@ -178,35 +250,35 @@ impl PluginLibrary {
 	}
 
 	/// Create a solver context
-	pub fn call_cuckoo_create_solver_ctx(&self) -> SolverCtx {
+	pub fn create_solver_ctx(&self, params: &mut SolverParams) -> *mut SolverCtx {
 		let call_ref = self.cuckoo_create_solver_ctx.lock().unwrap();
-		unsafe { call_ref() }
+		unsafe { call_ref(params) }
 	}
 
 	/// Destroy solver context
-	pub fn call_cuckoo_destroy_solver_ctx(&self, mut ctx: SolverCtx) {
+	pub fn destroy_solver_ctx(&self, ctx: *mut SolverCtx) {
 		let call_ref = self.cuckoo_destroy_solver_ctx.lock().unwrap();
-		unsafe { call_ref(&mut ctx) }
+		unsafe { call_ref(ctx) }
 	}
 
 	/// Run Solver
-	pub fn call_cuckoo_run_solver(
+	pub fn run_solver(
 		&self,
-		mut ctx: SolverCtx,
-		params: SolverParams,
+		ctx: *mut SolverCtx,
 		header: Vec<u8>,
 		nonce: u64,
+		range: u32,
 		solutions: &mut SolverSolutions,
 		stats: &mut SolverStats,
 	) -> u32 {
 		let call_ref = self.cuckoo_run_solver.lock().unwrap();
 		unsafe {
 			call_ref(
-				&mut ctx,
-				&params,
+				ctx,
 				header.as_ptr(),
 				header.len() as u32,
-				&nonce,
+				nonce,
+				range,
 				solutions,
 				stats,
 			)
@@ -214,7 +286,7 @@ impl PluginLibrary {
 	}
 
 	/// Stop solver
-	pub fn call_cuckoo_stop_solver(&self) {
+	pub fn stop_solver(&self) {
 		let call_ref = self.cuckoo_stop_solver.lock().unwrap();
 		unsafe { call_ref() }
 	}

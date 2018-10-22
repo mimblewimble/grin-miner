@@ -23,19 +23,16 @@ pub struct PluginConfig {
 	/// The filename of the plugin to load 
 	pub name: String,
 
-	/// Cuckoo size (edge bits) for the plugin
-	pub edge_bits: u8,
-
 	/// device params
-	pub device_parameters: Option<SolverParams>,
+	pub params: SolverParams,
 }
 
-impl Default for PluginConfig {
-	fn default() -> PluginConfig {
+impl PluginConfig {
+	// create new!
+	pub fn new(name: &str) -> PluginConfig {
 		PluginConfig {
-			name: String::new(),
-			edge_bits: 30,
-			device_parameters: None,
+			name: name.to_owned(),
+			params: SolverParams::default(),
 		}
 	}
 }

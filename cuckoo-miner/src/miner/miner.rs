@@ -19,16 +19,17 @@
 use std::sync::{Arc, RwLock};
 use std::{thread, time};
 use std::{fmt, cmp};
-use std::path::Path;
+use std::path::PathBuf;
 
 use byteorder::{ByteOrder, BigEndian};
 use blake2::blake2b::Blake2b;
 
-use serde_json;
-
+use cuckoo_sys::ffi::{PluginLibrary, SolverParams, SolverSolutions, SolverStats};
+use config::types::PluginConfig;
 use super::delegator:: {JobSharedData, JobControlData, Delegator};
-use cuckoo_sys::manager::PluginLibrary;
 use error::error::CuckooMinerError;
+
+static SO_SUFFIX: &str = ".cuckooplugin";
 
 // Hardcoded assumption for now that the solution size will be 42 will be
 // maintained, to avoid having to allocate memory within the called C functions
@@ -44,6 +45,7 @@ const CUCKOO_SOLUTION_SIZE: usize = 42;
 pub struct CuckooMinerSolution {
 	/// Cuckoo size
 	pub cuckoo_size: u32,
+
 	/// An array allocated in rust that will be filled
 	/// by the called plugin upon successfully finding
 	/// a solution
@@ -215,6 +217,39 @@ pub struct CuckooMinerDeviceStats {
 	pub iterations_completed: u32,
 }
 
+/// Holds a loaded lib + config + stats
+/// 1 instance = 1 device on 1 controlling thread
+pub struct SolverInstance {
+	/// The loaded plugin
+	pub lib: PluginLibrary,
+	/// Associated config
+	pub config: PluginConfig,
+	/// Last stats output
+	pub stats: SolverStats,
+	/// Last solution output
+	pub solutions: SolverSolutions,
+}
+
+impl SolverInstance {
+	/// Create a new solver instance with the given config
+	pub fn new(config: PluginConfig) -> Result<SolverInstance, CuckooMinerError> {
+		let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+		d.push(format!("../target/debug/plugins/{}{}", config.name, SO_SUFFIX).as_str());
+		let l = PluginLibrary::new(d.to_str().unwrap())?;
+		Ok(SolverInstance {
+			lib: l,
+			config: config,
+			stats: SolverStats::default(),
+			solutions: SolverSolutions::default(),
+		})
+	}
+
+	/// Release the lib
+	pub fn unload(&mut self) {
+		self.lib.unload();
+	}
+}
+
 /// Handle to the miner's running job, used to read solutions
 /// or to control the job. Internal members are not exposed
 /// and all interactions should be via public functions
@@ -227,9 +262,6 @@ pub struct CuckooMinerJobHandle {
 
 	/// Job control flag
 	pub control_data: Arc<RwLock<JobControlData>>,
-
-	/// The loaded plugin
-	pub library: Arc<RwLock<Vec<PluginLibrary>>>,
 }
 
 impl CuckooMinerJobHandle {
@@ -266,6 +298,30 @@ impl CuckooMinerJobHandle {
 
 	/// #Description
 	///
+	/// Returns an vector of [CuckooMinerDeviceStats](struct.CuckooMinerDeviceStats.html)
+	/// which will contain information about every device currently mining within the plugin.
+	/// In CPU based plugins, this will generally only contain the CPU device, but in plugins
+	/// that access multiple devices (such as cuda) the vector will contain information for
+	/// each currently engaged device. 
+	///
+	/// #Returns
+	///
+	/// * Ok([CuckooMinerDeviceStats](struct.CuckooMinerDeviceStats.html)) if successful
+	/// * A [CuckooMinerError](enum.CuckooMinerError.html) with specific detail if an
+	/// error occurred
+
+	pub fn get_stats(&self) -> Result<Vec<SolverStats>, CuckooMinerError> {
+		let  result:Vec<SolverStats> = vec![];
+		/*println!("SOLVER LEN: {}", self.solvers.len());
+		for s in self.solvers.iter() {
+			let s_lock = s.read().unwrap();
+			result.push(s_lock.stats.clone());
+		}*/
+		Ok(result)
+	}
+
+	/// #Description
+	///
 	/// Stops the current job, and signals for the loaded plugin to stop
 	/// processing and perform any cleanup it needs to do. Blocks until
 	/// the jobs have completed
@@ -293,68 +349,17 @@ impl CuckooMinerJobHandle {
 		debug!("All jobs have stopped");
 	}
 
-	/// #Description
-	///
-	/// Returns an vector of [CuckooMinerDeviceStats](struct.CuckooMinerDeviceStats.html)
-	/// which will contain information about every device currently mining within the plugin.
-	/// In CPU based plugins, this will generally only contain the CPU device, but in plugins
-	/// that access multiple devices (such as cuda) the vector will contain information for
-	/// each currently engaged device. 
-	///
-	/// #Returns
-	///
-	/// * Ok([CuckooMinerDeviceStats](struct.CuckooMinerDeviceStats.html)) if successful
-	/// * A [CuckooMinerError](enum.CuckooMinerError.html) with specific detail if an
-	/// error occurred
-
-	pub fn get_stats(&self, plugin_index:usize) -> Result<Vec<CuckooMinerDeviceStats>, CuckooMinerError> {
-		let mut stats_bytes: [u8; 4096] = [0; 4096];
-		let mut stats_bytes_len = stats_bytes.len() as u32;
-		// get a list of parameters
-		self.library.read().unwrap()[plugin_index].call_cuckoo_get_stats(
-			&mut stats_bytes,
-			&mut stats_bytes_len,
-		);
-		let mut stats_vec: Vec<u8> = Vec::new();
-		// result contains null zero
-		for i in 0..stats_bytes_len {
-			stats_vec.push(stats_bytes[i as usize].clone());
-		}
-		let stats_json = String::from_utf8(stats_vec)?;
-		//println!("Stats_json: {}", stats_json);
-
-		let result = serde_json::from_str(&stats_json);
-		if let Err(e) = result {
-			return Err(CuckooMinerError::StatsError(
-				String::from(format!("Error retrieving stats from plugin: {:?}", e)),
-			));
-		}
-
-		let mut result:Vec<CuckooMinerDeviceStats> = result.unwrap();
-		let lib_full_path = &self.library.read().unwrap()[plugin_index].lib_full_path;
-		let path_str = Path::new(lib_full_path).file_name().unwrap();
-		let path = Path::new(path_str).file_stem().unwrap();
-		
-		for r in &mut result {
-			r.plugin_name = Some(path.to_str().unwrap().to_owned());
-		}
-
-		Ok(result)
-	}
 }
 
 /// An instance of a miner, which loads a cuckoo-miner plugin
 /// and calls its mine function according to the provided configuration
 
 pub struct CuckooMiner {
-	/// The internal Configuration objects, one for each loaded plugin
-	pub configs: Vec<CuckooMinerConfig>,
-
 	/// Delegator object, used when spawning a processing thread
 	delegator: Option<Delegator>,
 
 	/// Loaded plugin
-	libraries: Vec<PluginLibrary>,
+	solvers: Vec<SolverInstance>,
 }
 
 impl CuckooMiner {
@@ -377,167 +382,23 @@ impl CuckooMiner {
 	/// * Otherwise a [CuckooMinerError](enum.CuckooMinerError.html)
 	/// with specific detail
 
-	pub fn new(configs: Vec<CuckooMinerConfig>) -> Result<CuckooMiner, CuckooMinerError> {
+	pub fn new(configs: Vec<PluginConfig>) -> Result<CuckooMiner, CuckooMinerError> {
 		CuckooMiner::init(configs)
 	}
 
-	/// Internal function to perform tha actual library loading
-
-	fn init(configs: Vec<CuckooMinerConfig>) -> Result<CuckooMiner, CuckooMinerError> {
+	/// Internal function to perform the actual library loading
+	fn init(configs: Vec<PluginConfig>) -> Result<CuckooMiner, CuckooMinerError> {
 		let mut lib_vec=Vec::new();
-		for c in &configs {
-			let lib=PluginLibrary::new(&c.plugin_full_path)?;
-			for elem in c.parameter_list.clone() {
-				CuckooMiner::set_parameter(elem.0.clone(), elem.1.clone(), elem.2.clone(), &lib)?;
-			}
-			lib_vec.push(lib);
+		for c in configs {
+			lib_vec.push(SolverInstance::new(c)?);
 		}
 
 		let ret_val=CuckooMiner {
-			configs : configs.clone(),
 			delegator : None,
-			libraries : lib_vec,
+			solvers : lib_vec,
 		};
 
 		Ok(ret_val)
-	}
-
-	/// #Description
-	///
-	/// Sets a parameter in the loaded plugin
-	///
-	/// #Arguments
-	///
-	/// * `name` The name of the parameter to set
-	///
-	/// * `value` The value to set the parameter to
-	///
-	/// #Returns
-	///
-	/// *`Ok()` if successful and the parameter has been set.
-	/// * Otherwise a
-	/// [CuckooMinerError](enum.CuckooMinerError.html)
-	/// with specific detail is returned.
-	///
-
-	pub fn set_parameter(name: String, device_id: u32, value: u32, library:&PluginLibrary) -> Result<(), CuckooMinerError> {
-		let return_code = library.call_cuckoo_set_parameter(
-			name.as_bytes(),
-			device_id,
-			value,
-		);
-		if return_code != 0 {
-
-			let reason = match return_code {
-				1 => "Property doesn't exist for this plugin",
-				2 => "Property outside allowed range",
-				5 => "Device doesn't exist",
-				_ => "Unknown Error",
-			};
-
-			return Err(CuckooMinerError::ParameterError(String::from(format!(
-				"Error setting parameter: {} to {} - {}",
-				name,
-				value,
-				reason
-			))));
-		}
-		Ok(())
-	}
-
-	/// #Description
-	///
-	/// Synchronous call to the cuckoo_call function of the currently loaded
-	/// plugin, which will perform
-	/// a Cuckoo Cycle on the given seed, filling the first solution (a length
-	/// 42 cycle) that is found in the provided
-	/// [CuckooMinerSolution](struct.CuckooMinerSolution.html) structure.
-	/// The implementation details are dependent on the particular loaded plugin.
-	/// Values provided
-	/// to the loaded plugin are contained in the internal
-	/// [CuckooMinerConfig](struct.CuckooMinerConfig.html)
-	///
-	/// #Arguments
-	///
-	/// * `header` (IN) A reference to a block of [u8] bytes to use for the
-	/// seed to the
-	/// internal SIPHASH function which generates edge locations in the
-	/// graph. In practice,
-	/// this is a SHA3 hash of a Grin blockheader, but from the plugin's
-	/// perspective this can be anything.
-	///
-	/// * `solution` (OUT) An empty
-	/// [CuckooMinerSolution](struct.CuckooMinerSolution.html).
-	/// If a solution is found, this structure will contain a list of
-	/// solution nonces, otherwise, it will remain untouched.
-	///
-	/// #Returns
-	///
-	/// * Ok(true) if a solution is found, with the 42 solution nonces
-	/// contained within
-	/// the provided [CuckooMinerSolution](struct.CuckooMinerSolution.html).
-	/// * Ok(false) if no solution is found and `solution` remains untouched.
-	/// * A [CuckooMinerError](enum.CuckooMinerError.html)
-	/// if there is an error calling the function.
-
-	pub fn mine(
-		&self,
-		header: &[u8],
-		cuckoo_size: &mut u32,
-		solution: &mut CuckooMinerSolution,
-		plugin_index: usize
-	) -> Result<bool, CuckooMinerError> {
-		let result = self.libraries[plugin_index].call_cuckoo(
-			header,
-			cuckoo_size,
-			&mut solution.solution_nonces,
-		);
-		match result {
-			1 => {
-				debug!("Solution found.");
-				Ok(true)
-			}
-			0 => Ok(false),
-			_ => Err(CuckooMinerError::UnexpectedResultError(result)),
-		}
-	}
-
-	/// #Description
-	///
-	/// Returns an vector of [CuckooMinerDeviceStats](struct.CuckooMinerDeviceStats.html)
-	/// which will contain information about every device currently mining within the plugin.
-	/// When called in syncronous mode, this wil only ever return a vector with a single value
-	/// containing stats on the currently running device. 
-	///
-	/// #Returns
-	///
-	/// * Ok([CuckooMinerDeviceStats](struct.CuckooMinerDeviceStats.html)) if successful
-	/// * A [CuckooMinerError](enum.CuckooMinerError.html) with specific detail if an
-	/// error occurred
-
-	pub fn get_stats(&self, plugin_index:usize) -> Result<Vec<CuckooMinerDeviceStats>, CuckooMinerError> {
-		let mut stats_bytes: [u8; 2048] = [0; 2048];
-		let mut stats_bytes_len = stats_bytes.len() as u32;
-		// get a list of parameters
-		self.libraries[plugin_index].call_cuckoo_get_stats(
-			&mut stats_bytes,
-			&mut stats_bytes_len,
-		);
-		let mut stats_vec: Vec<u8> = Vec::new();
-		// result contains null zero
-		for i in 0..stats_bytes_len {
-			stats_vec.push(stats_bytes[i as usize].clone());
-		}
-		let stats_json = String::from_utf8(stats_vec)?;
-		//println!("Stats_json: {}", stats_json);
-
-		let result = serde_json::from_str(&stats_json);
-		if let Err(e) = result {
-			return Err(CuckooMinerError::StatsError(
-				String::from(format!("Error retrieving stats from plugin: {:?}", e)),
-			));
-		}
-		Ok(result.unwrap())
 	}
 
 	/// #Description
@@ -594,7 +455,7 @@ impl CuckooMiner {
 	) -> Result<CuckooMinerJobHandle, CuckooMinerError> {
 
 		//Note this gives up the plugin to the job thread
-		self.delegator = Some(Delegator::new(job_id, pre_nonce, post_nonce, difficulty, self.libraries));
+		self.delegator = Some(Delegator::new(job_id, pre_nonce, post_nonce, difficulty, self.solvers));
 		Ok(self.delegator.unwrap().start_job_loop(hash_header).unwrap())
 	}
 }

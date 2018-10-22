@@ -26,10 +26,8 @@ use byteorder::{ByteOrder, BigEndian};
 use blake2::blake2b::Blake2b;
 use env_logger;
 
-use cuckoo_sys::manager::PluginLibrary;
 use error::error::CuckooMinerError;
-use CuckooMinerJobHandle;
-use CuckooMinerSolution;
+use miner::miner::{CuckooMinerJobHandle, CuckooMinerSolution, SolverInstance};
 
 /// From grin
 /// The target is the 8-bytes hash block hashes must be lower than.
@@ -37,7 +35,7 @@ const MAX_TARGET: [u8; 8] = [0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff];
 
 type JobSharedDataType = Arc<RwLock<JobSharedData>>;
 type JobControlDataType = Arc<RwLock<JobControlData>>;
-type PluginLibrariesDataType = Arc<RwLock<Vec<PluginLibrary>>>;
+type PluginLibrariesDataType = Vec<Arc<RwLock<SolverInstance>>>;
 
 /// Data intended to be shared across threads
 pub struct JobSharedData {
@@ -113,14 +111,14 @@ pub struct Delegator {
 	/// Job control flags which are shared across threads
 	control_data: JobControlDataType,
 
-	/// Loaded Plugin Library
-	libraries: PluginLibrariesDataType,
+	/// Solvers
+	solvers: Vec<SolverInstance>,
 }
 
 impl Delegator {
 	/// Create a new job delegator
 
-	pub fn new(job_id: u32, pre_nonce: &str, post_nonce: &str, difficulty: u64, libraries:Vec<PluginLibrary>) -> Delegator {
+	pub fn new(job_id: u32, pre_nonce: &str, post_nonce: &str, difficulty: u64, solvers: Vec<SolverInstance>) -> Delegator {
 		Delegator {
 			shared_data: Arc::new(RwLock::new(JobSharedData::new(
 				job_id,
@@ -129,91 +127,49 @@ impl Delegator {
 				difficulty,
 			))),
 			control_data: Arc::new(RwLock::new(JobControlData::default())),
-			libraries: Arc::new(RwLock::new(libraries)),
+			solvers: solvers,
+		}
+	}
+
+	/// Solver's instance of a thread
+	fn solver_thread(mut solver: SolverInstance, shared_data: JobSharedDataType, control_data: JobControlDataType) {
+		let ctx = solver.lib.create_solver_ctx(&mut solver.config.params);
+
+		loop {
+			let header_pre = shared_data.read().unwrap().pre_nonce.clone();
+			let header_post = shared_data.read().unwrap().pre_nonce.clone();
+			let header = get_next_header_data(&header_pre, &header_post);
+			let nonce = header.0;
+			solver.lib.run_solver(
+				ctx,
+				header.1,
+				0,
+				1,
+				&mut solver.solutions,
+				&mut solver.stats,
+			);
+			println!("Ran the solver!");
 		}
 	}
 
 	/// Starts the job loop, and initialises the internal plugin
-
 	pub fn start_job_loop(self, hash_header: bool) -> Result<CuckooMinerJobHandle, CuckooMinerError> {
-		let _=env_logger::init();
-		// this will block, waiting until previous job is cleared
-		// call_cuckoo_stop_processing();
+		let _ = env_logger::init();
 
-		let shared_data = self.shared_data.clone();
-		let control_data = self.control_data.clone();
-		let jh_library = self.libraries.clone();
+		for s in self.solvers {
+			let shared_data = self.shared_data.clone();
+			let control_data = self.control_data.clone();
+			thread::spawn(move || {
+				let result = Delegator::solver_thread(s, shared_data, control_data);
+			});
+		}
 
-		thread::spawn(move || {
-			let result = self.job_loop(hash_header);
-			if let Err(e) = result {
-				error!("Error in job loop: {:?}", e);
-			}
-		});
 		Ok(CuckooMinerJobHandle {
-			shared_data: shared_data,
-			control_data: control_data,
-			library: jh_library,
+			shared_data: self.shared_data,
+			control_data: self.control_data,
 		})
 	}
 
-	/// Helper to convert a hex string
-
-	fn from_hex_string(&self, in_str: &str) -> Vec<u8> {
-		let mut bytes = Vec::new();
-		for i in 0..(in_str.len() / 2) {
-			let res = u8::from_str_radix(&in_str[2 * i..2 * i + 2], 16);
-			match res {
-				Ok(v) => bytes.push(v),
-				Err(e) => println!("Problem with hex: {}", e),
-			}
-		}
-		bytes
-	}
-
-	/// As above, except doesn't hash the result
-	fn header_data(&self, pre_nonce: &str, post_nonce: &str, nonce: u64) -> Vec<u8> {
-		// Turn input strings into vectors
-		let mut pre_vec = self.from_hex_string(pre_nonce);
-		let mut post_vec = self.from_hex_string(post_nonce);
-
-		let mut nonce_bytes = [0; 8];
-		BigEndian::write_u64(&mut nonce_bytes, nonce);
-		let mut nonce_vec = nonce_bytes.to_vec();
-
-		// Generate new header
-		pre_vec.append(&mut nonce_vec);
-		pre_vec.append(&mut post_vec);
-
-		pre_vec
-	}
-	/// helper that generates a nonce and returns a header
-
-	fn get_next_header_data_hashed(&self, pre_nonce: &str, post_nonce: &str) -> (u64, Vec<u8>) {
-		// Generate new nonce
-		let nonce: u64 = rand::OsRng::new().unwrap().gen();
-		let mut blake2b = Blake2b::new(32);
-		blake2b.update(&self.header_data(pre_nonce, post_nonce, nonce));
-
-		let mut ret = [0; 32];
-		ret.copy_from_slice(blake2b.finalize().as_bytes());
-		(nonce, ret.to_vec())
-	}
-
-	/// as above, except doesn't hash the result
-	fn get_next_header_data(&self, pre_nonce: &str, post_nonce: &str) -> (u64, Vec<u8>) {
-		let nonce: u64 = rand:: OsRng::new().unwrap().gen();
-		(nonce, self.header_data(pre_nonce, post_nonce, nonce))
-	}
-
-	/// Helper to determing whether a solution meets a target difficulty
-	/// based on same algorithm from grin
-
-	fn meets_difficulty(&self, in_difficulty: u64, sol: CuckooMinerSolution) -> bool {
-		let max_target = BigEndian::read_u64(&MAX_TARGET);
-		let num = BigEndian::read_u64(&sol.hash()[0..8]);
-		max_target / num >= in_difficulty
-	}
 
 	/// The main job loop. Pushes hashes to the plugin and reads solutions
 	/// from the queue, putting them into the job's output queue. Continues
@@ -239,7 +195,7 @@ impl Delegator {
 			difficulty
 		);
 	
-		for l in self.libraries.read().unwrap().iter() {
+		/*for l in self.solvers.read().unwrap().iter() {
 			l.call_cuckoo_start_processing();
 		}
 
@@ -310,7 +266,51 @@ impl Delegator {
 			l.call_cuckoo_reset_processing();
 		}
 		let mut s = self.control_data.write().unwrap();
-		s.has_stopped=true;
+		s.has_stopped=true;*/
 		Ok(())
 	}
 }
+
+fn header_data(pre_nonce: &str, post_nonce: &str, nonce: u64) -> Vec<u8> {
+	// Turn input strings into vectors
+	let mut pre_vec = from_hex_string(pre_nonce);
+	let mut post_vec = from_hex_string(post_nonce);
+
+	let mut nonce_bytes = [0; 8];
+	BigEndian::write_u64(&mut nonce_bytes, nonce);
+	let mut nonce_vec = nonce_bytes.to_vec();
+
+	// Generate new header
+	pre_vec.append(&mut nonce_vec);
+	pre_vec.append(&mut post_vec);
+
+	pre_vec
+}
+
+fn get_next_header_data(pre_nonce: &str, post_nonce: &str) -> (u64, Vec<u8>) {
+	let nonce: u64 = rand:: OsRng::new().unwrap().gen();
+	(nonce, header_data(pre_nonce, post_nonce, nonce))
+}
+
+/// Helper to determing whether a solution meets a target difficulty
+/// based on same algorithm from grin
+fn meets_difficulty(in_difficulty: u64, sol: CuckooMinerSolution) -> bool {
+	let max_target = BigEndian::read_u64(&MAX_TARGET);
+	let num = BigEndian::read_u64(&sol.hash()[0..8]);
+	max_target / num >= in_difficulty
+}
+
+/// Helper to convert a hex string
+fn from_hex_string(in_str: &str) -> Vec<u8> {
+	let mut bytes = Vec::new();
+	for i in 0..(in_str.len() / 2) {
+		let res = u8::from_str_radix(&in_str[2 * i..2 * i + 2], 16);
+		match res {
+			Ok(v) => bytes.push(v),
+			Err(e) => println!("Problem with hex: {}", e),
+		}
+	}
+	bytes
+}
+
+
