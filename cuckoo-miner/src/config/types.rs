@@ -20,7 +20,7 @@ use SolverParams;
 /// CuckooMinerPlugin configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PluginConfig {
-	/// The filename of the plugin to load 
+	/// The filename of the plugin to load
 	pub name: String,
 
 	/// device params

@@ -216,6 +216,10 @@ pub fn mine_async_for_duration(configs: &Vec<PluginConfig>, duration_in_seconds:
 	let mut extra_time=false;
 	let extra_time_value=600;
 
+	// these always get consumed after a notify
+	let mut miner = CuckooMiner::new(configs.clone());
+	let _ = miner.start_solvers();
+
 	while time::get_time().sec < deadline {
 
 		println!("Test mining for {} seconds, looking for difficulty > 0", duration_in_seconds);
@@ -225,19 +229,18 @@ pub fn mine_async_for_duration(configs: &Vec<PluginConfig>, duration_in_seconds:
 			i+=1;
 		}
 
-		// these always get consumed after a notify
-		let miner = CuckooMiner::new(configs.clone()).expect("");
-		let job_handle = miner.notify(1, SAMPLE_GRIN_PRE_HEADER_1, SAMPLE_GRIN_POST_HEADER_1, 0).unwrap();
+		miner.notify(1, SAMPLE_GRIN_PRE_HEADER_1, SAMPLE_GRIN_POST_HEADER_1, 0).unwrap();
 
 		loop {
-			if let Some(s) = job_handle.get_solution() {
-				println!("Sol found: {}, {:?}", s.get_nonce_as_u64(), s);
-				// up to you to read it and check difficulty
-				continue;
+			if let Some(solutions) = miner.get_solution() {
+				for i in 0..solutions.num_sols {
+					println!("Sol found: {}", solutions.sols[i as usize]);
+					continue;
+				}
 			}
 			if time::get_time().sec >= next_stat_check {
 				let mut sps_total=0.0;
-				let stats_vec=job_handle.get_stats();
+				let stats_vec=miner.get_stats();
 				for s in stats_vec.unwrap().into_iter() {
 					let last_solution_time_secs = s.last_solution_time as f64 / 1000000000.0;
 					let last_hashes_per_sec = 1.0 / last_solution_time_secs;
@@ -261,7 +264,7 @@ pub fn mine_async_for_duration(configs: &Vec<PluginConfig>, duration_in_seconds:
 					println!("More time needed");
 				} else {
 					println!("Stopping jobs and waiting for cleanup");
-					job_handle.stop_jobs();
+					miner.stop_solvers();
 					break;
 				}
 			}

@@ -21,5 +21,6 @@
 #![deny(unused_mut)]
 #![warn(missing_docs)]
 
-mod delegator;
 pub mod miner;
+pub mod types;
+pub mod util;

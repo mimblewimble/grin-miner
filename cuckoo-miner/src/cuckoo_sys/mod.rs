@@ -12,6 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#![deny(non_upper_case_globals)]
+#![deny(non_camel_case_types)]
+#![deny(non_snake_case)]
+#![deny(unused_mut)]
+#![warn(missing_docs)]
+
 //! Crate containing the low level calls to cuckoo-miner plugins, including
 //! functions
 //! for loading and unloading plugins, querying what plugins are installed on
@@ -22,3 +28,4 @@
 //! crate.
 
 pub mod ffi;
+pub mod types;

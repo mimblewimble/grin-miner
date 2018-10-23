@@ -53,7 +53,8 @@ mod miner;
 mod config;
 mod cuckoo_sys;
 
-pub use cuckoo_sys::ffi::{PluginLibrary, SolverCtx, SolverParams, SolverStats, SolverSolutions};
+pub use cuckoo_sys::ffi::{PluginLibrary};
+pub use cuckoo_sys::types::{SolverCtx, SolverParams, SolverStats, SolverSolutions, Solution};
 pub use config::types::PluginConfig;
 pub use error::error::CuckooMinerError;
 pub use miner::miner::{CuckooMiner};
