@@ -26,6 +26,8 @@ time = "0.1"
 grin_miner_util = { path = "./util" }
 grin_miner_config = { path = "./config" }
 cuckoo_miner = { path = "./cuckoo-miner" }
+#use this alternative inclusion below to build cuda plugins
+#cuckoo_miner = { path = "./cuckoo-miner", features = ["build-cuda-plugins"]}
 
 #temporary until cursive author publishes a new release
 [dependencies.cursive]

@@ -14,7 +14,6 @@
 
 /// Plugin controller, listens for messages sent from the stratum 
 /// server, controls plugins and responds appropriately
-/// 
 
 use std::sync::{mpsc, Arc, RwLock};
 use time;
@@ -30,7 +29,17 @@ use cuckoo::{
 
 /// Transforms a set of grin-miner plugin configs to cuckoo-miner plugins configs
 fn read_configs(_conf_in: Vec<config::GrinMinerPluginConfig>) -> Vec<PluginConfig> {
-	vec![PluginConfig::new("cuckatoo_mean_compat_cpu_29")]
+	let res = PluginConfig::new("cuckatoo_cuda_29");
+	match res {
+		Err(e) => {
+			error!(LOGGER, "Error reading plugin config: {:?}", e);
+			panic!("{:?}", e);
+		},
+		Ok(mut c) => {
+			c.params.expand = 1;
+			vec![c]
+		}
+	}
 }
 
 pub struct Controller {

@@ -18,8 +18,7 @@ use std::sync::{Arc, RwLock};
 
 use CuckooMinerError;
 use {PluginConfig, PluginLibrary, SolverSolutions, SolverStats};
-
-static SO_SUFFIX: &str = ".cuckooplugin";
+use config::types::SO_SUFFIX;
 
 pub type JobSharedDataType = Arc<RwLock<JobSharedData>>;
 pub type JobControlDataType = Arc<RwLock<JobControlData>>;

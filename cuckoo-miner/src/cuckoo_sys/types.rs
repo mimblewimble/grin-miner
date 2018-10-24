@@ -48,6 +48,26 @@ pub struct SolverParams {
 	/// whether to apply the nonce to the header, or leave as is,
 	/// letting caller mutate nonce
 	pub mutate_nonce: bool,
+	///
+	/// Cuda params
+	/// 
+	pub device: u32,
+	///
+	pub expand: u32,
+	///
+	pub genablocks: u32,
+	///
+	pub genatpb: u32,
+	///
+	pub genbtpb: u32,
+	///
+	pub trimtpb: u32,
+	///
+	pub tailtpb: u32,
+	///
+	pub recoverblocks: u32,
+	///
+	pub recovertpb: u32,
 }
 
 impl Default for SolverParams {
@@ -58,6 +78,15 @@ impl Default for SolverParams {
 			showcycle: true,
 			allrounds: false,
 			mutate_nonce: false,
+			device: 0,
+			expand: 0,
+			genablocks: 0,
+			genatpb: 0,
+			genbtpb: 0,
+			trimtpb: 0,
+			tailtpb: 0,
+			recoverblocks: 0,
+			recovertpb: 0,
 		}
 	}
 }

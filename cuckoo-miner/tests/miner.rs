@@ -22,15 +22,23 @@ extern crate cuckoo_miner as cuckoo;
 use cuckoo::{PluginConfig};
 
 #[test]
-fn on_commit_mine_cuckatoo_mean_compat_cpu_19() {
-	let mut config = PluginConfig::new("cuckatoo_mean_compat_cpu_19");
+fn mine_cuckatoo_mean_compat_cpu_19() {
+	let mut config = PluginConfig::new("cuckatoo_mean_compat_cpu_19").unwrap();
 	config.params.nthreads = 4;
 	common::mine_async_for_duration(&vec![config], 20);
 }
 
 #[test]
-fn on_commit_mine_cuckatoo_mean_compat_cpu_29() {
-	let mut config = PluginConfig::new("cuckatoo_mean_compat_cpu_29");
+fn mine_cuckatoo_mean_compat_cpu_29() {
+	let mut config = PluginConfig::new("cuckatoo_mean_compat_cpu_29").unwrap();
 	config.params.nthreads = 4;
+	common::mine_async_for_duration(&vec![config], 20);
+}
+
+#[cfg(feature="build-cuda-plugins")]
+#[test]
+fn mine_cuckatoo_cuda_29() {
+	let mut config = PluginConfig::new("cuckatoo_cuda_29").unwrap();
+	config.params.expand = 1;
 	common::mine_async_for_duration(&vec![config], 20);
 }

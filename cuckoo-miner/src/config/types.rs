@@ -16,6 +16,10 @@
 
 use std::{io, fmt};
 use SolverParams;
+use std::path::PathBuf;
+use {CuckooMinerError, PluginLibrary};
+
+pub static SO_SUFFIX: &str = ".cuckooplugin";
 
 /// CuckooMinerPlugin configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -28,12 +32,18 @@ pub struct PluginConfig {
 }
 
 impl PluginConfig {
-	// create new!
-	pub fn new(name: &str) -> PluginConfig {
-		PluginConfig {
+	/// create new!
+	pub fn new(name: &str) -> Result<PluginConfig, CuckooMinerError> {
+		// Ensure it exists and get default parameters
+		let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+		d.push(format!("../target/debug/plugins/{}{}", name, SO_SUFFIX).as_str());
+		let l = PluginLibrary::new(d.to_str().unwrap())?;
+		let params = l.get_default_params();
+		l.unload();
+		Ok(PluginConfig {
 			name: name.to_owned(),
-			params: SolverParams::default(),
-		}
+			params: params,
+		})
 	}
 }
 

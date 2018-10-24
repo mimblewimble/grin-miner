@@ -101,7 +101,7 @@ impl CuckooMiner {
 				s.stats[instance].set_plugin_name(&solver.config.name);
 			}
 			let header_pre = shared_data.read().unwrap().pre_nonce.clone();
-			let header_post = shared_data.read().unwrap().pre_nonce.clone();
+			let header_post = shared_data.read().unwrap().post_nonce.clone();
 			let header = util::get_next_header_data(&header_pre, &header_post);
 			let nonce = header.0;
 			solver.lib.run_solver(

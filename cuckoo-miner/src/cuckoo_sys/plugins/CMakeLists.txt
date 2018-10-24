@@ -25,6 +25,9 @@ set (CUCKATOO_MEAN_MINER_SOURCES cuckoo/src/crypto/siphash.h cuckoo/src/cuckatoo
 
 set (CUCKATOO_MEAN_COMPAT_FLAGS "${CUCKATOO_BUILD_FLAGS} -DNSIPHASH=1 -DSAVEEDGES")
 
+#cuckatoo cuda miner source (mean_miner.cu)
+set (CUCKATOO_CUDA_MINER_SOURCES cuckoo/src/cuckatoo/mean.cu ${BLAKE_2B} )
+
 #matrix miner (cuckatoo_mean_compat_cpu) compatible mode targets, for older processors
 foreach(CUCKATOO_SIZE 19 29 30)
     if (CUCKATOO_SIZE EQUAL 19)
@@ -38,3 +41,17 @@ foreach(CUCKATOO_SIZE 19 29 30)
     set_target_properties(cuckatoo_mean_compat_cpu_${CUCKATOO_SIZE} PROPERTIES COMPILE_FLAGS "${GPP_FLAGS} ${DXBITSFLAG} ${CUCKATOO_MEAN_COMPAT_FLAGS} -DEDGEBITS=${EDGEBITS}" PREFIX "" SUFFIX ".cuckooplugin")
 endforeach(CUCKATOO_SIZE)
 
+# Cuda
+if(BUILD_CUDA_PLUGINS)
+    include("cmake/find_cuda.cmake")
+    IF (CUDA_FOUND)
+      set (CUDA_PROPAGATE_HOST_FLAGS ON)
+        ##cuckatoo cuda miner targets
+        foreach(CUCKATOO_SIZE 29 30)
+            #get edgebits
+            math (EXPR EDGEBITS ${CUCKATOO_SIZE})
+        cuda_add_library (cuckatoo_cuda_${CUCKATOO_SIZE} SHARED ${CUCKATOO_CUDA_MINER_SOURCES} OPTIONS "-DEDGEBITS=${EDGEBITS} ${CUCKATOO_BUILD_FLAGS}")
+        set_target_properties(cuckatoo_cuda_${CUCKATOO_SIZE} PROPERTIES PREFIX "" SUFFIX ".cuckooplugin")
+        endforeach(CUCKATOO_SIZE)
+    endif(CUDA_FOUND)
+endif(BUILD_CUDA_PLUGINS)

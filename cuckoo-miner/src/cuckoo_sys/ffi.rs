@@ -40,6 +40,7 @@ type CuckooRunSolver = unsafe extern "C" fn(
 	*mut SolverStats,     // solver stats
 ) -> uint32_t;
 type CuckooStopSolver = unsafe extern "C" fn();
+type CuckooFillDefaultParams = unsafe extern "C" fn(*mut SolverParams);
 
 /// Struct to hold instances of loaded plugins
 
@@ -52,6 +53,7 @@ pub struct PluginLibrary {
 	cuckoo_destroy_solver_ctx: Arc<Mutex<CuckooDestroySolverCtx>>,
 	cuckoo_run_solver: Arc<Mutex<CuckooRunSolver>>,
 	cuckoo_stop_solver: Arc<Mutex<CuckooStopSolver>>,
+	cuckoo_fill_default_params: Arc<Mutex<CuckooFillDefaultParams>>,
 }
 
 impl PluginLibrary {
@@ -107,6 +109,13 @@ impl PluginLibrary {
 					Arc::new(Mutex::new(*cuckoo_stop_solver.into_raw()))
 				},
 
+				cuckoo_fill_default_params: {
+					let cuckoo_fill_default_params: libloading::Symbol<
+						CuckooFillDefaultParams,
+					> = loaded_library.get(b"fill_default_params\0").unwrap();
+					Arc::new(Mutex::new(*cuckoo_fill_default_params.into_raw()))
+				},
+
 				loaded_library: Arc::new(Mutex::new(loaded_library)),
 			};
 
@@ -140,8 +149,12 @@ impl PluginLibrary {
 		let cuckoo_stop_solver_ref = self.cuckoo_stop_solver.lock().unwrap();
 		drop(cuckoo_stop_solver_ref);
 
+		let cuckoo_fill_default_params_ref = self.cuckoo_fill_default_params.lock().unwrap();
+		drop(cuckoo_fill_default_params_ref);
+
 		let loaded_library_ref = self.loaded_library.lock().unwrap();
 		drop(loaded_library_ref);
+
 	}
 
 	/// Create a solver context
@@ -184,6 +197,16 @@ impl PluginLibrary {
 	pub fn stop_solver(&self) {
 		let call_ref = self.cuckoo_stop_solver.lock().unwrap();
 		unsafe { call_ref() }
+	}
+
+	/// Get default params
+	pub fn get_default_params(&self) -> SolverParams {
+		let mut ret_params = SolverParams::default();
+		let call_ref = self.cuckoo_fill_default_params.lock().unwrap();
+		unsafe {
+			call_ref(&mut ret_params);
+			ret_params
+		}
 	}
 
 	/// Get an instance of the stop function, to allow it to run in another thread

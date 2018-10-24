@@ -47,7 +47,7 @@ const TEST_PLUGIN_LIBS_CORE : [&str;2] = [
 ];
 
 const TEST_PLUGIN_LIBS_OPTIONAL : [&str;1] = [
-	"lean_cuda_30",
+	"cuckatoo_cuda_30",
 ];
 
 //Helper to convert from hex string
@@ -109,17 +109,47 @@ fn on_commit_plugin_loading(){
 
 //Loads all plugins at once
 #[test]
-fn on_commit_plugin_multiple_loading(){
+fn plugin_multiple_loading(){
 	let _p=load_all_plugins();
 }
 
 #[test]
-fn on_commit_cuckatoo_mean_compat_cpu_29() {
+fn sanity_cuckatoo_mean_compat_cpu_29() {
 	let pl = load_plugin_lib("cuckatoo_mean_compat_cpu_29").unwrap();
 	let mut params = SolverParams::default();
 	let mut sols = SolverSolutions::default();
 	let mut stats = SolverStats::default();
 	params.nthreads = 4;
+	// to be consistent with command line solver operation
+	params.mutate_nonce = true;
+	let ctx = pl.create_solver_ctx(&mut params);
+	let test_header = [0u8; 80].to_vec();
+	let res = pl.run_solver(
+		ctx,
+		test_header,
+		20,
+		1,
+		&mut sols,
+		&mut stats,
+		);
+	assert_eq!(sols.num_sols, 1);
+	assert_eq!(sols.edge_bits, 29);
+	assert_eq!(stats.edge_bits, 29);
+	for i in 0..42 {
+		assert_eq!(sols.sols[0].proof[i], CUCKATOO_29_SOL[i]);
+	}
+	pl.destroy_solver_ctx(ctx);
+	pl.unload();
+}
+
+#[cfg(feature="build-cuda-plugins")]
+#[test]
+fn sanity_cuckatoo_cuda_29() {
+	let pl = load_plugin_lib("cuckatoo_cuda_29").unwrap();
+	let mut params = pl.get_default_params();
+	let mut sols = SolverSolutions::default();
+	let mut stats = SolverStats::default();
+	params.expand = 1;
 	// to be consistent with command line solver operation
 	params.mutate_nonce = true;
 	let ctx = pl.create_solver_ctx(&mut params);
