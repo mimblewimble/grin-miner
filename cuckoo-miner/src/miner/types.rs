@@ -21,7 +21,6 @@ use {PluginConfig, PluginLibrary, SolverSolutions, SolverStats};
 use config::types::SO_SUFFIX;
 
 pub type JobSharedDataType = Arc<RwLock<JobSharedData>>;
-pub type JobControlDataType = Arc<RwLock<JobControlData>>;
 
 /// Holds a loaded lib + config + stats
 /// 1 instance = 1 device on 1 controlling thread
@@ -103,29 +102,6 @@ impl JobSharedData {
 			difficulty: 1,
 			solutions: Vec::new(),
 			stats: vec![SolverStats::default(); num_solvers],
-		}
-	}
-}
-
-/// an internal structure to flag job control
-pub struct JobControlData {
-	/// Stop solvers, pull down miners, exit
-	pub stop_flag: bool,
-
-	/// Pause all processing
-	pub paused: bool,
-
-	/// monitor whether processing stop flag should be sent
-	/// (for one time stop signal only on pause)
-	pub pause_signal: bool,
-}
-
-impl Default for JobControlData {
-	fn default() -> JobControlData {
-		JobControlData {
-			stop_flag: false,
-			paused: true,
-			pause_signal: false,
 		}
 	}
 }

@@ -125,7 +125,7 @@ impl Controller {
 					},
 					types::MinerMessage::StopJob => {
 						debug!(LOGGER, "Stopping jobs");
-						miner.set_paused(true);
+						miner.pause_solvers();
 						Ok(())
 					}types::MinerMessage::Shutdown => {
 						debug!(LOGGER, "Stopping jobs and Shutting down mining controller");

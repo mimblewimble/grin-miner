@@ -16,17 +16,29 @@
 //! to load a mining plugin, send it a Cuckoo Cycle POW problem, and
 //! return any resulting solutions.
 
-use std::sync::{Arc, RwLock};
+use std::sync::{mpsc, Arc, RwLock};
 use std::{thread, time};
 use util::LOGGER;
 
 use config::types::PluginConfig;
 use miner::types::{
-	JobControlData, JobControlDataType, JobSharedData, JobSharedDataType,
+	JobSharedData, JobSharedDataType,
 	SolverInstance,
 };
+
 use miner::util;
 use {CuckooMinerError, PluginLibrary, SolverStats, SolverSolutions};
+
+/// Miner control Messages
+
+enum ControlMessage {
+	/// Stop everything, pull down, exis
+	Stop,
+	/// Stop current mining iteration, set solver threads to paused
+	Pause,
+	/// Resume
+	Resume,
+}
 
 /// An instance of a miner, which loads a cuckoo-miner plugin
 /// and calls its mine function according to the provided configuration
@@ -38,8 +50,11 @@ pub struct CuckooMiner {
 	/// Data shared across threads
 	pub shared_data: Arc<RwLock<JobSharedData>>,
 
-	/// Job control flag
-	pub control_data: Arc<RwLock<JobControlData>>,
+	/// Job control tx
+	control_txs: Vec<mpsc::Sender<ControlMessage>>,
+
+	/// solver loop tx
+	solver_loop_txs: Vec<mpsc::Sender<ControlMessage>>,
 }
 
 impl CuckooMiner {
@@ -51,7 +66,8 @@ impl CuckooMiner {
 		CuckooMiner {
 			configs: configs,
 			shared_data: Arc::new(RwLock::new(JobSharedData::new(len))),
-			control_data: Arc::new(RwLock::new(JobControlData::default())),
+			control_txs: vec![],
+			solver_loop_txs: vec![],
 		}
 	}
 
@@ -60,41 +76,45 @@ impl CuckooMiner {
 		mut solver: SolverInstance,
 		instance: usize,
 		shared_data: JobSharedDataType,
-		control_data: JobControlDataType,
+		control_rx: mpsc::Receiver<ControlMessage>,
+		solver_loop_rx: mpsc::Receiver<ControlMessage>,
 	) {
 		// "Detach" a stop function from the solver, to let us keep a control thread going
 		let stop_fn = solver.lib.get_stop_solver_instance();
-		let ctrl_data = control_data.clone();
 		let sleep_dur = time::Duration::from_millis(100);
 		// monitor whether to send a stop signal to the solver, which should
 		// end the current solve attempt below
 		let stop_handle = thread::spawn(move || {
 			loop {
-				{
-					let mut s = ctrl_data.write().unwrap();
-					if s.stop_flag || s.pause_signal {
-						PluginLibrary::stop_solver_from_instance(stop_fn.clone());
-						s.pause_signal = false;
-						break;
-					}
+				while let Some(message) = control_rx.try_iter().next() {
+					match message {
+						ControlMessage::Stop => {
+							PluginLibrary::stop_solver_from_instance(stop_fn.clone());
+							return;
+						},
+						ControlMessage::Pause => {
+							PluginLibrary::stop_solver_from_instance(stop_fn.clone());
+						},
+						_ => {},
+					};
 				}
-				//avoid busy wait
-				thread::sleep(sleep_dur);
 			}
 		});
 
 		let mut iter_count = 0;
 		let ctx = solver.lib.create_solver_ctx(&mut solver.config.params);
+		let mut paused = true;
 		loop {
-			{
-				let c = control_data.read().unwrap();
-				if c.paused {
-					thread::sleep(sleep_dur);
-					continue;
+			if let Some(message) = solver_loop_rx.try_iter().next() {
+				match message {
+					ControlMessage::Stop => break,
+					ControlMessage::Pause => paused = true,
+					ControlMessage::Resume => paused = false,
 				}
-				if c.stop_flag {
-					break;
-				}
+			}
+			if paused {
+				thread::sleep(sleep_dur);
+				continue;
 			}
 			{
 				let mut s = shared_data.write().unwrap();
@@ -147,9 +167,12 @@ impl CuckooMiner {
 		let mut i = 0;
 		for s in solvers {
 			let sd = self.shared_data.clone();
-			let cd = self.control_data.clone();
+			let (control_tx, control_rx) = mpsc::channel::<ControlMessage>();
+			let (solver_tx, solver_rx) = mpsc::channel::<ControlMessage>();
+			self.control_txs.push(control_tx);
+			self.solver_loop_txs.push(solver_tx);
 			thread::spawn(move || {
-				let _ = CuckooMiner::solver_thread(s, i, sd, cd);
+				let _ = CuckooMiner::solver_thread(s, i, sd, control_rx, solver_rx);
 			});
 			i += 1;
 		}
@@ -175,7 +198,7 @@ impl CuckooMiner {
 		                   * be returned. */
 	) -> Result<(), CuckooMinerError> {
 		// stop/pause any existing jobs
-		self.set_paused(true);
+		self.pause_solvers();
 		// Notify of new header data
 		{
 			let mut sd = self.shared_data.write().unwrap();
@@ -185,7 +208,7 @@ impl CuckooMiner {
 			sd.difficulty = difficulty;
 		}
 		// resume jobs
-		self.set_paused(false);
+		self.resume_solvers();
 		Ok(())
 	}
 
@@ -227,22 +250,34 @@ impl CuckooMiner {
 	/// Nothing
 
 	pub fn stop_solvers(&self) {
-		{
-			let mut r = self.control_data.write().unwrap();
-			r.stop_flag = true;
+		for t in self.control_txs.iter() {
+			let _ = t.send(ControlMessage::Stop);
 		}
-		debug!(LOGGER, "Stop jobs flag set");
+		for t in self.solver_loop_txs.iter() {
+			let _ = t.send(ControlMessage::Stop);
+		}
+		debug!(LOGGER, "Stop message sent");
 	}
 
 	/// Tells current solvers to stop and wait
-	pub fn set_paused(&self, value: bool) {
-		{
-			let mut r = self.control_data.write().unwrap();
-			r.paused = value;
-			if r.paused {
-				r.pause_signal = true;
-			}
+	pub fn pause_solvers(&self) {
+		for t in self.control_txs.iter() {
+			let _ = t.send(ControlMessage::Pause);
 		}
-		debug!(LOGGER, "Pause jobs flag set to {}", value);
+		for t in self.solver_loop_txs.iter() {
+			let _ = t.send(ControlMessage::Pause);
+		}
+		debug!(LOGGER, "Pause message sent");
+	}
+
+	/// Tells current solvers to stop and wait
+	pub fn resume_solvers(&self) {
+		for t in self.control_txs.iter() {
+			let _ = t.send(ControlMessage::Resume);
+		}
+		for t in self.solver_loop_txs.iter() {
+			let _ = t.send(ControlMessage::Resume);
+		}
+		debug!(LOGGER, "Resume message sent");
 	}
 }
