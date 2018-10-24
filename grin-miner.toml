@@ -37,7 +37,7 @@ log_file_append = true
 [mining]
 
 # whether to run the tui
-run_tui = false
+run_tui = true
 
 # listening grin stratum server url
 stratum_server_addr = "127.0.0.1:13416"
@@ -74,10 +74,9 @@ stratum_server_addr = "127.0.0.1:13416"
 # older processors. In this case, use mean_compat_cpu
 # instead
 
-[mining.miner_plugin_config]]
-edge_bits = 29
-type_filter = "cuckatoo_mean_compat_cpu"
-[mining.miner_plugin_config.device_parameters.0]
+[[mining.miner_plugin_config]]
+plugin_name = "cuckatoo_mean_compat_cpu_29"
+[mining.miner_plugin_config.parameters]
 NUM_THREADS = 4
 
 # As above, but for processors supporting avx2
@@ -114,26 +113,27 @@ NUM_THREADS = 4
 #disabled unless explicitly enabled by setting the 'USE_DEVICE'
 #param to 1 on each device, as demonstrated below.
 
+[[mining.miner_plugin_config]]
+plugin_name = "cuckatoo_cuda_29"
+
+[mining.miner_plugin_config.parameters]
+#device = 0
+expand = 1
+#genablocks = 4096
+#genatpb = 256
+#genbtpb = 128
+#trimtpb = 512
+#tailtpb = 1024
+#recoverblocks = 1024
+#recovertpb = 1024
+
+
+# To enable multiple devices:
+
 #[[mining.miner_plugin_config]]
-#edge_bits = 29
-#type_filter = "cuckatoo_cuda"
+#plugin_name = "cuckatoo_cuda_29"
+#[mining.miner_plugin_config.parameters]
+#device = 1 
 
-#[mining.miner_plugin_config.device_parameters.0]
-#USE_DEVICE = 1
 
-# Below are advanced optional per-device tweakable params
-#EXPAND = 0
-#N_TRIMS = 176
-#GEN_A_BLOCKS = 4096
-#GEN_A_TPB = 256
-#GEN_B_TPB = 128
-#TRIM_TPB = 512
-#TAIL_TPB = 1024
-#RECOVER_BLOCKS = 1024
-#RECOVER_TPB = 1024
 
-#[mining.miner_plugin_config.device_parameters.1]
-#USE_DEVICE = 1
-
-#[mining.miner_plugin_config.device_parameters.2]
-#USE_DEVICE = 1

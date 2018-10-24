@@ -100,8 +100,12 @@ impl CuckooMiner {
 				let mut s = shared_data.write().unwrap();
 				s.stats[instance].set_plugin_name(&solver.config.name);
 			}
-			let header_pre = shared_data.read().unwrap().pre_nonce.clone();
-			let header_post = shared_data.read().unwrap().post_nonce.clone();
+			let header_pre = {
+				shared_data.read().unwrap().pre_nonce.clone()
+			};
+			let header_post = {
+				shared_data.read().unwrap().post_nonce.clone()
+			};
 			let header = util::get_next_header_data(&header_pre, &header_post);
 			let nonce = header.0;
 			solver.lib.run_solver(
@@ -173,11 +177,13 @@ impl CuckooMiner {
 		// stop/pause any existing jobs
 		self.set_paused(true);
 		// Notify of new header data
-		let mut sd = self.shared_data.write().unwrap();
-		sd.job_id = job_id;
-		sd.pre_nonce = pre_nonce.to_owned();
-		sd.post_nonce = post_nonce.to_owned();
-		sd.difficulty = difficulty;
+		{
+			let mut sd = self.shared_data.write().unwrap();
+			sd.job_id = job_id;
+			sd.pre_nonce = pre_nonce.to_owned();
+			sd.post_nonce = post_nonce.to_owned();
+			sd.difficulty = difficulty;
+		}
 		// resume jobs
 		self.set_paused(false);
 		Ok(())
@@ -192,13 +198,15 @@ impl CuckooMiner {
 		// TODO: Make this less blocky
 		thread::sleep(time::Duration::from_millis(10));
 		// let time_pre_lock=Instant::now();
-		let mut s = self.shared_data.write().unwrap();
+		{
+			let mut s = self.shared_data.write().unwrap();
 		// let time_elapsed=Instant::now()-time_pre_lock;
 		// println!("Get_solution Time spent waiting for lock: {}",
 		// time_elapsed.as_secs()*1000 +(time_elapsed.subsec_nanos()/1_000_000)as u64);
-		if s.solutions.len() > 0 {
-			let sol = s.solutions.pop().unwrap();
-			return Some(sol);
+			if s.solutions.len() > 0 {
+				let sol = s.solutions.pop().unwrap();
+				return Some(sol);
+			}
 		}
 		None
 	}

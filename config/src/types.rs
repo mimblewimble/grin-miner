@@ -24,21 +24,17 @@ use util;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GrinMinerPluginConfig {
 	/// The type of plugin to load (i.e. filters on filename)
-	pub type_filter: String,
+	pub plugin_name: String,
 
-	/// Cuckoo size (edge bits) for the plugin
-	pub edge_bits: u8,
-
-	/// device params
-	pub device_parameters: Option<HashMap<String, HashMap<String, u32>>>,
+	///
+	pub parameters: Option<HashMap<String, u32>>,
 }
 
 impl Default for GrinMinerPluginConfig {
 	fn default() -> GrinMinerPluginConfig {
 		GrinMinerPluginConfig {
-			type_filter: String::new(),
-			edge_bits: 30,
-			device_parameters: None,
+			plugin_name: String::new(),
+			parameters: None,
 		}
 	}
 }
