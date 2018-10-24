@@ -77,7 +77,7 @@ stratum_server_addr = "127.0.0.1:13416"
 [[mining.miner_plugin_config]]
 plugin_name = "cuckatoo_mean_compat_cpu_29"
 [mining.miner_plugin_config.parameters]
-NUM_THREADS = 4
+nthreads = 4
 
 # As above, but for processors supporting avx2
 #[[mining.miner_plugin_config]]
@@ -113,12 +113,12 @@ NUM_THREADS = 4
 #disabled unless explicitly enabled by setting the 'USE_DEVICE'
 #param to 1 on each device, as demonstrated below.
 
-[[mining.miner_plugin_config]]
-plugin_name = "cuckatoo_cuda_29"
+#[[mining.miner_plugin_config]]
+#plugin_name = "cuckatoo_cuda_29"
 
-[mining.miner_plugin_config.parameters]
+#[mining.miner_plugin_config.parameters]
 #device = 0
-expand = 1
+#expand = 1
 #genablocks = 4096
 #genatpb = 256
 #genbtpb = 128
