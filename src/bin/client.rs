@@ -184,7 +184,7 @@ impl Controller {
 		self.send_message(&req_str)
 	}
 
-	fn send_message_submit(&mut self, height: u64, job_id: u64, edge_bits: u32, nonce: u64, pow: Vec<u32>) -> Result<(), Error> {
+	fn send_message_submit(&mut self, height: u64, job_id: u64, edge_bits: u32, nonce: u64, pow: Vec<u64>) -> Result<(), Error> {
 		let params_in = types::SubmitParams {
 			height: height,
 			job_id: job_id,

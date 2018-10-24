@@ -27,9 +27,7 @@
 #![deny(unused_mut)]
 #![warn(missing_docs)]
 
-#[macro_use]
-extern crate log;
-extern crate env_logger;
+extern crate grin_miner_util as util;
 
 extern crate serde;
 #[macro_use]
@@ -45,11 +43,13 @@ extern crate blake2_rfc as blake2;
 extern crate libloading as libloading;
 extern crate libc;
 
+#[macro_use]
+extern crate slog;
+
 extern crate glob;
 
 mod error;
 mod miner;
-//mod manager;
 mod config;
 mod cuckoo_sys;
 
@@ -58,7 +58,3 @@ pub use cuckoo_sys::types::{SolverCtx, SolverParams, SolverStats, SolverSolution
 pub use config::types::PluginConfig;
 pub use error::error::CuckooMinerError;
 pub use miner::miner::{CuckooMiner};
-
-//pub use miner::miner::{CuckooMinerConfig, CuckooMiner, CuckooMinerSolution, CuckooMinerJobHandle,
-//                CuckooMinerDeviceStats};
-

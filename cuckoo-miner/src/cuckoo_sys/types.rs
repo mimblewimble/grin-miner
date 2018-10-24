@@ -26,7 +26,7 @@ use blake2::blake2b::Blake2b;
 use byteorder::{ByteOrder, BigEndian};
 
 pub const PROOFSIZE: usize = 42;
-pub const MAX_DEVICE_NAME_LEN: usize = 256;
+pub const MAX_NAME_LEN: usize = 256;
 pub const MAX_SOLS: usize = 4;
 
 /// A solver context, opaque reference to C++ type underneath
@@ -70,8 +70,10 @@ pub struct SolverStats {
 	pub device_id: uint32_t,
 	/// graph size
 	pub edge_bits: uint32_t,
+	/// plugin name
+	pub plugin_name: [c_uchar; MAX_NAME_LEN],
 	/// device name
-	pub device_name: [c_uchar; MAX_DEVICE_NAME_LEN],
+	pub device_name: [c_uchar; MAX_NAME_LEN],
 	/// whether device has reported an error
 	pub has_errored: bool,
 	/// number of searched completed by device
@@ -89,7 +91,8 @@ impl Default for SolverStats {
 		SolverStats {
 			device_id: 0,
 			edge_bits: 0,
-			device_name: [0; MAX_DEVICE_NAME_LEN],
+			plugin_name: [0; MAX_NAME_LEN],
+			device_name: [0; MAX_NAME_LEN],
 			has_errored: false,
 			iterations: 0,
 			last_start_time: 0,
@@ -100,10 +103,9 @@ impl Default for SolverStats {
 }
 
 impl SolverStats {
-	/// return device name as rust string
-	pub fn get_device_name(&self) -> String {
+	fn get_name(&self, c_str: &[u8; MAX_NAME_LEN]) -> String {
 		// remove all null zeroes
-		let v = self.device_name.clone().to_vec();
+		let v = c_str.clone().to_vec();
 		let mut i = 0;
 		for j in 0..v.len() {
 			if v.get(j) == Some(&0) {
@@ -115,6 +117,21 @@ impl SolverStats {
 		match CString::new(v) {
 			Ok(s) => s.to_str().unwrap().to_owned(),
 			Err(_) => String::from("Unknown Device Name"),
+		}
+	}
+	/// return device name as rust string
+	pub fn get_device_name(&self) -> String {
+		self.get_name(&self.device_name)
+	}
+	/// return plugin name as rust string
+	pub fn get_plugin_name(&self) -> String {
+		self.get_name(&self.plugin_name)
+	}
+	/// set plugin name
+	pub fn set_plugin_name(&mut self, name: &str) {
+		let c_vec = CString::new(name).unwrap().into_bytes();
+		for i in 0..c_vec.len() {
+			self.plugin_name[i] = c_vec[i];
 		}
 	}
 }

@@ -16,9 +16,9 @@
 //! to load a mining plugin, send it a Cuckoo Cycle POW problem, and
 //! return any resulting solutions.
 
-use env_logger;
 use std::sync::{Arc, RwLock};
 use std::{thread, time};
+use util::LOGGER;
 
 use config::types::PluginConfig;
 use miner::types::{
@@ -70,11 +70,13 @@ impl CuckooMiner {
 		// end the current solve attempt below
 		let stop_handle = thread::spawn(move || {
 			loop {
-				let mut s = ctrl_data.write().unwrap();
-				if s.stop_flag || s.pause_signal {
-					PluginLibrary::stop_solver_from_instance(stop_fn.clone());
-					s.pause_signal = false;
-					break;
+				{
+					let mut s = ctrl_data.write().unwrap();
+					if s.stop_flag || s.pause_signal {
+						PluginLibrary::stop_solver_from_instance(stop_fn.clone());
+						s.pause_signal = false;
+						break;
+					}
 				}
 				//avoid busy wait
 				thread::sleep(sleep_dur);
@@ -94,6 +96,10 @@ impl CuckooMiner {
 					break;
 				}
 			}
+			{
+				let mut s = shared_data.write().unwrap();
+				s.stats[instance].set_plugin_name(&solver.config.name);
+			}
 			let header_pre = shared_data.read().unwrap().pre_nonce.clone();
 			let header_post = shared_data.read().unwrap().pre_nonce.clone();
 			let header = util::get_next_header_data(&header_pre, &header_post);
@@ -107,27 +113,29 @@ impl CuckooMiner {
 				&mut solver.stats,
 			);
 			iter_count += 1;
-			let mut s = shared_data.write().unwrap();
-			s.stats[instance] = solver.stats.clone();
-			s.stats[instance].iterations = iter_count;
-			if solver.solutions.num_sols > 0 {
-				for mut ss in solver.solutions.sols.iter_mut() {
-					ss.nonce = nonce;
+			{
+				let mut s = shared_data.write().unwrap();
+				s.stats[instance] = solver.stats.clone();
+				s.stats[instance].iterations = iter_count;
+				if solver.solutions.num_sols > 0 {
+					for mut ss in solver.solutions.sols.iter_mut() {
+						ss.nonce = nonce;
+					}
+					s.solutions.push(solver.solutions.clone());
 				}
-				s.solutions.push(solver.solutions.clone());
 			}
 			solver.solutions = SolverSolutions::default();
 		}
 
 		let _ = stop_handle.join();
 		solver.lib.destroy_solver_ctx(ctx);
+		solver.lib.unload();
 	}
 
 	/// Starts solvers, ready for jobs via job control
 	pub fn start_solvers(
 		&mut self,
 	) -> Result<(), CuckooMinerError> {
-		let _ = env_logger::init();
 		let mut solvers = Vec::new();
 		for c in self.configs.clone() {
 			solvers.push(SolverInstance::new(c)?);
@@ -175,19 +183,9 @@ impl CuckooMiner {
 		Ok(())
 	}
 
-	/// #Description
-	///
-	/// Returns a solution if one is currently waiting.
-	///
-	/// #Returns
-	///
-	/// If a solution was found and is waiting in the plugin's input queue,
-	/// returns
-	/// * Ok([CuckooMinerSolution](struct.CuckooMinerSolution.html)) if a
-	/// solution is waiting in the queue.
-	/// * None if no solution is waiting
+	/// Returns solutions if currently waiting.
 
-	pub fn get_solution(&self) -> Option<SolverSolutions> {
+	pub fn get_solutions(&self) -> Option<SolverSolutions> {
 		// just to prevent endless needless locking of this
 		// when using fast test miners, in real cuckoo30 terms
 		// this shouldn't be an issue
@@ -221,17 +219,15 @@ impl CuckooMiner {
 	/// Nothing
 
 	pub fn stop_solvers(&self) {
-		debug!("Stop jobs called");
 		{
 			let mut r = self.control_data.write().unwrap();
 			r.stop_flag = true;
 		}
-		debug!("Stop jobs flag set");
+		debug!(LOGGER, "Stop jobs flag set");
 	}
 
 	/// Tells current solvers to stop and wait
 	pub fn set_paused(&self, value: bool) {
-		debug!("Pause jobs called");
 		{
 			let mut r = self.control_data.write().unwrap();
 			r.paused = value;
@@ -239,6 +235,6 @@ impl CuckooMiner {
 				r.pause_signal = true;
 			}
 		}
-		debug!("Pause jobs flag set");
+		debug!(LOGGER, "Pause jobs flag set to {}", value);
 	}
 }

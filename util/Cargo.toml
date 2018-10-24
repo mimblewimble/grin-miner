@@ -6,8 +6,6 @@ workspace = ".."
 publish = false
 
 [dependencies]
-cuckoo_miner = { path = "../cuckoo-miner" }
-
 backtrace = "0.3"
 byteorder = "1"
 lazy_static = "0.2"

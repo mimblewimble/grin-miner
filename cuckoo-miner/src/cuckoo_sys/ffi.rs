@@ -19,6 +19,7 @@
 //! and will not be exposed to other projects including the cuckoo-miner crate.
 
 use std::sync::{Arc, Mutex};
+use util::LOGGER;
 
 use libc::*;
 use libloading;
@@ -57,7 +58,7 @@ impl PluginLibrary {
 	/// Loads the specified library
 
 	pub fn new(lib_full_path: &str) -> Result<PluginLibrary, CuckooMinerError> {
-		debug!("Loading miner plugin: {}", &lib_full_path);
+		debug!(LOGGER, "Loading miner plugin: {}", &lib_full_path);
 
 		let result = libloading::Library::new(lib_full_path);
 

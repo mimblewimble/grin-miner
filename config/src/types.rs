@@ -22,7 +22,7 @@ use util;
 
 /// CuckooMinerPlugin configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct CuckooMinerPluginConfig {
+pub struct GrinMinerPluginConfig {
 	/// The type of plugin to load (i.e. filters on filename)
 	pub type_filter: String,
 
@@ -33,9 +33,9 @@ pub struct CuckooMinerPluginConfig {
 	pub device_parameters: Option<HashMap<String, HashMap<String, u32>>>,
 }
 
-impl Default for CuckooMinerPluginConfig {
-	fn default() -> CuckooMinerPluginConfig {
-		CuckooMinerPluginConfig {
+impl Default for GrinMinerPluginConfig {
+	fn default() -> GrinMinerPluginConfig {
+		GrinMinerPluginConfig {
 			type_filter: String::new(),
 			edge_bits: 30,
 			device_parameters: None,
@@ -108,7 +108,7 @@ pub struct MinerConfig {
 	pub miner_plugin_dir: Option<String>,
 
 	/// Cuckoo miner plugin configuration, one for each plugin
-	pub miner_plugin_config: Vec<CuckooMinerPluginConfig>,
+	pub miner_plugin_config: Vec<GrinMinerPluginConfig>,
 }
 
 impl Default for MinerConfig {

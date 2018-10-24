@@ -27,7 +27,7 @@ extern crate toml;
 
 extern crate grin_miner_util as util;
 
-pub mod config;
-pub mod types;
+mod config;
+mod types;
 
-pub use types::{ConfigError, ConfigMembers, GlobalConfig, MinerConfig};
+pub use types::{ConfigError, ConfigMembers, GlobalConfig, GrinMinerPluginConfig, MinerConfig};

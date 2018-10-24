@@ -36,10 +36,6 @@ extern crate serde;
 #[macro_use]
 extern crate serde_derive;
 
-// re-export cuckoo miner lib
-pub extern crate cuckoo_miner as cuckoo_;
-pub use cuckoo_ as cuckoo_miner;
-
 // Logging related
 pub mod logger;
 pub use logger::{init_logger, init_test_logger, LOGGER};

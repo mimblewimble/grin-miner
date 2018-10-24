@@ -60,7 +60,7 @@ pub struct SubmitParams {
 	pub job_id: u64,
 	pub edge_bits: u32,
 	pub nonce: u64,
-	pub pow: Vec<u32>,
+	pub pow: Vec<u64>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -85,6 +85,6 @@ pub enum MinerMessage{
 #[derive(Serialize, Deserialize, Debug)]
 pub enum ClientMessage{
 	// height, job_id, edge_bits, nonce, pow
-	FoundSolution(u64, u64, u32, u64, Vec<u32>),
+	FoundSolution(u64, u64, u32, u64, Vec<u64>),
 	Shutdown,
 }

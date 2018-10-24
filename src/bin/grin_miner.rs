@@ -16,6 +16,7 @@
 //! grin node
 extern crate grin_miner_util as util;
 extern crate grin_miner_config as config;
+extern crate cuckoo_miner as cuckoo;
 
 extern crate bufstream;
 extern crate time;
@@ -24,11 +25,8 @@ extern crate serde_derive;
 extern crate serde_json;
 #[macro_use]
 extern crate slog;
-#[macro_use]
-extern crate lazy_static;
 extern crate cursive;
 
-pub mod plugin;
 pub mod mining;
 pub mod client;
 pub mod types;
@@ -39,7 +37,6 @@ use std::thread;
 use std::sync::{mpsc, Arc, RwLock};
 use std::sync::atomic::{AtomicBool, Ordering};
 use config::GlobalConfig;
-use util::cuckoo_miner as cuckoo;
 
 use tui::ui;
 

@@ -28,7 +28,7 @@ use tui::constants::*;
 use tui::types::*;
 
 use stats;
-use util::cuckoo_miner::CuckooMinerDeviceStats;
+use cuckoo::SolverStats;
 use tui::table::{TableView, TableViewItem};
 
 #[derive(Copy, Clone, PartialEq, Eq, Hash)]
@@ -37,7 +37,6 @@ enum MiningDeviceColumn {
 	DeviceId,
 	DeviceName,
 	EdgeBits,
-	InUse,
 	ErrorStatus,
 	LastGraphTime,
 	GraphsPerSecond,
@@ -50,7 +49,6 @@ impl MiningDeviceColumn {
 			MiningDeviceColumn::DeviceId => "Device ID",
 			MiningDeviceColumn::DeviceName => "Name",
 			MiningDeviceColumn::EdgeBits => "Graph Size",
-			MiningDeviceColumn::InUse => "In Use",
 			MiningDeviceColumn::ErrorStatus => "Status",
 			MiningDeviceColumn::LastGraphTime => "Last Graph Time",
 			MiningDeviceColumn::GraphsPerSecond => "GPS",
@@ -58,20 +56,16 @@ impl MiningDeviceColumn {
 	}
 }
 
-impl TableViewItem<MiningDeviceColumn> for CuckooMinerDeviceStats {
+impl TableViewItem<MiningDeviceColumn> for SolverStats {
 	fn to_column(&self, column: MiningDeviceColumn) -> String {
 		let last_solution_time_secs = self.last_solution_time as f64 / 1000000000.0;
 		match column {
-			MiningDeviceColumn::Plugin => self.plugin_name.clone().unwrap(),
-			MiningDeviceColumn::DeviceId => self.device_id.clone(),
-			MiningDeviceColumn::DeviceName => self.device_name.clone(),
-			MiningDeviceColumn::EdgeBits => self.cuckoo_size.clone(),
-			MiningDeviceColumn::InUse => match self.in_use {
-				1 => String::from("Yes"),
-				_ => String::from("No"),
-			},
+			MiningDeviceColumn::Plugin => self.get_plugin_name(),
+			MiningDeviceColumn::DeviceId => format!("{}", self.device_id).to_owned(),
+			MiningDeviceColumn::DeviceName => self.get_device_name(),
+			MiningDeviceColumn::EdgeBits => format!("{}", self.edge_bits).to_owned(),
 			MiningDeviceColumn::ErrorStatus => match self.has_errored {
-				0 => String::from("OK"),
+				false => String::from("OK"),
 				_ => String::from("Errored"),
 			},
 			MiningDeviceColumn::LastGraphTime => {
@@ -95,8 +89,7 @@ impl TableViewItem<MiningDeviceColumn> for CuckooMinerDeviceStats {
 			MiningDeviceColumn::Plugin => self.plugin_name.cmp(&other.plugin_name),
 			MiningDeviceColumn::DeviceId => self.device_id.cmp(&other.device_id),
 			MiningDeviceColumn::DeviceName => self.device_name.cmp(&other.device_name),
-			MiningDeviceColumn::EdgeBits => self.cuckoo_size.cmp(&other.cuckoo_size),
-			MiningDeviceColumn::InUse => self.in_use.cmp(&other.in_use),
+			MiningDeviceColumn::EdgeBits => self.edge_bits.cmp(&other.edge_bits),
 			MiningDeviceColumn::ErrorStatus => self.has_errored.cmp(&other.has_errored),
 			MiningDeviceColumn::LastGraphTime => {
 				self.last_solution_time.cmp(&other.last_solution_time)
@@ -114,20 +107,19 @@ impl TUIStatusListener for TUIMiningView {
 	fn create() -> Box<View> {
 
 		let table_view =
-			TableView::<CuckooMinerDeviceStats, MiningDeviceColumn>::new()
+			TableView::<SolverStats, MiningDeviceColumn>::new()
 				.column(MiningDeviceColumn::Plugin, "Plugin", |c| {
-					c.width_percent(15)
+					c.width_percent(20)
 				})
 				.column(MiningDeviceColumn::DeviceId, "Device ID", |c| {
-					c.width_percent(10)
+					c.width_percent(5)
 				})
 				.column(MiningDeviceColumn::DeviceName, "Device Name", |c| {
-					c.width_percent(15)
+					c.width_percent(20)
 				})
 				.column(MiningDeviceColumn::EdgeBits, "Size", |c| {
 					c.width_percent(5)
 				})
-				.column(MiningDeviceColumn::InUse, "In Use", |c| c.width_percent(5))
 				.column(MiningDeviceColumn::ErrorStatus, "Status", |c| {
 					c.width_percent(5)
 				})
@@ -226,21 +218,10 @@ impl TUIStatusListener for TUIMiningView {
 		let mining_stats = stats.mining_stats.clone();
 		let device_stats = mining_stats.device_stats;
 
-		let mut flattened_device_stats = vec![];
-
-		if device_stats.is_some() {
-			let device_stats = device_stats.unwrap();
-			for p in device_stats.into_iter() {
-				for d in p.into_iter() {
-					flattened_device_stats.push(d);
-				}
-			}
-		}
-
 		let _ = c.call_on_id(
 			TABLE_MINING_STATUS,
-			|t: &mut TableView<CuckooMinerDeviceStats, MiningDeviceColumn>| {
-				t.set_items(flattened_device_stats);
+			|t: &mut TableView<SolverStats, MiningDeviceColumn>| {
+				t.set_items(device_stats);
 			},
 		);
 	}
