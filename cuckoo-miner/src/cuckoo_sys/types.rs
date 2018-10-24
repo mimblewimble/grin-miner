@@ -19,6 +19,7 @@
 #![warn(missing_docs)]
 
 use libc::*;
+use std::ffi::CString;
 use std::{fmt, cmp};
 
 use blake2::blake2b::Blake2b;
@@ -71,6 +72,10 @@ pub struct SolverStats {
 	pub edge_bits: uint32_t,
 	/// device name
 	pub device_name: [c_uchar; MAX_DEVICE_NAME_LEN],
+	/// whether device has reported an error
+	pub has_errored: bool,
+	/// number of searched completed by device
+	pub iterations: uint32_t,
 	/// last solution start time
 	pub last_start_time: uint64_t,
 	/// last solution end time
@@ -85,9 +90,31 @@ impl Default for SolverStats {
 			device_id: 0,
 			edge_bits: 0,
 			device_name: [0; MAX_DEVICE_NAME_LEN],
+			has_errored: false,
+			iterations: 0,
 			last_start_time: 0,
 			last_end_time: 0,
 			last_solution_time: 0,
+		}
+	}
+}
+
+impl SolverStats {
+	/// return device name as rust string
+	pub fn get_device_name(&self) -> String {
+		// remove all null zeroes
+		let v = self.device_name.clone().to_vec();
+		let mut i = 0;
+		for j in 0..v.len() {
+			if v.get(j) == Some(&0) {
+				i = j;
+				break;
+			}
+		}
+		let v = v.split_at(i).0;
+		match CString::new(v) {
+			Ok(s) => s.to_str().unwrap().to_owned(),
+			Err(_) => String::from("Unknown Device Name"),
 		}
 	}
 }

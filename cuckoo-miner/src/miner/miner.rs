@@ -81,6 +81,7 @@ impl CuckooMiner {
 			}
 		});
 
+		let mut iter_count = 0;
 		let ctx = solver.lib.create_solver_ctx(&mut solver.config.params);
 		loop {
 			{
@@ -105,8 +106,10 @@ impl CuckooMiner {
 				&mut solver.solutions,
 				&mut solver.stats,
 			);
+			iter_count += 1;
 			let mut s = shared_data.write().unwrap();
 			s.stats[instance] = solver.stats.clone();
+			s.stats[instance].iterations = iter_count;
 			if solver.solutions.num_sols > 0 {
 				for mut ss in solver.solutions.sols.iter_mut() {
 					ss.nonce = nonce;
@@ -202,7 +205,7 @@ impl CuckooMiner {
 		None
 	}
 
-	// get stats for all running solvers
+	/// get stats for all running solvers
 	pub fn get_stats(&self) -> Result<Vec<SolverStats>, CuckooMinerError> {
 		let s = self.shared_data.read().unwrap();
 		Ok(s.stats.clone())

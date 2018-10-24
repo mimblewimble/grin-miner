@@ -244,8 +244,13 @@ pub fn mine_async_for_duration(configs: &Vec<PluginConfig>, duration_in_seconds:
 				for s in stats_vec.unwrap().into_iter() {
 					let last_solution_time_secs = s.last_solution_time as f64 / 1000000000.0;
 					let last_hashes_per_sec = 1.0 / last_solution_time_secs;
-					println!("Plugin 0 - Device {} ({}) at Cuckoo{} - Last Graph time: {}; Graphs per second: {:.*}", 
-					s.device_id, s.device_name[0], s.edge_bits, last_solution_time_secs, 3, last_hashes_per_sec);
+					let status = match s.has_errored {
+						false => "OK",
+						_ => "ERRORED",
+					};
+					println!("Plugin 0 - Device {} ({}) (Cuck(at)oo{}) - Status: {} - Last Graph time: {}; Graphs per second: {:.*} \
+					- Total Attempts: {}",
+					s.device_id, s.get_device_name(), s.edge_bits, status, last_solution_time_secs, 3, last_hashes_per_sec, s.iterations);
 					if last_hashes_per_sec.is_finite() {
 						sps_total+=last_hashes_per_sec;
 					}
