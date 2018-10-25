@@ -16,7 +16,7 @@
 
 use std::{io, fmt};
 use SolverParams;
-use std::path::PathBuf;
+use std::env;
 use {CuckooMinerError, PluginLibrary};
 
 pub static SO_SUFFIX: &str = ".cuckooplugin";
@@ -35,9 +35,15 @@ impl PluginConfig {
 	/// create new!
 	pub fn new(name: &str) -> Result<PluginConfig, CuckooMinerError> {
 		// Ensure it exists and get default parameters
-		let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-		d.push(format!("../target/debug/plugins/{}{}", name, SO_SUFFIX).as_str());
-		let l = PluginLibrary::new(d.to_str().unwrap())?;
+		let mut p_path = env::current_exe().unwrap();
+		p_path.pop();
+		// cargo test exes are a directory further down
+		if p_path.ends_with("deps") {
+			p_path.pop();
+		}
+		p_path.push("plugins");
+		p_path.push(format!("{}{}", name, SO_SUFFIX).as_str());
+		let l = PluginLibrary::new(p_path.to_str().unwrap())?;
 		let params = l.get_default_params();
 		l.unload();
 		Ok(PluginConfig {

@@ -63,8 +63,10 @@ fn from_hex_string(in_str: &str) -> Vec<u8> {
 //Helper to load a plugin library
 fn load_plugin_lib(plugin:&str) -> Result<PluginLibrary, CuckooMinerError> {
 	let mut p_path = env::current_exe().unwrap();
+	p_path.pop();
+	p_path.pop();
 	p_path.push("plugins");
-	p_path.push(format!("/{}{}", plugin, SO_SUFFIX).as_str());
+	p_path.push(format!("{}{}", plugin, SO_SUFFIX).as_str());
 	PluginLibrary::new(p_path.to_str().unwrap())
 }
 
