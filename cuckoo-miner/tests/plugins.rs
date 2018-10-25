@@ -14,24 +14,17 @@
 
 /// Tests exercising the loading and unloading of plugins, as well as the
 /// existence and correct functionality of each plugin function
+mod common;
 
 extern crate rand;
 extern crate cuckoo_miner as cuckoo;
 
 use std::path::PathBuf;
-use std::{thread, time};
-use std::time::Instant;
+use common::{T4_GENESIS_PREPOW, T4_GENESIS_PROOF};
 
-use cuckoo::{SolverCtx, SolverParams, SolverStats, SolverSolutions, CuckooMinerError, PluginLibrary};
-
-/*pub mod common;
-
-use common::{
-	KNOWN_30_HASH_1,
-	KNOWN_16_HASH_1};*/
+use cuckoo::{SolverParams, SolverStats, SolverSolutions, CuckooMinerError, PluginLibrary};
 
 static DLL_SUFFIX: &str = ".cuckooplugin";
-
 
 /// Solution for 80 length header with nonce 0
 const CUCKATOO_29_SOL:[u64; 42] = [
@@ -41,9 +34,13 @@ const CUCKATOO_29_SOL:[u64; 42] = [
 0x11786035, 0x1243b60a, 0x12892da0, 0x141b5453, 0x1483c3a0, 0x1505525e, 0x1607352c, 0x16181fe3, 
 0x17e3a1da, 0x180b651e, 0x1899d678, 0x1931b0bb, 0x19606448, 0x1b041655, 0x1b2c20ad, 0x1bd7a83c, 0x1c05d5b0, 0x1c0b9caa ];
 
-const TEST_PLUGIN_LIBS_CORE : [&str;2] = [
-	"cuckatoo_mean_compat_cpu_19",
+const TEST_PLUGIN_LIBS_CORE : [&str;6] = [
+	"cuckatoo_mean_avx2_cpu_19",
+	"cuckatoo_mean_avx2_cpu_29",
 	"cuckatoo_mean_compat_cpu_29",
+	"cuckatoo_mean_compat_cpu_29",
+	"cuckatoo_lean_cpu_19",
+	"cuckatoo_lean_cpu_29",
 ];
 
 const TEST_PLUGIN_LIBS_OPTIONAL : [&str;1] = [
@@ -113,18 +110,15 @@ fn plugin_multiple_loading(){
 	let _p=load_all_plugins();
 }
 
-#[test]
-fn sanity_cuckatoo_mean_compat_cpu_29() {
-	let pl = load_plugin_lib("cuckatoo_mean_compat_cpu_29").unwrap();
-	let mut params = SolverParams::default();
+// check that output is consistent with command line
+fn test_mutating(pl: &PluginLibrary, mut params: SolverParams){
 	let mut sols = SolverSolutions::default();
 	let mut stats = SolverStats::default();
-	params.nthreads = 4;
 	// to be consistent with command line solver operation
 	params.mutate_nonce = true;
 	let ctx = pl.create_solver_ctx(&mut params);
 	let test_header = [0u8; 80].to_vec();
-	let res = pl.run_solver(
+	let _ = pl.run_solver(
 		ctx,
 		test_header,
 		20,
@@ -142,32 +136,74 @@ fn sanity_cuckatoo_mean_compat_cpu_29() {
 	pl.unload();
 }
 
-#[cfg(feature="build-cuda-plugins")]
-#[test]
-fn sanity_cuckatoo_cuda_29() {
-	let pl = load_plugin_lib("cuckatoo_cuda_29").unwrap();
-	let mut params = pl.get_default_params();
+// check that output is consistent with grin T4 Genesis
+fn test_t4_genesis(pl: &PluginLibrary, mut params: SolverParams){
 	let mut sols = SolverSolutions::default();
 	let mut stats = SolverStats::default();
-	params.expand = 1;
-	// to be consistent with command line solver operation
-	params.mutate_nonce = true;
+	params.mutate_nonce = false;
 	let ctx = pl.create_solver_ctx(&mut params);
-	let test_header = [0u8; 80].to_vec();
-	let res = pl.run_solver(
+	let test_header = from_hex_string(T4_GENESIS_PREPOW);
+	let _ = pl.run_solver(
 		ctx,
 		test_header,
-		20,
+		0,
 		1,
 		&mut sols,
 		&mut stats,
 		);
 	assert_eq!(sols.num_sols, 1);
 	assert_eq!(sols.edge_bits, 29);
+	assert_eq!(sols.edge_bits, 29);
 	assert_eq!(stats.edge_bits, 29);
 	for i in 0..42 {
-		assert_eq!(sols.sols[0].proof[i], CUCKATOO_29_SOL[i]);
+		assert_eq!(sols.sols[0].proof[i], T4_GENESIS_PROOF[i]);
 	}
 	pl.destroy_solver_ctx(ctx);
 	pl.unload();
+}
+fn run_solver(pl: &PluginLibrary, params: SolverParams) {
+	test_mutating(pl, params.clone());
+	test_t4_genesis(pl, params.clone());
+}
+
+#[test]
+fn sanity_cuckatoo_mean_compat_cpu_29() {
+	let pl = load_plugin_lib("cuckatoo_mean_compat_cpu_29").unwrap();
+	let mut params = pl.get_default_params();
+	params.nthreads = 4;
+	run_solver(&pl, params);
+}
+#[cfg(feature="build-mean-avx2")]
+#[test]
+fn sanity_cuckatoo_mean_avx2_cpu_29() {
+	let pl = load_plugin_lib("cuckatoo_mean_avx2_cpu_29").unwrap();
+	let mut params = pl.get_default_params();
+	params.nthreads = 4;
+	run_solver(&pl, params);
+}
+
+#[test]
+fn sanity_cuckatoo_lean_cpu_29() {
+	let pl = load_plugin_lib("cuckatoo_lean_cpu_29").unwrap();
+	let mut params = pl.get_default_params();
+	params.expand = 1;
+	params.nthreads = 4;
+	run_solver(&pl, params);
+}
+
+#[cfg(feature="build-cuda-plugins")]
+#[test]
+fn sanity_cuckatoo_mean_cuda_29() {
+	let pl = load_plugin_lib("cuckatoo_mean_cuda_29").unwrap();
+	let mut params = pl.get_default_params();
+	params.expand = 1;
+	run_solver(&pl, params);
+}
+
+#[cfg(feature="build-cuda-plugins")]
+#[test]
+fn sanity_cuckatoo_lean_cuda_29() {
+	let pl = load_plugin_lib("cuckatoo_lean_cuda_29").unwrap();
+	let params = pl.get_default_params();
+	run_solver(&pl, params);
 }

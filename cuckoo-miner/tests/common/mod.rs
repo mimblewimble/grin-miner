@@ -22,12 +22,23 @@ extern crate time;
 use std;
 use self::cuckoo::{CuckooMiner, PluginConfig};
 
-// Grin Pre and Post headers, into which a nonce is to be insterted for mutation
-pub const SAMPLE_GRIN_PRE_HEADER_1:&str = "00000000000000118e0fe6bcfaa76c6795592339f27b6d330d8f9c4ac8e86171a66357d1\
-    d0fce808000000005971f14f0000000000000000000000000000000000000000000000000000000000000000\
-    3e1fcdd453ce51ffbb16dd200aeb9ef7375aec196e97094868428a7325e4a19b00";
+/// Values from T4 genesis that should be validated
+pub const T4_GENESIS_PREPOW:&str = "00010000000000000000000000005bc794c0fffffffff\
+fffffffffffffffffffffffffffffffffffffffffffffffffffffff0000000000000000000000\
+00000000000000000000000000000000000000000000000000000000000000000000000000000\
+00000000000000000000000000000000000000000000000000000000000000000000000000000\
+00000000000000000000000000000000000000000000000000000000000000000000000000000\
+00000000000000000000000000000000000000000000000000000000000000000000000000000\
+000000000000000000000000000000001c5200000007407784d410a210b1ba";
 
-pub const SAMPLE_GRIN_POST_HEADER_1:&str = "010a020364";
+pub const _T4_GENESIS_NONCE:u64 = 8612241555342799290;
+pub const T4_GENESIS_PROOF:[u64; 42] = [
+0x46f3b4, 0x1135f8c, 0x1a1596f, 0x1e10f71, 0x41c03ea, 0x63fe8e7, 0x65af34f,
+0x73c16d3, 0x8216dc3, 0x9bc75d0, 0xae7d9ad, 0xc1cb12b, 0xc65e957, 0xf67a152,
+0xfac6559, 0x100c3d71, 0x11eea08b, 0x1225dfbb, 0x124d61a1, 0x132a14b4, 0x13f4ec38,
+0x1542d236, 0x155f2df0, 0x1577394e, 0x163c3513, 0x19349845, 0x19d46953, 0x19f65ed4,
+0x1a0411b9, 0x1a2fa039, 0x1a72a06c, 0x1b02ddd2, 0x1b594d59, 0x1b7bffd3, 0x1befe12e,
+0x1c82e4cd, 0x1d492478, 0x1de132a5, 0x1e578b3c, 0x1ed96855, 0x1f222896, 0x1fea0da6];
 
 // Helper function, tests a particular miner implementation against a known set
 pub fn mine_async_for_duration(configs: &Vec<PluginConfig>, duration_in_seconds: i64) {
@@ -47,14 +58,14 @@ pub fn mine_async_for_duration(configs: &Vec<PluginConfig>, duration_in_seconds:
 
 	while time::get_time().sec < deadline {
 
-		println!("Test mining for {} seconds, looking for difficulty > 0", duration_in_seconds);
+		println!("Test mining for {} seconds, looking for difficulty >= 0", duration_in_seconds);
 		let mut i=0;
 		for c in configs.clone().into_iter(){
 			println!("Plugin {}: {}", i, c.name);
 			i+=1;
 		}
 
-		miner.notify(1, SAMPLE_GRIN_PRE_HEADER_1, SAMPLE_GRIN_POST_HEADER_1, 0).unwrap();
+		miner.notify(1, T4_GENESIS_PREPOW, "", 0).unwrap();
 
 		loop {
 			if let Some(solutions) = miner.get_solutions() {
@@ -99,7 +110,8 @@ pub fn mine_async_for_duration(configs: &Vec<PluginConfig>, duration_in_seconds:
 				}
 			}
 			if stats_updated && extra_time {
-				break;
+				miner.stop_solvers();
+				return;
 			}
 			//avoid busy wait 
 			let sleep_dur = std::time::Duration::from_millis(100);

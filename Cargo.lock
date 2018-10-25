@@ -265,10 +265,12 @@ dependencies = [
 name = "grin_miner_config"
 version = "0.4.0"
 dependencies = [
+ "cuckoo_miner 0.4.0",
  "dirs 1.0.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "grin_miner_util 0.4.0",
  "serde 1.0.78 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_derive 1.0.78 (registry+https://github.com/rust-lang/crates.io-index)",
+ "slog 2.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "toml 0.4.6 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 

@@ -21,8 +21,9 @@ use std::fs::File;
 
 use toml;
 use types::MinerConfig;
-use util::LoggingConfig;
-use types::{ConfigError, ConfigMembers, GlobalConfig};
+use util::{LoggingConfig, LOGGER};
+use types::{ConfigError, ConfigMembers, GlobalConfig, GrinMinerPluginConfig};
+use cuckoo::PluginConfig;
 
 extern crate dirs;
 
@@ -32,8 +33,51 @@ extern crate dirs;
 const CONFIG_FILE_NAME: &'static str = "grin-miner.toml";
 const GRIN_HOME: &'static str = ".grin";
 
-/// Returns the defaults, as strewn throughout the code
+/// resolve a read parameter to a solver param, (or not if it isn't found)
+fn resolve_param(config: &mut PluginConfig, name: &str, value: u32) {
+	match name {
+		"nthreads" => config.params.nthreads = value,
+		"ntrims" => config.params.ntrims = value,
+		"device" => config.params.device = value,
+		"blocks" => config.params.blocks = value,
+		"tbp" => config.params.tpb = value,
+		"expand" => config.params.expand = value,
+		"genablocks" => config.params.genablocks = value,
+		"genatpb" => config.params.genatpb = value,
+		"genbtpb" => config.params.genbtpb = value,
+		"trimtpb" => config.params.trimtpb = value,
+		"tailtpb" => config.params.tailtpb = value,
+		"recoverblocks" => config.params.recoverblocks = value,
+		"recovertpb" => config.params.recovertpb = value,
+		_ => {},
+	};
+}
 
+/// Transforms a set of grin-miner plugin configs to cuckoo-miner plugins configs
+pub fn read_configs(conf_in: Vec<GrinMinerPluginConfig>) -> Vec<PluginConfig> {
+	let mut return_vec = vec![];
+	for conf in conf_in {
+		let res = PluginConfig::new(&conf.plugin_name);
+		match res {
+			Err(e) => {
+				error!(LOGGER, "Error reading plugin config: {:?}", e);
+				panic!("{:?}", e);
+			},
+			Ok(mut c) => {
+				if conf.parameters.is_some() {
+					let params = conf.parameters.unwrap();
+					for k in params.keys() {
+						resolve_param(&mut c, k, *params.get(k).unwrap());
+					}
+				}
+				return_vec.push(c)
+			}
+		}
+	}
+	return_vec
+}
+
+/// Returns the defaults, as strewn throughout the code
 impl Default for ConfigMembers {
 	fn default() -> ConfigMembers {
 		ConfigMembers {

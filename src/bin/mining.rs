@@ -23,51 +23,8 @@ use {config, types, stats};
 
 use cuckoo::{
 	CuckooMiner,
-	PluginConfig,
 	SolverStats
 };
-
-/// resolve a read parameter to a solver param, (or not if it isn't found)
-fn resolve_param(config: &mut PluginConfig, name: &str, value: u32) {
-	match name {
-		"nthreads" => config.params.nthreads = value,
-		"ntrims" => config.params.ntrims = value,
-		"device" => config.params.device = value,
-		"expand" => config.params.expand = value,
-		"genablocks" => config.params.genablocks = value,
-		"genatpb" => config.params.genatpb = value,
-		"genbtpb" => config.params.genbtpb = value,
-		"trimtpb" => config.params.trimtpb = value,
-		"tailtpb" => config.params.tailtpb = value,
-		"recoverblocks" => config.params.recoverblocks = value,
-		"recovertpb" => config.params.recovertpb = value,
-		_ => {},
-	};
-}
-
-/// Transforms a set of grin-miner plugin configs to cuckoo-miner plugins configs
-fn read_configs(conf_in: Vec<config::GrinMinerPluginConfig>) -> Vec<PluginConfig> {
-	let mut return_vec = vec![];
-	for conf in conf_in {
-		let res = PluginConfig::new(&conf.plugin_name);
-		match res {
-			Err(e) => {
-				error!(LOGGER, "Error reading plugin config: {:?}", e);
-				panic!("{:?}", e);
-			},
-			Ok(mut c) => {
-				if conf.parameters.is_some() {
-					let params = conf.parameters.unwrap();
-					for k in params.keys() {
-						resolve_param(&mut c, k, *params.get(k).unwrap());
-					}
-				}
-				return_vec.push(c)
-			}
-		}
-	}
-	return_vec
-}
 
 pub struct Controller {
 	config: config::MinerConfig,
@@ -110,7 +67,7 @@ impl Controller {
 		let mut next_stat_output = time::get_time().sec + stat_output_interval;
 
 		debug!(LOGGER, "Starting solvers");
-		let mut miner = CuckooMiner::new(read_configs(self.config.miner_plugin_config.clone()));
+		let mut miner = CuckooMiner::new(config::read_configs(self.config.miner_plugin_config.clone()));
 		let _ = miner.start_solvers();
 
 		loop {

@@ -20,25 +20,55 @@ extern crate rand;
 extern crate cuckoo_miner as cuckoo;
 
 use cuckoo::{PluginConfig};
+use common::mine_async_for_duration;
 
 #[test]
 fn mine_cuckatoo_mean_compat_cpu_19() {
 	let mut config = PluginConfig::new("cuckatoo_mean_compat_cpu_19").unwrap();
 	config.params.nthreads = 4;
-	common::mine_async_for_duration(&vec![config], 20);
+	mine_async_for_duration(&vec![config], 20);
 }
 
 #[test]
 fn mine_cuckatoo_mean_compat_cpu_29() {
 	let mut config = PluginConfig::new("cuckatoo_mean_compat_cpu_29").unwrap();
 	config.params.nthreads = 4;
-	common::mine_async_for_duration(&vec![config], 20);
+	mine_async_for_duration(&vec![config], 20);
+}
+
+#[cfg(feature="build-mean-avx2")]
+#[test]
+fn mine_cuckatoo_mean_avx2_cpu_29() {
+	let mut config = PluginConfig::new("cuckatoo_mean_avx2_cpu_29").unwrap();
+	config.params.nthreads = 4;
+	mine_async_for_duration(&vec![config], 20);
+}
+
+#[test]
+fn mine_cuckatoo_lean_cpu_19() {
+	let mut config = PluginConfig::new("cuckatoo_lean_cpu_19").unwrap();
+	config.params.nthreads = 4;
+	mine_async_for_duration(&vec![config], 20);
+}
+
+#[test]
+fn mine_cuckatoo_lean_cpu_29() {
+	let mut config = PluginConfig::new("cuckatoo_lean_cpu_29").unwrap();
+	config.params.nthreads = 4;
+	mine_async_for_duration(&vec![config], 20);
 }
 
 #[cfg(feature="build-cuda-plugins")]
 #[test]
-fn mine_cuckatoo_cuda_29() {
-	let mut config = PluginConfig::new("cuckatoo_cuda_29").unwrap();
+fn mine_cuckatoo_mean_cuda_29() {
+	let mut config = PluginConfig::new("cuckatoo_mean_cuda_29").unwrap();
 	config.params.expand = 1;
-	common::mine_async_for_duration(&vec![config], 20);
+	mine_async_for_duration(&vec![config], 20);
+}
+
+#[cfg(feature="build-cuda-plugins")]
+#[test]
+fn mine_cuckatoo_lean_cuda_29() {
+	let config = PluginConfig::new("cuckatoo_lean_cuda_29").unwrap();
+	mine_async_for_duration(&vec![config], 20);
 }
