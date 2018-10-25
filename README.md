@@ -70,7 +70,7 @@ You can then run `grin-miner` directly.
 
 # Configuration
 
-Grin-miner can be further configured via the `grin-miner.toml` file. 
+Grin-miner can be further configured via the `grin-miner.toml` file.
 This file contains contains inline documentation on all configuration
 options, and should be the first point of reference.
 
