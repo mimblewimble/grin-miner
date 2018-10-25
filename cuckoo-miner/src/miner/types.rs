@@ -13,8 +13,8 @@
 // limitations under the License.
 
 //! Miner types
-use std::path::PathBuf;
 use std::sync::{Arc, RwLock};
+use std::env;
 
 use CuckooMinerError;
 use {PluginConfig, PluginLibrary, SolverSolutions, SolverStats};
@@ -38,9 +38,10 @@ pub struct SolverInstance {
 impl SolverInstance {
 	/// Create a new solver instance with the given config
 	pub fn new(config: PluginConfig) -> Result<SolverInstance, CuckooMinerError> {
-		let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-		d.push(format!("../target/debug/plugins/{}{}", config.name, SO_SUFFIX).as_str());
-		let l = PluginLibrary::new(d.to_str().unwrap())?;
+		let mut p_path = env::current_exe().unwrap();
+		p_path.push("plugins");
+		p_path.push(format!("/{}{}", config.name, SO_SUFFIX).as_str());
+		let l = PluginLibrary::new(p_path.to_str().unwrap())?;
 		Ok(SolverInstance {
 			lib: l,
 			config: config,

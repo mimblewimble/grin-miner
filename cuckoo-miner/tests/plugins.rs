@@ -19,12 +19,12 @@ mod common;
 extern crate rand;
 extern crate cuckoo_miner as cuckoo;
 
-use std::path::PathBuf;
+use std::env;
 use common::{T4_GENESIS_PREPOW, T4_GENESIS_PROOF};
 
 use cuckoo::{SolverParams, SolverStats, SolverSolutions, CuckooMinerError, PluginLibrary};
 
-static DLL_SUFFIX: &str = ".cuckooplugin";
+static SO_SUFFIX: &str = ".cuckooplugin";
 
 /// Solution for 80 length header with nonce 0
 const CUCKATOO_29_SOL:[u64; 42] = [
@@ -62,9 +62,10 @@ fn from_hex_string(in_str: &str) -> Vec<u8> {
 
 //Helper to load a plugin library
 fn load_plugin_lib(plugin:&str) -> Result<PluginLibrary, CuckooMinerError> {
-	let mut d = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-	d.push(format!("../target/debug/plugins/{}{}", plugin, DLL_SUFFIX).as_str());
-	PluginLibrary::new(d.to_str().unwrap())
+	let mut p_path = env::current_exe().unwrap();
+	p_path.push("plugins");
+	p_path.push(format!("/{}{}", plugin, SO_SUFFIX).as_str());
+	PluginLibrary::new(p_path.to_str().unwrap())
 }
 
 //Helper to load all plugin libraries specified above
