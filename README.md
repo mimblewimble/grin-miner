@@ -1,4 +1,4 @@
-# Grin Miner - Build
+# Grin Miner
 
 A standalone mining implementation intended for mining Grin against a running Grin node.
 
