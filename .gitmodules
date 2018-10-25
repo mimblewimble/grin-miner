@@ -1,3 +1,0 @@
-[submodule "cuckoo-miner/src/cuckoo_sys/plugins/cuckoo/cuckoo"]
-	path = cuckoo-miner/src/cuckoo_sys/plugins/cuckoo/cuckoo
-	url = https://github.com/tromp/cuckoo.git
