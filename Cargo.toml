@@ -22,6 +22,7 @@ serde_json = "1"
 slog = { version = "~2.1", features = ["max_level_trace", "release_max_level_trace"] }
 term = "0.4"
 time = "0.1"
+cursive = "0.9.0"
 
 grin_miner_util = { path = "./util" }
 grin_miner_config = { path = "./config" }
@@ -33,11 +34,6 @@ cuckoo_miner = { path = "./cuckoo-miner" }
 #cuckoo_miner = { path = "./cuckoo-miner", features = ["build-mean-avx2"]}
 #or to build both
 #cuckoo_miner = { path = "./cuckoo-miner", features = ["build-cuda-plugins","build-mean-avx2"]}
-
-#temporary until cursive author publishes a new release
-[dependencies.cursive]
-git = "https://github.com/yeastplume/Cursive"
-tag = "grin_integration_1"
 
 [build-dependencies]
 built = "0.2"

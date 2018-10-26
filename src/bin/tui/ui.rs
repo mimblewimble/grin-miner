@@ -61,7 +61,7 @@ impl UI {
 	pub fn new(controller_tx: mpsc::Sender<ControllerMessage>) -> UI {
 		let (ui_tx, ui_rx) = mpsc::channel::<UIMessage>();
 		let mut grin_ui = UI {
-			cursive: Cursive::new(),
+			cursive: Cursive::default(),
 			ui_tx: ui_tx,
 			ui_rx: ui_rx,
 			controller_tx: controller_tx,
