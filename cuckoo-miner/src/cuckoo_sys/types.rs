@@ -112,6 +112,8 @@ pub struct SolverStats {
 	pub device_name: [c_uchar; MAX_NAME_LEN],
 	/// whether device has reported an error
 	pub has_errored: bool,
+	/// reason for error
+	pub error_reason: [c_uchar; MAX_NAME_LEN],
 	/// number of searched completed by device
 	pub iterations: uint32_t,
 	/// last solution start time
@@ -130,6 +132,7 @@ impl Default for SolverStats {
 			plugin_name: [0; MAX_NAME_LEN],
 			device_name: [0; MAX_NAME_LEN],
 			has_errored: false,
+			error_reason: [0; MAX_NAME_LEN],
 			iterations: 0,
 			last_start_time: 0,
 			last_end_time: 0,
@@ -162,6 +165,10 @@ impl SolverStats {
 	/// return plugin name as rust string
 	pub fn get_plugin_name(&self) -> String {
 		self.get_name(&self.plugin_name)
+	}
+	/// return plugin name as rust string
+	pub fn get_error_reason(&self) -> String {
+		self.get_name(&self.error_reason)
 	}
 	/// set plugin name
 	pub fn set_plugin_name(&mut self, name: &str) {

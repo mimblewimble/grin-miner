@@ -126,22 +126,33 @@ impl Controller {
 				false => "OK",
 				_ => "ERRORED",
 			};
-			debug!(
-				LOGGER,
-						"Mining: Plugin {} - Device {} ({}) at Cuck(at)oo{} - Status: {} : Last Graph time: {}s; \
-				 Graphs per second: {:.*} - Total Attempts: {}",
-						i,
-				s.device_id,
-				s.get_device_name(),
-				s.edge_bits,
-				status,
-				last_solution_time_secs,
-				3,
-				last_hashes_per_sec,
-				s.iterations
-			);
-			if last_hashes_per_sec.is_finite() {
-				sps_total += last_hashes_per_sec;
+			if !s.has_errored {
+				debug!(
+					LOGGER,
+							"Mining: Plugin {} - Device {} ({}) at Cuck(at)oo{} - Status: {} : Last Graph time: {}s; \
+					 Graphs per second: {:.*} - Total Attempts: {}",
+							i,
+					s.device_id,
+					s.get_device_name(),
+					s.edge_bits,
+					status,
+					last_solution_time_secs,
+					3,
+					last_hashes_per_sec,
+					s.iterations
+				);
+				if last_hashes_per_sec.is_finite() {
+					sps_total += last_hashes_per_sec;
+				}
+			} else {
+				debug!(
+					LOGGER,
+							"Mining: Plugin {} - Device {} ({}) Has ERRORED! Reason: {}",
+							i,
+							s.device_id,
+							s.get_device_name(),
+							s.get_error_reason(),
+					);
 			}
 			i += 1;
 		}

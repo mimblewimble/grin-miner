@@ -86,6 +86,10 @@ impl CuckooMiner {
 		solver_loop_rx: mpsc::Receiver<ControlMessage>,
 		solver_stopped_tx: mpsc::Sender<ControlMessage>,
 	) {
+		{
+			let mut s = shared_data.write().unwrap();
+			s.stats[instance].set_plugin_name(&solver.config.name);
+		}
 		// "Detach" a stop function from the solver, to let us keep a control thread going
 		let stop_fn = solver.lib.get_stop_solver_instance();
 		let sleep_dur = time::Duration::from_millis(100);
@@ -154,6 +158,16 @@ impl CuckooMiner {
 						ss.nonce = nonce;
 					}
 					s.solutions.push(solver.solutions.clone());
+				}
+				if s.stats[instance].has_errored {
+					s.stats[instance].set_plugin_name(&solver.config.name);
+					error!(LOGGER,
+						"Plugin {} has errored, device: {}. Reason: {}",
+						s.stats[instance].get_plugin_name(),
+						s.stats[instance].get_device_name(),
+						s.stats[instance].get_error_reason(),
+					);
+					break;
 				}
 			}
 			solver.solutions = SolverSolutions::default();
