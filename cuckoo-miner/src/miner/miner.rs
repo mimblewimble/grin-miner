@@ -38,6 +38,8 @@ enum ControlMessage {
 	Pause,
 	/// Resume
 	Resume,
+	/// Solver reporting stopped
+	SolverStopped(usize),
 }
 
 /// An instance of a miner, which loads a cuckoo-miner plugin
@@ -55,6 +57,9 @@ pub struct CuckooMiner {
 
 	/// solver loop tx
 	solver_loop_txs: Vec<mpsc::Sender<ControlMessage>>,
+
+	/// Solver has stopped and cleanly shutdown
+	solver_stopped_rxs: Vec<mpsc::Receiver<ControlMessage>>,
 }
 
 impl CuckooMiner {
@@ -68,6 +73,7 @@ impl CuckooMiner {
 			shared_data: Arc::new(RwLock::new(JobSharedData::new(len))),
 			control_txs: vec![],
 			solver_loop_txs: vec![],
+			solver_stopped_rxs: vec![],
 		}
 	}
 
@@ -78,6 +84,7 @@ impl CuckooMiner {
 		shared_data: JobSharedDataType,
 		control_rx: mpsc::Receiver<ControlMessage>,
 		solver_loop_rx: mpsc::Receiver<ControlMessage>,
+		solver_stopped_tx: mpsc::Sender<ControlMessage>,
 	) {
 		// "Detach" a stop function from the solver, to let us keep a control thread going
 		let stop_fn = solver.lib.get_stop_solver_instance();
@@ -110,6 +117,7 @@ impl CuckooMiner {
 					ControlMessage::Stop => break,
 					ControlMessage::Pause => paused = true,
 					ControlMessage::Resume => paused = false,
+					_ => {},
 				}
 			}
 			if paused {
@@ -154,6 +162,7 @@ impl CuckooMiner {
 		let _ = stop_handle.join();
 		solver.lib.destroy_solver_ctx(ctx);
 		solver.lib.unload();
+		let _ = solver_stopped_tx.send(ControlMessage::SolverStopped(instance));
 	}
 
 	/// Starts solvers, ready for jobs via job control
@@ -169,10 +178,12 @@ impl CuckooMiner {
 			let sd = self.shared_data.clone();
 			let (control_tx, control_rx) = mpsc::channel::<ControlMessage>();
 			let (solver_tx, solver_rx) = mpsc::channel::<ControlMessage>();
+			let (solver_stopped_tx, solver_stopped_rx) = mpsc::channel::<ControlMessage>();
 			self.control_txs.push(control_tx);
 			self.solver_loop_txs.push(solver_tx);
+			self.solver_stopped_rxs.push(solver_stopped_rx);
 			thread::spawn(move || {
-				let _ = CuckooMiner::solver_thread(s, i, sd, control_rx, solver_rx);
+				let _ = CuckooMiner::solver_thread(s, i, sd, control_rx, solver_rx, solver_stopped_tx);
 			});
 			i += 1;
 		}
@@ -279,5 +290,20 @@ impl CuckooMiner {
 			let _ = t.send(ControlMessage::Resume);
 		}
 		debug!(LOGGER, "Resume message sent");
+	}
+
+	/// block until solvers have all exited
+	pub fn wait_for_solver_shutdown(&self){
+		for r in self.solver_stopped_rxs.iter() {
+			while let Some(message) = r.iter().next() {
+				match message {
+					ControlMessage::SolverStopped(i) => {
+						debug!(LOGGER, "Solver stopped: {}", i);
+						break;
+					}
+					_ => {},
+				}
+			}
+		}
 	}
 }

@@ -167,13 +167,8 @@ impl Controller {
 			while let Some(message) = self.rx.try_iter().next() {
 				match message {
 					ControllerMessage::Shutdown => {
-						//server.stop();
 						self.ui.stop();
 						return;
-						/*self.ui
-							.ui_tx
-							.send(UIMessage::UpdateOutput("update".to_string()))
-							.unwrap();*/
 					}
 				}
 			}

@@ -87,6 +87,7 @@ impl Controller {
 					}types::MinerMessage::Shutdown => {
 						debug!(LOGGER, "Stopping jobs and Shutting down mining controller");
 						miner.stop_solvers();
+						miner.wait_for_solver_shutdown();
 						return;
 					}
 				};

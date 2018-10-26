@@ -82,6 +82,7 @@ fn start_tui(
 	// Run the UI controller.. here for now for simplicity to access
 	// everything it might need
 	println!("Starting Grin Miner in UI mode...");
+	println!("Waiting for solvers to shutdown...");
 	let _ = thread::Builder::new()
 		.name("ui".to_string())
 		.spawn(move || {
@@ -92,7 +93,6 @@ fn start_tui(
 			// Shut down everything else on tui exit
 			let _ = client_tx.send(types::ClientMessage::Shutdown);
 			let _ = miner_tx.send(types::MinerMessage::Shutdown);
-			println!("Stopping mining plugins and exiting...");
 			stop.store(true, Ordering::Relaxed);
 		});
 }
