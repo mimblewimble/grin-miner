@@ -49,7 +49,9 @@ fn resolve_param(config: &mut PluginConfig, name: &str, value: u32) {
 		"tailtpb" => config.params.tailtpb = value,
 		"recoverblocks" => config.params.recoverblocks = value,
 		"recovertpb" => config.params.recovertpb = value,
-		_ => {},
+		n => {
+				warn!(LOGGER, "Configuration param: {} unknown. Ignored.", n);
+			},
 	};
 }
 
