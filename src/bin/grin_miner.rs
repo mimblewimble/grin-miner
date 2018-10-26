@@ -145,6 +145,28 @@ fn main() {
 	let miner_stopped = Arc::new(AtomicBool::new(false));
 	let client_stopped = Arc::new(AtomicBool::new(false));
 
+	// Load plugin configuration and start solvers first,
+	// so we can exit pre-tui if something is obviously wrong
+	debug!(LOGGER, "Starting solvers");
+	let result = config::read_configs(mining_config.miner_plugin_config.clone());
+	let mut miner = match result {
+		Ok(cfgs) => cuckoo::CuckooMiner::new(cfgs),
+		Err(e) => {
+			println!("Error loading plugins. Please check logs for further info.");
+			println!("Error details:");
+			println!("{:?}", e);
+			println!("Exiting");
+			return;
+		}
+	};
+	if let Err(e) = miner.start_solvers(){
+		println!("Error starting plugins. Please check logs for further info.");
+		println!("Error details:");
+		println!("{:?}", e);
+		println!("Exiting");
+		return;
+	}
+
 	if mining_config.run_tui {
 		start_tui(stats.clone(), cc.tx.clone(), mc.tx.clone(), tui_stopped.clone());
 	} else {
@@ -157,7 +179,10 @@ fn main() {
 	let _ = thread::Builder::new()
 		.name("mining_controller".to_string())
 		.spawn(move || {
-			mc.run();
+			if let Err(e) = mc.run(miner) {
+				error!(LOGGER, "Error loading plugins. Please check logs for further info: {:?}", e);
+				return;
+			}
 			miner_stopped_internal.store(true, Ordering::Relaxed);
 		});
 

@@ -23,11 +23,12 @@ use {config, types, stats};
 
 use cuckoo::{
 	CuckooMiner,
+	CuckooMinerError,
 	SolverStats
 };
 
 pub struct Controller {
-	config: config::MinerConfig,
+	_config: config::MinerConfig,
 	rx: mpsc::Receiver<types::MinerMessage>,
 	pub tx: mpsc::Sender<types::MinerMessage>,
 	client_tx: Option<mpsc::Sender<types::ClientMessage>>,
@@ -45,7 +46,7 @@ impl Controller {
 		}
 		let (tx, rx) = mpsc::channel::<types::MinerMessage>();
 		Ok(Controller {
-			config: config,
+			_config: config,
 			rx: rx,
 			tx: tx,
 			client_tx: None,
@@ -60,15 +61,11 @@ impl Controller {
 		self.client_tx = Some(client_tx);
 	}
 
-	/// Run the mining controller
-	pub fn run(&mut self){
+	/// Run the mining controller, solvers in miner should already be going
+	pub fn run(&mut self, mut miner: CuckooMiner) -> Result<(), CuckooMinerError>{
 		// how often to output stats
 		let stat_output_interval = 2;
 		let mut next_stat_output = time::get_time().sec + stat_output_interval;
-
-		debug!(LOGGER, "Starting solvers");
-		let mut miner = CuckooMiner::new(config::read_configs(self.config.miner_plugin_config.clone()));
-		let _ = miner.start_solvers();
 
 		loop {
 			while let Some(message) = self.rx.try_iter().next() {
@@ -88,7 +85,7 @@ impl Controller {
 						debug!(LOGGER, "Stopping jobs and Shutting down mining controller");
 						miner.stop_solvers();
 						miner.wait_for_solver_shutdown();
-						return;
+						return Ok(());
 					}
 				};
 				if let Err(e) = result {

@@ -23,7 +23,7 @@ use toml;
 use types::MinerConfig;
 use util::{LoggingConfig, LOGGER};
 use types::{ConfigError, ConfigMembers, GlobalConfig, GrinMinerPluginConfig};
-use cuckoo::PluginConfig;
+use cuckoo::{PluginConfig, CuckooMinerError};
 
 extern crate dirs;
 
@@ -54,14 +54,14 @@ fn resolve_param(config: &mut PluginConfig, name: &str, value: u32) {
 }
 
 /// Transforms a set of grin-miner plugin configs to cuckoo-miner plugins configs
-pub fn read_configs(conf_in: Vec<GrinMinerPluginConfig>) -> Vec<PluginConfig> {
+pub fn read_configs(conf_in: Vec<GrinMinerPluginConfig>) -> Result<Vec<PluginConfig>, CuckooMinerError> {
 	let mut return_vec = vec![];
 	for conf in conf_in {
 		let res = PluginConfig::new(&conf.plugin_name);
 		match res {
 			Err(e) => {
 				error!(LOGGER, "Error reading plugin config: {:?}", e);
-				panic!("{:?}", e);
+				return Err(e);
 			},
 			Ok(mut c) => {
 				if conf.parameters.is_some() {
@@ -74,7 +74,7 @@ pub fn read_configs(conf_in: Vec<GrinMinerPluginConfig>) -> Vec<PluginConfig> {
 			}
 		}
 	}
-	return_vec
+	Ok(return_vec)
 }
 
 /// Returns the defaults, as strewn throughout the code
