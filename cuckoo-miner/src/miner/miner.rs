@@ -149,7 +149,10 @@ impl CuckooMiner {
 				&mut solver.stats,
 			);
 			iter_count += 1;
-			{
+			let still_valid = {
+				header_pre == shared_data.read().unwrap().pre_nonce
+			};
+			if still_valid {
 				let mut s = shared_data.write().unwrap();
 				s.stats[instance] = solver.stats.clone();
 				s.stats[instance].iterations = iter_count;
