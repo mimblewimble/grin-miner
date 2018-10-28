@@ -20,7 +20,8 @@
 
 use libc::*;
 use std::ffi::CString;
-use std::{fmt, cmp};
+use std::{fmt, cmp, marker};
+use std::ptr::NonNull;
 
 use blake2::blake2b::Blake2b;
 use byteorder::{ByteOrder, BigEndian};
@@ -30,8 +31,11 @@ pub const MAX_NAME_LEN: usize = 256;
 pub const MAX_SOLS: usize = 4;
 
 /// A solver context, opaque reference to C++ type underneath
-#[derive(Clone, Debug)]
+#[derive(Copy, Clone, Debug)]
 pub enum SolverCtx {}
+/// wrap ctx to send across threads
+pub struct SolverCtxWrapper(pub NonNull<SolverCtx>);
+unsafe impl marker::Send for SolverCtxWrapper { }
 
 /// Common parameters for a solver
 #[derive(Clone, Debug, Serialize, Deserialize)]

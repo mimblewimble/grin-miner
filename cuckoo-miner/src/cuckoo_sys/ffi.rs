@@ -39,7 +39,7 @@ type CuckooRunSolver = unsafe extern "C" fn(
 	*mut SolverSolutions, // reference to any found solutions
 	*mut SolverStats,     // solver stats
 ) -> uint32_t;
-type CuckooStopSolver = unsafe extern "C" fn();
+type CuckooStopSolver = unsafe extern "C" fn(*mut SolverCtx);
 type CuckooFillDefaultParams = unsafe extern "C" fn(*mut SolverParams);
 
 /// Struct to hold instances of loaded plugins
@@ -194,9 +194,9 @@ impl PluginLibrary {
 	}
 
 	/// Stop solver
-	pub fn stop_solver(&self) {
+	pub fn stop_solver(&self, ctx: *mut SolverCtx) {
 		let call_ref = self.cuckoo_stop_solver.lock().unwrap();
-		unsafe { call_ref() }
+		unsafe { call_ref(ctx) }
 	}
 
 	/// Get default params
@@ -215,9 +215,9 @@ impl PluginLibrary {
 	}
 
 	/// Stop solver from a "detached" instance
-	pub fn stop_solver_from_instance(inst: Arc<Mutex<CuckooStopSolver>>) {
+	pub fn stop_solver_from_instance(inst: Arc<Mutex<CuckooStopSolver>>, ctx: *mut SolverCtx) {
 		let call_ref = inst.lock().unwrap();
-		unsafe { call_ref() }
+		unsafe { call_ref(ctx) }
 	}
 
 }

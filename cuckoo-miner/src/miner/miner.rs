@@ -18,6 +18,7 @@
 
 use std::sync::{mpsc, Arc, RwLock};
 use std::{thread, time};
+use std::ptr::NonNull;
 use util::LOGGER;
 
 use config::types::PluginConfig;
@@ -27,7 +28,7 @@ use miner::types::{
 };
 
 use miner::util;
-use {CuckooMinerError, PluginLibrary, SolverStats, SolverSolutions};
+use {CuckooMinerError, PluginLibrary, SolverCtxWrapper, SolverStats, SolverSolutions};
 
 /// Miner control Messages
 
@@ -91,29 +92,32 @@ impl CuckooMiner {
 			s.stats[instance].set_plugin_name(&solver.config.name);
 		}
 		// "Detach" a stop function from the solver, to let us keep a control thread going
+		let ctx = solver.lib.create_solver_ctx(&mut solver.config.params);
+		let control_ctx =  SolverCtxWrapper(NonNull::new(ctx).unwrap());
+
 		let stop_fn = solver.lib.get_stop_solver_instance();
 		let sleep_dur = time::Duration::from_millis(100);
 		// monitor whether to send a stop signal to the solver, which should
 		// end the current solve attempt below
 		let stop_handle = thread::spawn(move || {
-			loop {
-				while let Some(message) = control_rx.try_iter().next() {
-					match message {
-						ControlMessage::Stop => {
-							PluginLibrary::stop_solver_from_instance(stop_fn.clone());
-							return;
-						},
-						ControlMessage::Pause => {
-							PluginLibrary::stop_solver_from_instance(stop_fn.clone());
-						},
-						_ => {},
-					};
+				loop {
+					let ctx_ptr = control_ctx.0.as_ptr();
+					while let Some(message) = control_rx.try_iter().next() {
+						match message {
+							ControlMessage::Stop => {
+								PluginLibrary::stop_solver_from_instance(stop_fn.clone(), ctx_ptr);
+								return;
+							},
+							ControlMessage::Pause => {
+								PluginLibrary::stop_solver_from_instance(stop_fn.clone(), ctx_ptr);
+							},
+							_ => {},
+						};
+					}
 				}
-			}
-		});
+			});
 
 		let mut iter_count = 0;
-		let ctx = solver.lib.create_solver_ctx(&mut solver.config.params);
 		let mut paused = true;
 		loop {
 			if let Some(message) = solver_loop_rx.try_iter().next() {
