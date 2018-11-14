@@ -122,6 +122,7 @@ nthreads = 4
 
 #[mining.miner_plugin_config.parameters]
 #device = 0
+#ntrims = 68
 #expand = 0
 #genablocks = 4096
 #genatpb = 256
