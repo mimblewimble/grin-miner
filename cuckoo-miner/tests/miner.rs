@@ -36,10 +36,27 @@ fn mine_cuckatoo_mean_compat_cpu_29() {
 	mine_async_for_duration(&vec![config], 20);
 }
 
+#[ignore]
+#[test]
+fn mine_cuckatoo_mean_compat_cpu_30() {
+	let mut config = PluginConfig::new("cuckatoo_mean_compat_cpu_30").unwrap();
+	config.params.nthreads = 4;
+	mine_async_for_duration(&vec![config], 20);
+}
+
 #[cfg(feature="build-mean-avx2")]
 #[test]
 fn mine_cuckatoo_mean_avx2_cpu_29() {
 	let mut config = PluginConfig::new("cuckatoo_mean_avx2_cpu_29").unwrap();
+	config.params.nthreads = 4;
+	mine_async_for_duration(&vec![config], 20);
+}
+
+#[ignore]
+#[cfg(feature="build-mean-avx2")]
+#[test]
+fn mine_cuckatoo_mean_avx2_cpu_30() {
+	let mut config = PluginConfig::new("cuckatoo_mean_avx2_cpu_30").unwrap();
 	config.params.nthreads = 4;
 	mine_async_for_duration(&vec![config], 20);
 }
