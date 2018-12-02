@@ -112,7 +112,7 @@ if(BUILD_CUDA_PLUGINS)
         endforeach(CUCKATOO_SIZE)
 
         ##cuckaroo mean cuda mean miner targets
-        foreach(CUCKAROO_SIZE 19 29 30)
+        foreach(CUCKAROO_SIZE 19 29)
             #get edgebits
             math (EXPR EDGEBITS ${CUCKAROO_SIZE})
         cuda_add_library (cuckaroo_mean_cuda_${CUCKAROO_SIZE} SHARED ${CUCKAROO_CUDA_MEAN_MINER_SOURCES} OPTIONS "-DEDGEBITS=${EDGEBITS} ${CUCKAROO_BUILD_FLAGS}")
