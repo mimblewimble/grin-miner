@@ -135,6 +135,7 @@ fn test_mutating(pl: &PluginLibrary, mut params: SolverParams){
 	for i in 0..42 {
 		assert_eq!(sols.sols[0].proof[i], CUCKATOO_29_SOL[i]);
 	}
+	println!("We're here");
 	pl.destroy_solver_ctx(ctx);
 	pl.unload();
 }
@@ -176,10 +177,30 @@ fn sanity_cuckatoo_mean_compat_cpu_29() {
 	params.nthreads = 4;
 	run_solver(&pl, params);
 }
+
+#[ignore]
+#[test]
+fn sanity_cuckatoo_mean_compat_cpu_30() {
+	let pl = load_plugin_lib("cuckatoo_mean_compat_cpu_30").unwrap();
+	let mut params = pl.get_default_params();
+	params.nthreads = 4;
+	run_solver(&pl, params);
+}
+
 #[cfg(feature="build-mean-avx2")]
 #[test]
 fn sanity_cuckatoo_mean_avx2_cpu_29() {
 	let pl = load_plugin_lib("cuckatoo_mean_avx2_cpu_29").unwrap();
+	let mut params = pl.get_default_params();
+	params.nthreads = 4;
+	run_solver(&pl, params);
+}
+
+#[ignore]
+#[cfg(feature="build-mean-avx2")]
+#[test]
+fn sanity_cuckatoo_mean_avx2_cpu_30() {
+	let pl = load_plugin_lib("cuckatoo_mean_avx2_cpu_30").unwrap();
 	let mut params = pl.get_default_params();
 	params.nthreads = 4;
 	run_solver(&pl, params);
