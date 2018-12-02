@@ -118,7 +118,7 @@ nthreads = 4
 # the expand parameter, 8GB+ withoug
 
 #[[mining.miner_plugin_config]]
-#plugin_name = "cuckatoo_mean_cuda_29"
+#plugin_name = "cuckaroo_mean_cuda_29"
 
 #[mining.miner_plugin_config.parameters]
 #device = 0
@@ -135,14 +135,14 @@ nthreads = 4
 # e.g. To enable multiple devices (copy params from above as needed)
 
 #[[mining.miner_plugin_config]]
-#plugin_name = "cuckatoo_mean_cuda_29"
+#plugin_name = "cuckaroo_mean_cuda_29"
 #[mining.miner_plugin_config.parameters]
 #device = 1
 
 ### lean cuda miner
 # much slower cuda solver, but should be usable on low-memory cards
 #[[mining.miner_plugin_config]]
-#plugin_name = "cuckatoo_lean_cuda_29"
+#plugin_name = "cuckaroo_lean_cuda_29"
 #device = 0
 #blocks = 128
 #tpb = 128
