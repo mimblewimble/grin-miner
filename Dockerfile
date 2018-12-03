@@ -3,8 +3,6 @@
 # builder stage
 FROM nvidia/cuda:10.0-devel as builder
 
-RUN curl https://sh.rustup.rs -sSf | sh -s -- -y
-
 RUN set -ex && \
     apt-get update && \
     apt-get --no-install-recommends --yes install \
@@ -39,7 +37,7 @@ WORKDIR /grin-miner
 
 RUN sed -i -e 's/run_tui = true/run_tui = false/' grin-miner.toml
 
-RUN echo $'#!/bin/bash\n\
+RUN echo '#!/bin/bash\n\
 if [ $# -eq 1 ]\n\
    then\n\
 sed -i -e 's/127.0.0.1/\$1/g' grin-miner.toml\n\
