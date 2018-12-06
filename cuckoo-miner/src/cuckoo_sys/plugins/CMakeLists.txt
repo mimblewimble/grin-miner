@@ -50,7 +50,7 @@ foreach(CUCKATOO_SIZE 19 29 30)
     set_target_properties(cuckatoo_lean_cpu_${CUCKATOO_SIZE} PROPERTIES COMPILE_FLAGS "${GPP_FLAGS} ${CUCKATOO_BUILD_FLAGS} -DATOMIC -DEDGEBITS=${EDGEBITS}" PREFIX "" SUFFIX ".cuckooplugin" )
 endforeach(CUCKATOO_SIZE)
 
-set (CUCKATOO_MEAN_COMPAT_FLAGS "${CUCKATOO_BUILD_FLAGS} -DNSIPHASH=1 -DSAVEEDGES")
+set (CUCKATOO_MEAN_COMPAT_FLAGS "${CUCKATOO_BUILD_FLAGS} -mno-avx2 -DNSIPHASH=4 -DSAVEEDGES")
 
 #cuckatoo_mean_compat_cpu compatible mode targets, for older processors
 foreach(CUCKATOO_SIZE 19 29 30)
