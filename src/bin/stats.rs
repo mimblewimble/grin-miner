@@ -17,8 +17,7 @@
 
 /// Struct to return relevant information about the mining process
 /// back to interested callers (such as the TUI)
- 
-use cuckoo;
+use plugin;
 
 #[derive(Clone)]
 pub struct MiningStats {
@@ -29,12 +28,12 @@ pub struct MiningStats {
 	/// current target for share difficulty we're working on
 	pub target_difficulty: u64,
 	/// Individual device status from Cuckoo-Miner
-	pub device_stats: Vec<cuckoo::SolverStats>,
+	pub device_stats: Vec<plugin::SolverStats>,
 }
 
 impl Default for MiningStats {
-	fn default() -> MiningStats{
-		MiningStats{
+	fn default() -> MiningStats {
+		MiningStats {
 			combined_gps: 0.0,
 			block_height: 0,
 			target_difficulty: 0,

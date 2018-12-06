@@ -14,9 +14,9 @@
 
 //! Public Types used for cuckoo-miner module
 
-use std::{io, fmt};
-use SolverParams;
+use plugin::SolverParams;
 use std::env;
+use std::{fmt, io};
 use {CuckooMinerError, PluginLibrary};
 
 pub static SO_SUFFIX: &str = ".cuckooplugin";

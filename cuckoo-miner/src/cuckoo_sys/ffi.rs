@@ -18,29 +18,13 @@
 //! miner modules. These functions are meant for internal cuckoo-miner crates,
 //! and will not be exposed to other projects including the cuckoo-miner crate.
 
+use plugin::*;
 use std::sync::{Arc, Mutex};
 use util::LOGGER;
 
-use libc::*;
 use libloading;
 
-use cuckoo_sys::types::*;
 use error::error::CuckooMinerError;
-
-// Type definitions corresponding to each function that the plugin/solver implements
-type CuckooCreateSolverCtx = unsafe extern "C" fn(*mut SolverParams) -> *mut SolverCtx;
-type CuckooDestroySolverCtx = unsafe extern "C" fn(*mut SolverCtx);
-type CuckooRunSolver = unsafe extern "C" fn(
-	*mut SolverCtx,       // Solver context
-	*const c_uchar,       // header
-	uint32_t,             // header length
-	uint64_t,             // nonce
-	uint32_t,             // range
-	*mut SolverSolutions, // reference to any found solutions
-	*mut SolverStats,     // solver stats
-) -> uint32_t;
-type CuckooStopSolver = unsafe extern "C" fn(*mut SolverCtx);
-type CuckooFillDefaultParams = unsafe extern "C" fn(*mut SolverParams);
 
 /// Struct to hold instances of loaded plugins
 
@@ -154,7 +138,6 @@ impl PluginLibrary {
 
 		let loaded_library_ref = self.loaded_library.lock().unwrap();
 		drop(loaded_library_ref);
-
 	}
 
 	/// Create a solver context
@@ -219,5 +202,4 @@ impl PluginLibrary {
 		let call_ref = inst.lock().unwrap();
 		unsafe { call_ref(ctx) }
 	}
-
 }

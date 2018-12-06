@@ -18,24 +18,55 @@
 #![deny(unused_mut)]
 #![warn(missing_docs)]
 
+extern crate serde;
+#[macro_use]
+extern crate serde_derive;
+extern crate blake2_rfc as blake2;
+extern crate byteorder;
+extern crate libc;
+extern crate serde_json;
+
 use libc::*;
 use std::ffi::CString;
-use std::{fmt, cmp, marker};
 use std::ptr::NonNull;
+use std::{cmp, fmt, marker};
 
 use blake2::blake2b::Blake2b;
-use byteorder::{ByteOrder, BigEndian};
+use byteorder::{BigEndian, ByteOrder};
 
+/// Size of proof
 pub const PROOFSIZE: usize = 42;
+/// Maximin length of plugin name w
 pub const MAX_NAME_LEN: usize = 256;
+/// Maximum number of solutions
 pub const MAX_SOLS: usize = 4;
+
+// Type definitions corresponding to each function that the plugin/solver implements
+/// Create solver function
+pub type CuckooCreateSolverCtx = unsafe extern "C" fn(*mut SolverParams) -> *mut SolverCtx;
+/// Destroy solver function
+pub type CuckooDestroySolverCtx = unsafe extern "C" fn(*mut SolverCtx);
+/// Run solver function
+pub type CuckooRunSolver = unsafe extern "C" fn(
+	*mut SolverCtx,       // Solver context
+	*const c_uchar,       // header
+	uint32_t,             // header length
+	uint64_t,             // nonce
+	uint32_t,             // range
+	*mut SolverSolutions, // reference to any found solutions
+	*mut SolverStats,     // solver stats
+) -> uint32_t;
+/// Stop solver function
+pub type CuckooStopSolver = unsafe extern "C" fn(*mut SolverCtx);
+/// Fill default params of solver
+pub type CuckooFillDefaultParams = unsafe extern "C" fn(*mut SolverParams);
 
 /// A solver context, opaque reference to C++ type underneath
 #[derive(Copy, Clone, Debug)]
 pub enum SolverCtx {}
 /// wrap ctx to send across threads
 pub struct SolverCtxWrapper(pub NonNull<SolverCtx>);
-unsafe impl marker::Send for SolverCtxWrapper { }
+unsafe impl marker::Send for SolverCtxWrapper {}
 
 /// Common parameters for a solver
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -187,7 +218,7 @@ impl SolverStats {
 #[repr(C)]
 #[derive(Clone, Copy)]
 pub struct Solution {
-	/// Nonce 
+	/// Nonce
 	pub nonce: uint64_t,
 	/// Proof
 	pub proof: [uint64_t; PROOFSIZE],

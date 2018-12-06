@@ -7,7 +7,7 @@ build = "src/build/build.rs"
 autobins = false
 
 [workspace]
-members = ["config", "util"]
+members = ["config", "util", "plugin"]
 
 [[bin]]
 name = "grin-miner"
@@ -25,6 +25,7 @@ time = "0.1"
 cursive = "0.9.0"
 
 grin_miner_util = { path = "./util" }
+grin_miner_plugin = { path = "./plugin" }
 grin_miner_config = { path = "./config" }
 cuckoo_miner = { path = "./cuckoo-miner" }
 
