@@ -14,9 +14,10 @@
 
 //! Stratum client implementation, for standalone mining against a running
 //! grin node
-extern crate grin_miner_util as util;
-extern crate grin_miner_config as config;
 extern crate cuckoo_miner as cuckoo;
+extern crate grin_miner_config as config;
+extern crate grin_miner_plugin as plugin;
+extern crate grin_miner_util as util;
 
 extern crate bufstream;
 extern crate time;
@@ -27,16 +28,16 @@ extern crate serde_json;
 extern crate slog;
 extern crate cursive;
 
-pub mod mining;
 pub mod client;
-pub mod types;
+pub mod mining;
 pub mod stats;
 pub mod tui;
+pub mod types;
 
-use std::thread;
-use std::sync::{mpsc, Arc, RwLock};
-use std::sync::atomic::{AtomicBool, Ordering};
 use config::GlobalConfig;
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::{mpsc, Arc, RwLock};
+use std::thread;
 
 use tui::ui;
 
@@ -73,12 +74,12 @@ fn log_build_info() {
 	trace!(LOGGER, "{}", deps);
 }
 
-
 fn start_tui(
-	s: Arc<RwLock<stats::Stats>>, 
+	s: Arc<RwLock<stats::Stats>>,
 	client_tx: mpsc::Sender<types::ClientMessage>,
 	miner_tx: mpsc::Sender<types::MinerMessage>,
-	stop: Arc<AtomicBool>) {
+	stop: Arc<AtomicBool>,
+) {
 	// Run the UI controller.. here for now for simplicity to access
 	// everything it might need
 	println!("Starting Grin Miner in UI mode...");
@@ -102,8 +103,10 @@ fn main() {
 	let mut global_config = GlobalConfig::new(None).unwrap_or_else(|e| {
 		panic!("Error parsing config file: {}", e);
 	});
-	println!("Starting Grin-Miner from config file at: {}", 
-		global_config.config_file_path.unwrap().to_str().unwrap());
+	println!(
+		"Starting Grin-Miner from config file at: {}",
+		global_config.config_file_path.unwrap().to_str().unwrap()
+	);
 	// Init logging
 	let mut log_conf = global_config
 		.members
@@ -126,9 +129,10 @@ fn main() {
 
 	let stats = Arc::new(RwLock::new(stats::Stats::default()));
 
-	let mut mc = mining::Controller::new(mining_config.clone(), stats.clone()).unwrap_or_else(|e| {
-		panic!("Error loading mining controller: {}", e);
-	});
+	let mut mc =
+		mining::Controller::new(mining_config.clone(), stats.clone()).unwrap_or_else(|e| {
+			panic!("Error loading mining controller: {}", e);
+		});
 
 	let cc = client::Controller::new(
 		&mining_config.stratum_server_addr,
@@ -137,7 +141,6 @@ fn main() {
 		mc.tx.clone(),
 		stats.clone(),
 	).unwrap_or_else(|e| {
-
 		panic!("Error loading stratum client controller: {:?}", e);
 	});
 
@@ -159,7 +162,7 @@ fn main() {
 			return;
 		}
 	};
-	if let Err(e) = miner.start_solvers(){
+	if let Err(e) = miner.start_solvers() {
 		println!("Error starting plugins. Please check logs for further info.");
 		println!("Error details:");
 		println!("{:?}", e);
@@ -168,7 +171,12 @@ fn main() {
 	}
 
 	if mining_config.run_tui {
-		start_tui(stats.clone(), cc.tx.clone(), mc.tx.clone(), tui_stopped.clone());
+		start_tui(
+			stats.clone(),
+			cc.tx.clone(),
+			mc.tx.clone(),
+			tui_stopped.clone(),
+		);
 	} else {
 		tui_stopped.store(true, Ordering::Relaxed);
 	}
@@ -180,7 +188,10 @@ fn main() {
 		.name("mining_controller".to_string())
 		.spawn(move || {
 			if let Err(e) = mc.run(miner) {
-				error!(LOGGER, "Error loading plugins. Please check logs for further info: {:?}", e);
+				error!(
+					LOGGER,
+					"Error loading plugins. Please check logs for further info: {:?}", e
+				);
 				return;
 			}
 			miner_stopped_internal.store(true, Ordering::Relaxed);
@@ -194,10 +205,11 @@ fn main() {
 			client_stopped_internal.store(true, Ordering::Relaxed);
 		});
 
-	loop{
+	loop {
 		if miner_stopped.load(Ordering::Relaxed)
-				&& client_stopped.load(Ordering::Relaxed)
-				&& tui_stopped.load(Ordering::Relaxed) {
+			&& client_stopped.load(Ordering::Relaxed)
+			&& tui_stopped.load(Ordering::Relaxed)
+		{
 			thread::sleep(std::time::Duration::from_millis(100));
 			break;
 		}

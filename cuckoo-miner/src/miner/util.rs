@@ -14,9 +14,9 @@
 
 //! header manipulation utility functions
 
+use byteorder::{BigEndian, ByteOrder};
+use plugin::Solution;
 use rand::{self, Rng};
-use byteorder::{ByteOrder, BigEndian};
-use Solution;
 
 /// From grin
 /// The target is the 8-bytes hash block hashes must be lower than.
@@ -39,7 +39,7 @@ pub fn header_data(pre_nonce: &str, post_nonce: &str, nonce: u64) -> Vec<u8> {
 }
 
 pub fn get_next_header_data(pre_nonce: &str, post_nonce: &str) -> (u64, Vec<u8>) {
-	let nonce: u64 = rand:: OsRng::new().unwrap().gen();
+	let nonce: u64 = rand::OsRng::new().unwrap().gen();
 	(nonce, header_data(pre_nonce, post_nonce, nonce))
 }
 
@@ -63,5 +63,3 @@ pub fn from_hex_string(in_str: &str) -> Vec<u8> {
 	}
 	bytes
 }
-
-

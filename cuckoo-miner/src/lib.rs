@@ -27,6 +27,7 @@
 #![deny(unused_mut)]
 #![warn(missing_docs)]
 
+extern crate grin_miner_plugin as plugin;
 extern crate grin_miner_util as util;
 
 extern crate serde;
@@ -52,10 +53,8 @@ mod config;
 mod cuckoo_sys;
 mod error;
 mod miner;
-mod types;
 
 pub use config::types::PluginConfig;
 pub use cuckoo_sys::ffi::PluginLibrary;
 pub use error::error::CuckooMinerError;
 pub use miner::miner::CuckooMiner;
-pub use types::*;

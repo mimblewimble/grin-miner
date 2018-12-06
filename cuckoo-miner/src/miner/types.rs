@@ -13,12 +13,13 @@
 // limitations under the License.
 
 //! Miner types
-use std::sync::{Arc, RwLock};
 use std::env;
+use std::sync::{Arc, RwLock};
 
-use CuckooMinerError;
-use {PluginConfig, PluginLibrary, SolverSolutions, SolverStats};
 use config::types::SO_SUFFIX;
+use plugin::{SolverSolutions, SolverStats};
+use CuckooMinerError;
+use {PluginConfig, PluginLibrary};
 
 pub type JobSharedDataType = Arc<RwLock<JobSharedData>>;
 
@@ -98,9 +99,7 @@ impl Default for JobSharedData {
 }
 
 impl JobSharedData {
-	pub fn new(
-		num_solvers: usize,
-	) -> JobSharedData {
+	pub fn new(num_solvers: usize) -> JobSharedData {
 		JobSharedData {
 			job_id: 0,
 			pre_nonce: String::from(""),

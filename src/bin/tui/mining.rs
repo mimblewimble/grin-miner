@@ -17,18 +17,17 @@
 use std::cmp::Ordering;
 use std::sync::{Arc, RwLock};
 
-use cursive::Cursive;
-use cursive::view::View;
-use cursive::views::{BoxView, Dialog, LinearLayout, StackView,
-                     TextView};
 use cursive::direction::Orientation;
 use cursive::traits::*;
+use cursive::view::View;
+use cursive::views::{BoxView, Dialog, LinearLayout, StackView, TextView};
+use cursive::Cursive;
 
 use tui::constants::*;
 use tui::types::*;
 
+use plugin::SolverStats;
 use stats;
-use cuckoo::SolverStats;
 use tui::table::{TableView, TableViewItem};
 
 #[derive(Copy, Clone, PartialEq, Eq, Hash)]
@@ -105,65 +104,51 @@ pub struct TUIMiningView;
 impl TUIStatusListener for TUIMiningView {
 	/// Create the mining view
 	fn create() -> Box<View> {
+		let table_view = TableView::<SolverStats, MiningDeviceColumn>::new()
+			.column(MiningDeviceColumn::Plugin, "Plugin", |c| {
+				c.width_percent(20)
+			}).column(MiningDeviceColumn::DeviceId, "Device ID", |c| {
+				c.width_percent(5)
+			}).column(MiningDeviceColumn::DeviceName, "Device Name", |c| {
+				c.width_percent(20)
+			}).column(MiningDeviceColumn::EdgeBits, "Size", |c| c.width_percent(5))
+			.column(MiningDeviceColumn::ErrorStatus, "Status", |c| {
+				c.width_percent(5)
+			}).column(MiningDeviceColumn::LastGraphTime, "Graph Time", |c| {
+				c.width_percent(10)
+			}).column(MiningDeviceColumn::GraphsPerSecond, "GPS", |c| {
+				c.width_percent(10)
+			});
 
-		let table_view =
-			TableView::<SolverStats, MiningDeviceColumn>::new()
-				.column(MiningDeviceColumn::Plugin, "Plugin", |c| {
-					c.width_percent(20)
-				})
-				.column(MiningDeviceColumn::DeviceId, "Device ID", |c| {
-					c.width_percent(5)
-				})
-				.column(MiningDeviceColumn::DeviceName, "Device Name", |c| {
-					c.width_percent(20)
-				})
-				.column(MiningDeviceColumn::EdgeBits, "Size", |c| {
-					c.width_percent(5)
-				})
-				.column(MiningDeviceColumn::ErrorStatus, "Status", |c| {
-					c.width_percent(5)
-				})
-				.column(MiningDeviceColumn::LastGraphTime, "Graph Time", |c| {
-					c.width_percent(10)
-				})
-				.column(MiningDeviceColumn::GraphsPerSecond, "GPS", |c| {
-					c.width_percent(10)
-				});
-
-		let status_view = LinearLayout::new(Orientation::Vertical)
-			.child(
-				LinearLayout::new(Orientation::Horizontal)
-					.child(TextView::new("Connection Status: Starting...").with_id("mining_server_status")),
-			).child(
-				LinearLayout::new(Orientation::Horizontal)
-					.child(TextView::new("Last Message Sent:  ").with_id("last_message_sent")),
-			).child(
-				LinearLayout::new(Orientation::Horizontal)
-					.child(TextView::new("Last Message Received:  ").with_id("last_message_received")),
-			)
-			.child(
-				LinearLayout::new(Orientation::Horizontal)
-					.child(TextView::new("Mining Status: ").with_id("mining_status")),
-			)
-			.child(
-				LinearLayout::new(Orientation::Horizontal)
-					.child(TextView::new("  ").with_id("network_info")),
-			);
+		let status_view =
+			LinearLayout::new(Orientation::Vertical)
+				.child(LinearLayout::new(Orientation::Horizontal).child(
+					TextView::new("Connection Status: Starting...").with_id("mining_server_status"),
+				)).child(
+					LinearLayout::new(Orientation::Horizontal)
+						.child(TextView::new("Last Message Sent:  ").with_id("last_message_sent")),
+				).child(LinearLayout::new(Orientation::Horizontal).child(
+					TextView::new("Last Message Received:  ").with_id("last_message_received"),
+				)).child(
+					LinearLayout::new(Orientation::Horizontal)
+						.child(TextView::new("Mining Status: ").with_id("mining_status")),
+				).child(
+					LinearLayout::new(Orientation::Horizontal)
+						.child(TextView::new("  ").with_id("network_info")),
+				);
 
 		let mining_device_view = LinearLayout::new(Orientation::Vertical)
 			.child(status_view)
 			.child(BoxView::with_full_screen(
 				Dialog::around(table_view.with_id(TABLE_MINING_STATUS).min_size((50, 20)))
 					.title("Mining Devices"),
-			))
-			.with_id("mining_device_view");
+			)).with_id("mining_device_view");
 
 		let view_stack = StackView::new()
 			.layer(mining_device_view)
 			.with_id("mining_stack_view");
 
-		let mining_view = LinearLayout::new(Orientation::Vertical)
-			.child(view_stack);
+		let mining_view = LinearLayout::new(Orientation::Vertical).child(view_stack);
 
 		Box::new(mining_view.with_id(VIEW_MINING))
 	}
@@ -175,12 +160,13 @@ impl TUIStatusListener for TUIMiningView {
 		c.call_on_id("mining_server_status", |t: &mut TextView| {
 			t.set_content(stats.client_stats.connection_status.clone());
 		});
-	
+
 		let (basic_mining_status, basic_network_info) = {
 			if stats.client_stats.connected {
 				if stats.mining_stats.combined_gps == 0.0 {
 					(
-						"Mining Status: Starting miner and awaiting first graph time...".to_string(),
+						"Mining Status: Starting miner and awaiting first graph time..."
+							.to_string(),
 						" ".to_string(),
 					)
 				} else {
@@ -196,10 +182,13 @@ impl TUIStatusListener for TUIMiningView {
 					)
 				}
 			} else {
-				("Mining Status: Waiting for server".to_string(), "  ".to_string())
+				(
+					"Mining Status: Waiting for server".to_string(),
+					"  ".to_string(),
+				)
 			}
 		};
-		
+
 		// device
 		c.call_on_id("mining_status", |t: &mut TextView| {
 			t.set_content(basic_mining_status);

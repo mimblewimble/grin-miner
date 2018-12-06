@@ -18,6 +18,14 @@
 #![deny(unused_mut)]
 #![warn(missing_docs)]
 
+extern crate serde;
+#[macro_use]
+extern crate serde_derive;
+extern crate blake2_rfc as blake2;
+extern crate byteorder;
+extern crate libc;
+extern crate serde_json;
+
 use libc::*;
 use std::ffi::CString;
 use std::ptr::NonNull;

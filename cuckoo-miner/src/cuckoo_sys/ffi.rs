@@ -18,8 +18,8 @@
 //! miner modules. These functions are meant for internal cuckoo-miner crates,
 //! and will not be exposed to other projects including the cuckoo-miner crate.
 
+use plugin::*;
 use std::sync::{Arc, Mutex};
-use types::*;
 use util::LOGGER;
 
 use libloading;

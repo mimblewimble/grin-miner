@@ -18,6 +18,7 @@ build-cuda-plugins = []
 
 [dependencies]
 grin_miner_util = { path = "../util" }
+grin_miner_plugin = { path = "../plugin" }
 time = "^0.1"
 rust-crypto = "0.2.36"
 log = "^0.3"

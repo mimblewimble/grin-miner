@@ -12,20 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-/// Plugin controller, listens for messages sent from the stratum 
+/// Plugin controller, listens for messages sent from the stratum
 /// server, controls plugins and responds appropriately
-
 use std::sync::{mpsc, Arc, RwLock};
-use time;
 use std::{self, thread};
+use time;
 use util::LOGGER;
-use {config, types, stats};
+use {config, stats, types};
 
-use cuckoo::{
-	CuckooMiner,
-	CuckooMinerError,
-	SolverStats
-};
+use cuckoo::{CuckooMiner, CuckooMinerError};
+
+use plugin::SolverStats;
 
 pub struct Controller {
 	_config: config::MinerConfig,
@@ -39,7 +36,10 @@ pub struct Controller {
 }
 
 impl Controller {
-	pub fn new(config: config::MinerConfig, stats: Arc<RwLock<stats::Stats>>) -> Result<Controller, String> {
+	pub fn new(
+		config: config::MinerConfig,
+		stats: Arc<RwLock<stats::Stats>>,
+	) -> Result<Controller, String> {
 		{
 			let mut stats_w = stats.write().unwrap();
 			stats_w.client_stats.server_url = config.stratum_server_addr.clone();
@@ -62,7 +62,7 @@ impl Controller {
 	}
 
 	/// Run the mining controller, solvers in miner should already be going
-	pub fn run(&mut self, mut miner: CuckooMiner) -> Result<(), CuckooMinerError>{
+	pub fn run(&mut self, mut miner: CuckooMiner) -> Result<(), CuckooMinerError> {
 		// how often to output stats
 		let stat_output_interval = 2;
 		let mut next_stat_output = time::get_time().sec + stat_output_interval;
@@ -76,12 +76,13 @@ impl Controller {
 						self.current_job_id = job_id;
 						self.current_target_diff = diff;
 						miner.notify(self.current_job_id as u32, &pre_pow, "", 0)
-					},
+					}
 					types::MinerMessage::StopJob => {
 						debug!(LOGGER, "Stopping jobs");
 						miner.pause_solvers();
 						Ok(())
-					}types::MinerMessage::Shutdown => {
+					}
+					types::MinerMessage::Shutdown => {
 						debug!(LOGGER, "Stopping jobs and Shutting down mining controller");
 						miner.stop_solvers();
 						miner.wait_for_solver_shutdown();
@@ -102,13 +103,17 @@ impl Controller {
 			if let Some(ss) = solutions {
 				let edge_bits = ss.edge_bits;
 				for i in 0..ss.num_sols {
-					let _ = self.client_tx.as_mut().unwrap().send(types::ClientMessage::FoundSolution (
-						self.current_height,
-						self.current_job_id,
-						edge_bits,
-						ss.sols[i as usize].nonce,
-						ss.sols[i as usize].proof.to_vec(),
-					));
+					let _ =
+						self.client_tx
+							.as_mut()
+							.unwrap()
+							.send(types::ClientMessage::FoundSolution(
+								self.current_height,
+								self.current_job_id,
+								edge_bits,
+								ss.sols[i as usize].nonce,
+								ss.sols[i as usize].proof.to_vec(),
+							));
 				}
 			}
 			thread::sleep(std::time::Duration::from_millis(100));
@@ -119,8 +124,7 @@ impl Controller {
 		let mut sps_total = 0.0;
 		let mut i = 0;
 		for s in stats.clone() {
-			let last_solution_time_secs =
-				s.last_solution_time as f64 / 1000000000.0;
+			let last_solution_time_secs = s.last_solution_time as f64 / 1000000000.0;
 			let last_hashes_per_sec = 1.0 / last_solution_time_secs;
 			let status = match s.has_errored {
 				false => "OK",
@@ -147,12 +151,12 @@ impl Controller {
 			} else {
 				debug!(
 					LOGGER,
-							"Mining: Plugin {} - Device {} ({}) Has ERRORED! Reason: {}",
-							i,
-							s.device_id,
-							s.get_device_name(),
-							s.get_error_reason(),
-					);
+					"Mining: Plugin {} - Device {} ({}) Has ERRORED! Reason: {}",
+					i,
+					s.device_id,
+					s.get_device_name(),
+					s.get_error_reason(),
+				);
 			}
 			i += 1;
 		}
@@ -169,5 +173,4 @@ impl Controller {
 			s_stats.mining_stats.device_stats = stats;
 		}
 	}
-
 }
