@@ -18,6 +18,8 @@ extern crate cuckoo_miner as cuckoo;
 extern crate grin_miner_config as config;
 extern crate grin_miner_plugin as plugin;
 extern crate grin_miner_util as util;
+extern crate native_tls;
+extern crate url;
 
 extern crate bufstream;
 extern crate time;

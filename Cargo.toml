@@ -16,6 +16,8 @@ path = "src/bin/grin_miner.rs"
 [dependencies]
 backtrace = "0.3"
 bufstream = "~0.1"
+native-tls = "0.2"
+url = "1.7"
 serde = "1"
 serde_derive = "1"
 serde_json = "1"

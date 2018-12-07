@@ -16,14 +16,17 @@
 //! stratum server
 
 use std;
-use std::io::{BufRead, ErrorKind, Write};
+use std::io::{BufRead, ErrorKind, Read, Write};
 use std::net::TcpStream;
 use std::sync::{mpsc, Arc, RwLock};
 use std::thread;
 
 use bufstream::BufStream;
+use native_tls::TlsConnector;
+use native_tls::TlsStream;
 use serde_json;
 use time;
+use url::{ParseError, Url};
 
 use stats;
 use types;
@@ -34,12 +37,15 @@ pub enum Error {
 	ConnectionError(String),
 }
 
-pub struct Controller {
+pub struct Controller<T>
+where
+	T: Read + Write,
+{
 	_id: u32,
 	server_url: String,
 	server_login: Option<String>,
 	server_password: Option<String>,
-	stream: Option<BufStream<TcpStream>>,
+	stream: Option<BufStream<T>>,
 	rx: mpsc::Receiver<types::ClientMessage>,
 	pub tx: mpsc::Sender<types::ClientMessage>,
 	miner_tx: mpsc::Sender<types::MinerMessage>,
@@ -47,14 +53,17 @@ pub struct Controller {
 	stats: Arc<RwLock<stats::Stats>>,
 }
 
-impl Controller {
+impl<T> Controller<T>
+where
+	T: Read + Write,
+{
 	pub fn new(
 		server_url: &str,
 		server_login: Option<String>,
 		server_password: Option<String>,
 		miner_tx: mpsc::Sender<types::MinerMessage>,
 		stats: Arc<RwLock<stats::Stats>>,
-	) -> Result<Controller, Error> {
+	) -> Result<Controller<T>, Error> {
 		let (tx, rx) = mpsc::channel::<types::ClientMessage>();
 		Ok(Controller {
 			_id: 0,
@@ -71,10 +80,16 @@ impl Controller {
 	}
 
 	pub fn try_connect(&mut self) -> Result<(), Error> {
+		let connector = TlsConnector::new().unwrap();
 		match TcpStream::connect(self.server_url.clone()) {
 			Ok(conn) => {
-				let _ = conn.set_nonblocking(true);
-				self.stream = Some(BufStream::new(conn));
+				let url = Url::parse(&self.server_url).unwrap();
+				let host = url.host_str().unwrap();;
+				let mut stream = connector.connect(host, conn).unwrap();
+				let _ = stream.get_mut().set_nonblocking(true);
+
+				self.stream = Some(BufStream::new(stream));
+
 				Ok(())
 			}
 			Err(e) => Err(Error::ConnectionError(format!("{}", e))),
@@ -112,12 +127,14 @@ impl Controller {
 			return Err(Error::ConnectionError(String::from("No server connection")));
 		}
 		debug!(LOGGER, "sending request: {}", message);
-		let _ = self.stream
+		let _ = self
+			.stream
 			.as_mut()
 			.unwrap()
 			.write(message.as_bytes())
 			.unwrap();
-		let _ = self.stream
+		let _ = self
+			.stream
 			.as_mut()
 			.unwrap()
 			.write("\n".as_bytes())
@@ -184,7 +201,14 @@ impl Controller {
 		self.send_message(&req_str)
 	}
 
-	fn send_message_submit(&mut self, height: u64, job_id: u64, edge_bits: u32, nonce: u64, pow: Vec<u64>) -> Result<(), Error> {
+	fn send_message_submit(
+		&mut self,
+		height: u64,
+		job_id: u64,
+		edge_bits: u32,
+		nonce: u64,
+		pow: Vec<u64>,
+	) -> Result<(), Error> {
 		let params_in = types::SubmitParams {
 			height: height,
 			job_id: job_id,
@@ -313,7 +337,7 @@ impl Controller {
 					if result.contains("blockfound") {
 						info!(LOGGER, "Block Found!!");
 						stats.client_stats.last_message_received =
-						format!("Last Message Received: Block Found!!");
+							format!("Last Message Received: Block Found!!");
 					}
 				} else {
 					let err = res.error.unwrap();
