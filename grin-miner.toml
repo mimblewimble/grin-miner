@@ -54,9 +54,9 @@ stratum_server_addr = "127.0.0.1:13416"
 
 #miner_plugin_dir = "target/debug/plugins"
 
-#############################################
-### CUCK(AT)OO MINER PLUGIN CONFIGURATION ###
-#############################################
+#################################################
+### CUCK(AT)(AR)OO MINER PLUGIN CONFIGURATION ###
+#################################################
 
 # Multiple plugins can be specified, (e.g. a cpu
 # miner and a gpu miner running in parallel)
@@ -78,6 +78,7 @@ stratum_server_addr = "127.0.0.1:13416"
 plugin_name = "cuckatoo_mean_compat_cpu_29"
 [mining.miner_plugin_config.parameters]
 nthreads = 4
+cpuload = 1
 
 ### cuckatoo_mean_avx2_cpu
 # As above, but for processors supporting avx2
@@ -89,6 +90,7 @@ nthreads = 4
 #plugin_name = "cuckatoo_mean_avx2_cpu_29"
 #[mining.miner_plugin_config.parameters]
 #nthreads = 4
+#cpuload = 1
 
 ### cuckatoo_lean_cpu
 # Low memory requirements, but very slow

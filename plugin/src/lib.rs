@@ -83,6 +83,8 @@ pub struct SolverParams {
 	/// whether to apply the nonce to the header, or leave as is,
 	/// letting caller mutate nonce
 	pub mutate_nonce: bool,
+	/// reduce cpuload
+	pub cpuload: bool,
 
 	/// Common Cuda params
 	pub device: u32,
@@ -118,6 +120,7 @@ impl Default for SolverParams {
 			showcycle: true,
 			allrounds: false,
 			mutate_nonce: false,
+			cpuload: true,
 			device: 0,
 			blocks: 0,
 			tpb: 0,

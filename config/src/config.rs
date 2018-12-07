@@ -38,6 +38,10 @@ fn resolve_param(config: &mut PluginConfig, name: &str, value: u32) {
 	match name {
 		"nthreads" => config.params.nthreads = value,
 		"ntrims" => config.params.ntrims = value,
+		"cpuload" => config.params.cpuload = match value {
+			1 => true,
+			_ => false,
+		},
 		"device" => config.params.device = value,
 		"blocks" => config.params.blocks = value,
 		"tbp" => config.params.tpb = value,
