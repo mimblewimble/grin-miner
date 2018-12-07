@@ -80,15 +80,19 @@ where
 	}
 
 	pub fn try_connect(&mut self) -> Result<(), Error> {
-		let connector = TlsConnector::new().unwrap();
+		let ssl = true;
 		match TcpStream::connect(self.server_url.clone()) {
 			Ok(conn) => {
-				let url = Url::parse(&self.server_url).unwrap();
-				let host = url.host_str().unwrap();;
-				let mut stream = connector.connect(host, conn).unwrap();
 				let _ = stream.get_mut().set_nonblocking(true);
-
-				self.stream = Some(BufStream::new(stream));
+				if ssl {
+					let connector = TlsConnector::new().unwrap();
+					let url = Url::parse(&self.server_url).unwrap();
+					let host = url.host_str().unwrap();;
+					let mut stream = connector.connect(host, conn).unwrap();
+					self.stream = Some(BufStream::new(stream));
+				} else {
+					self.stream = Some(BufStream::new(conn));
+				}
 
 				Ok(())
 			}
