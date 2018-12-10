@@ -14,9 +14,9 @@
 
 //! Public types for config modules
 
-use std::path::PathBuf;
-use std::{io, fmt};
 use std::collections::HashMap;
+use std::path::PathBuf;
+use std::{fmt, io};
 
 use util;
 
@@ -100,6 +100,9 @@ pub struct MinerConfig {
 	/// password for the stratum server
 	pub stratum_server_password: Option<String>,
 
+	/// whether tls is enabled for the stratum server
+	pub stratum_server_tls_enabled: Option<bool>,
+
 	/// plugin dir
 	pub miner_plugin_dir: Option<String>,
 
@@ -116,6 +119,7 @@ impl Default for MinerConfig {
 			stratum_server_addr: String::from("http://127.0.0.1:13416"),
 			stratum_server_login: None,
 			stratum_server_password: None,
+			stratum_server_tls_enabled: None,
 		}
 	}
 }

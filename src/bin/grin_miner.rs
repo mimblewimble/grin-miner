@@ -20,6 +20,7 @@ extern crate grin_miner_plugin as plugin;
 extern crate grin_miner_util as util;
 
 extern crate bufstream;
+extern crate native_tls;
 extern crate time;
 #[macro_use]
 extern crate serde_derive;
@@ -56,13 +57,15 @@ pub fn info_strings() -> (String, String, String) {
 			built_info::GIT_VERSION.map_or_else(|| "".to_owned(), |v| format!(" (git {})", v)),
 			built_info::TARGET,
 			built_info::RUSTC_VERSION
-		).to_string(),
+		)
+		.to_string(),
 		format!(
 			"Built with profile \"{}\", features \"{}\" on {}.",
 			built_info::PROFILE,
 			built_info::FEATURES_STR,
 			built_info::BUILT_TIME_UTC
-		).to_string(),
+		)
+		.to_string(),
 		format!("Dependencies:\n {}", built_info::DEPENDENCIES_STR).to_string(),
 	)
 }
@@ -126,24 +129,23 @@ fn main() {
 	init_logger(Some(log_conf));
 
 	log_build_info();
-
 	let stats = Arc::new(RwLock::new(stats::Stats::default()));
 
 	let mut mc =
 		mining::Controller::new(mining_config.clone(), stats.clone()).unwrap_or_else(|e| {
 			panic!("Error loading mining controller: {}", e);
 		});
-
 	let cc = client::Controller::new(
 		&mining_config.stratum_server_addr,
 		mining_config.stratum_server_login.clone(),
 		mining_config.stratum_server_password.clone(),
+		mining_config.stratum_server_tls_enabled.clone(),
 		mc.tx.clone(),
 		stats.clone(),
-	).unwrap_or_else(|e| {
+	)
+	.unwrap_or_else(|e| {
 		panic!("Error loading stratum client controller: {:?}", e);
 	});
-
 	let tui_stopped = Arc::new(AtomicBool::new(false));
 	let miner_stopped = Arc::new(AtomicBool::new(false));
 	let client_stopped = Arc::new(AtomicBool::new(false));
