@@ -57,9 +57,9 @@ stratum_server_tls_enabled = false
 
 #miner_plugin_dir = "target/debug/plugins"
 
-#############################################
-### CUCK(AT)OO MINER PLUGIN CONFIGURATION ###
-#############################################
+#################################################
+### CUCK(AT)(AR)OO MINER PLUGIN CONFIGURATION ###
+#################################################
 
 # Multiple plugins can be specified, (e.g. a cpu
 # miner and a gpu miner running in parallel)
@@ -78,9 +78,10 @@ stratum_server_tls_enabled = false
 # The fastest cpu algorithm, but consumes the most memory
 
 [[mining.miner_plugin_config]]
-plugin_name = "cuckatoo_mean_compat_cpu_29"
+plugin_name = "cuckatoo_mean_compat_cpu_30"
 [mining.miner_plugin_config.parameters]
 nthreads = 4
+cpuload = 1
 
 ### cuckatoo_mean_avx2_cpu
 # As above, but for processors supporting avx2
@@ -89,19 +90,20 @@ nthreads = 4
 # cuckoo_miner = { path = "./cuckoo-miner", features = ["build-mean-avx2"]}
 
 #[[mining.miner_plugin_config]]
-#plugin_name = "cuckatoo_mean_avx2_cpu_29"
+#plugin_name = "cuckatoo_mean_avx2_cpu_30"
 #[mining.miner_plugin_config.parameters]
 #nthreads = 4
+#cpuload = 1
 
 ### cuckatoo_lean_cpu
 # Low memory requirements, but very slow
 
 #[[mining.miner_plugin_config]]
-#plugin_name = "cuckatoo_lean_cpu_29"
+#plugin_name = "cuckatoo_lean_cpu_30"
 #[mining.miner_plugin_config.parameters]
 #nthreads = 4
 
-# CUCKATOO CUDA SOLVERS
+# CUCKAROO CUDA SOLVERS
 #
 # These plugins are not built by default. To build:
 #1) Ensure the latest cuda toolkit is installed
