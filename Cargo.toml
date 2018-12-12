@@ -2,8 +2,11 @@
 name = "grin-miner"
 version = "0.4.2"
 authors = ["Grin Developers <mimblewimble@lists.launchpad.net>"]
-publish = false
+description = "Mining software for Grin, supports CPU and CUDA GPUs."
 build = "src/build/build.rs"
+license = "Apache-2.0"
+repository = "https://github.com/mimblewimble/grin-miner"
+keywords = [ "crypto", "grin", "mimblewimble", "mining"]
 autobins = false
 
 [workspace]
@@ -25,10 +28,10 @@ term = "0.4"
 time = "0.1"
 cursive = "0.9.0"
 
-grin_miner_util = { path = "./util" }
-grin_miner_plugin = { path = "./plugin" }
-grin_miner_config = { path = "./config" }
-cuckoo_miner = { path = "./cuckoo-miner" }
+grin_miner_util = { path = "./util", version = "0.4.2" }
+grin_miner_plugin = { path = "./plugin", version = "0.4.2" }
+grin_miner_config = { path = "./config", version = "0.4.2" }
+cuckoo_miner = { path = "./cuckoo-miner", version = "0.4.2" }
 
 #use this alternative inclusion below to build cuda plugins
 #cuckoo_miner = { path = "./cuckoo-miner", features = ["build-cuda-plugins"]}

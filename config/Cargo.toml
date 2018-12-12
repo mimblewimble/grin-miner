@@ -2,8 +2,10 @@
 name = "grin_miner_config"
 version = "0.4.2"
 authors = ["Grin Developers <mimblewimble@lists.launchpad.net>"]
+description = "Configuration handling for the grin miner"
+license = "Apache-2.0"
+repository = "https://github.com/mimblewimble/grin-miner"
 workspace = ".."
-publish = false
 
 [dependencies]
 serde = "1"
@@ -11,6 +13,6 @@ serde_derive = "1"
 toml = "0.4"
 dirs = "1.0"
 
-cuckoo_miner = { path = "../cuckoo-miner" }
+cuckoo_miner = { path = "../cuckoo-miner", version = "0.4.2" }
 slog = { version = "~2.1", features = ["max_level_trace", "release_max_level_trace"] }
-grin_miner_util = { path = "../util" }
+grin_miner_util = { path = "../util", version = "0.4.2" }
