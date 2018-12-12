@@ -64,7 +64,7 @@ stratum_server_tls_enabled = false
 # Multiple plugins can be specified, (e.g. a cpu
 # miner and a gpu miner running in parallel)
 # Use a single plugin instance per device, as 
-# demonstrated below
+# demonstrated below.
 
 # Multiple instances of the same plugin can be loaded
 # and used with different devices. On CPU plugins
@@ -117,17 +117,19 @@ cpuload = 1
 #
 
 ### mean cuda miner
-# The fastest cuda solver. If you're getting 'out of memory' errors 
-# when trying to run this solver, increase the 'expand' parameter
-# by 1, and try again. This should work on 6 GB + Cards using
-# the expand parameter, 8GB+ withoug
+# The fastest cuda solver.
+# If you're getting 'out of memory' errors  when trying to run this
+# solver, increase the 'expand' parameter by 1, and try again. This
+# should work on 6 GB + Cards using the expand parameter, 8GB+ without.
+# All other configuration parameters have a sensible default value,
+# only uncomment them if you know what you're doing.
 
 #[[mining.miner_plugin_config]]
 #plugin_name = "cuckaroo_mean_cuda_29"
 
 #[mining.miner_plugin_config.parameters]
 #device = 0
-#ntrims = 68
+#ntrims = 176
 #expand = 0
 #genablocks = 4096
 #genatpb = 256
