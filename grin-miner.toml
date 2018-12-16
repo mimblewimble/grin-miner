@@ -81,7 +81,6 @@ stratum_server_tls_enabled = false
 plugin_name = "cuckatoo_mean_compat_cpu_30"
 [mining.miner_plugin_config.parameters]
 nthreads = 4
-cpuload = 1
 
 ### cuckatoo_mean_avx2_cpu
 # As above, but for processors supporting avx2
@@ -93,7 +92,6 @@ cpuload = 1
 #plugin_name = "cuckatoo_mean_avx2_cpu_30"
 #[mining.miner_plugin_config.parameters]
 #nthreads = 4
-#cpuload = 1
 
 ### cuckatoo_lean_cpu
 # Low memory requirements, but very slow
@@ -129,6 +127,7 @@ cpuload = 1
 
 #[mining.miner_plugin_config.parameters]
 #device = 0
+#cpuload = 1
 #ntrims = 176
 #expand = 0
 #genablocks = 4096
