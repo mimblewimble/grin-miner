@@ -210,19 +210,9 @@ impl Controller {
 			return Err(Error::ConnectionError(String::from("No server connection")));
 		}
 		debug!(LOGGER, "sending request: {}", message);
-		let _ = self
-			.stream
-			.as_mut()
-			.unwrap()
-			.write(message.as_bytes())
-			.unwrap();
-		let _ = self
-			.stream
-			.as_mut()
-			.unwrap()
-			.write("\n".as_bytes())
-			.unwrap();
-		let _ = self.stream.as_mut().unwrap().flush().unwrap();
+		let _ = self.stream.as_mut().unwrap().write(message.as_bytes());
+		let _ = self.stream.as_mut().unwrap().write("\n".as_bytes());
+		let _ = self.stream.as_mut().unwrap().flush();
 		Ok(())
 	}
 
@@ -581,6 +571,7 @@ impl Controller {
 				if let Err(e) = result {
 					error!(LOGGER, "Mining Controller Error {:?}", e);
 				}
+				self.stream = None;
 			}
 			thread::sleep(std::time::Duration::from_millis(100));
 		} // loop
