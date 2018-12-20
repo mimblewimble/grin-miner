@@ -101,10 +101,17 @@ if(BUILD_CUDA_PLUGINS)
     IF (CUDA_FOUND)
       set (CUDA_PROPAGATE_HOST_FLAGS ON)
         ##cuckatoo mean cuda mean miner targets
-        foreach(CUCKATOO_SIZE 29 30 31)
+        foreach(CUCKATOO_SIZE 29 30)
             #get edgebits
             math (EXPR EDGEBITS ${CUCKATOO_SIZE})
         cuda_add_library (cuckatoo_mean_cuda_${CUCKATOO_SIZE} SHARED ${CUCKATOO_CUDA_MEAN_MINER_SOURCES} OPTIONS "-DEDGEBITS=${EDGEBITS} ${CUCKATOO_BUILD_FLAGS}")
+        set_target_properties(cuckatoo_mean_cuda_${CUCKATOO_SIZE} PROPERTIES PREFIX "" SUFFIX ".cuckooplugin")
+        endforeach(CUCKATOO_SIZE)
+        ##cuckatoo mean cuda mean miner targets
+        foreach(CUCKATOO_SIZE 31)
+            #get edgebits
+            math (EXPR EDGEBITS ${CUCKATOO_SIZE})
+        cuda_add_library (cuckatoo_mean_cuda_${CUCKATOO_SIZE} SHARED ${CUCKATOO_CUDA_MEAN_MINER_SOURCES} OPTIONS "-DXBITS=7 -DEDGEBITS=${EDGEBITS} ${CUCKATOO_BUILD_FLAGS}")
         set_target_properties(cuckatoo_mean_cuda_${CUCKATOO_SIZE} PROPERTIES PREFIX "" SUFFIX ".cuckooplugin")
         endforeach(CUCKATOO_SIZE)
         ##cuckatoo lean cuda mean miner targets
