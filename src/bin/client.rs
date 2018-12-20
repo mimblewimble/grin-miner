@@ -570,8 +570,8 @@ impl Controller {
 				};
 				if let Err(e) = result {
 					error!(LOGGER, "Mining Controller Error {:?}", e);
+					self.stream = None;
 				}
-				self.stream = None;
 			}
 			thread::sleep(std::time::Duration::from_millis(100));
 		} // loop
