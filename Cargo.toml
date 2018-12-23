@@ -10,7 +10,7 @@ keywords = [ "crypto", "grin", "mimblewimble", "mining"]
 autobins = false
 
 [workspace]
-members = ["config", "util", "plugin"]
+members = ["config", "util", "plugin", "ocl_cuckatoo"]
 
 [[bin]]
 name = "grin-miner"
@@ -31,10 +31,10 @@ cursive = "0.9.0"
 grin_miner_util = { path = "./util", version = "0.4.2" }
 grin_miner_plugin = { path = "./plugin", version = "0.4.2" }
 grin_miner_config = { path = "./config", version = "0.4.2" }
-cuckoo_miner = { path = "./cuckoo-miner", version = "0.4.2" }
+#cuckoo_miner = { path = "./cuckoo-miner", version = "0.4.2" }
 
 #use this alternative inclusion below to build cuda plugins
-#cuckoo_miner = { path = "./cuckoo-miner", features = ["build-cuda-plugins"]}
+cuckoo_miner = { path = "./cuckoo-miner", features = ["build-cuda-plugins"]}
 #or to build avx2 CPU plugins
 #cuckoo_miner = { path = "./cuckoo-miner", features = ["build-mean-avx2"]}
 #or to build both

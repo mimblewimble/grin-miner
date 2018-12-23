@@ -77,10 +77,10 @@ stratum_server_tls_enabled = false
 ### cuckatoo_mean_compat_cpu
 # The fastest cpu algorithm, but consumes the most memory
 
-[[mining.miner_plugin_config]]
-plugin_name = "cuckatoo_mean_compat_cpu_30"
-[mining.miner_plugin_config.parameters]
-nthreads = 4
+#[[mining.miner_plugin_config]]
+#plugin_name = "cuckatoo_mean_compat_cpu_30"
+#[mining.miner_plugin_config.parameters]
+#nthreads = 4
 
 ### cuckatoo_mean_avx2_cpu
 # As above, but for processors supporting avx2
@@ -124,7 +124,7 @@ nthreads = 4
 
 #[[mining.miner_plugin_config]]
 #plugin_name = "cuckaroo_mean_cuda_29"
-
+#
 #[mining.miner_plugin_config.parameters]
 #device = 0
 #cpuload = 1
@@ -152,3 +152,7 @@ nthreads = 4
 #device = 0
 #blocks = 128
 #tpb = 128
+#
+
+[[mining.miner_plugin_config]]
+plugin_name = "ocl_cuckatoo"

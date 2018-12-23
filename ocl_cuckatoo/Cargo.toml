@@ -1,0 +1,19 @@
+[package]
+name = "ocl_cuckatoo"
+version = "0.1.0"
+
+
+[dependencies]
+grin_miner_plugin = { path = "../plugin" }
+grin_miner_util = { path = "../util", version = "0.4.2" }
+ocl = "0.19"
+hashbrown = "0.1"
+libc = "0.2.24"
+blake2-rfc = "0.2"
+byteorder = "1"
+slog = { version = "~2.1", features = ["max_level_trace", "release_max_level_trace"] }
+
+
+[lib]
+name = "ocl_cuckatoo"
+crate-type = ["cdylib"]
