@@ -23,10 +23,10 @@ set (BLAKE_2B "cuckoo/src/crypto/blake2b-ref.c")
 set (CUCKATOO_BUILD_FLAGS "-DC_CALL_CONVENTION=1 -DSQUASH_OUTPUT=1")
 
 #cuckatoo lean (lean_cpu) sources
-set (CUCKATOO_LEAN_MINER_SOURCES cuckoo/src/crypto/siphash.h cuckoo/src/cuckatoo/cuckatoo.h cuckoo/src/cuckatoo/lean.hpp cuckoo/src/cuckatoo/lean.cpp ${BLAKE_2B})
+set (CUCKATOO_LEAN_MINER_SOURCES cuckoo/src/cuckatoo/cuckatoo.h cuckoo/src/cuckatoo/lean.hpp cuckoo/src/cuckatoo/lean.cpp ${BLAKE_2B})
 
 #cuckatoo mean miner sources (mean_cpu)
-set (CUCKATOO_MEAN_MINER_SOURCES cuckoo/src/crypto/siphash.h cuckoo/src/cuckatoo/cuckatoo.h cuckoo/src/cuckatoo/mean.hpp cuckoo/src/cuckatoo/mean.cpp ${BLAKE_2B})
+set (CUCKATOO_MEAN_MINER_SOURCES cuckoo/src/cuckatoo/cuckatoo.h cuckoo/src/cuckatoo/mean.hpp cuckoo/src/cuckatoo/mean.cpp ${BLAKE_2B})
 
 #cuckatoo cuda mean miner source (mean_miner.cu)
 set (CUCKATOO_CUDA_MEAN_MINER_SOURCES cuckoo/src/cuckatoo/mean.cu ${BLAKE_2B} )
