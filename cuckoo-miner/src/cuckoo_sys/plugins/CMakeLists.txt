@@ -56,7 +56,7 @@ set (AT_LEAN_CPU_SRC
 
 build_cpu_target("${AT_LEAN_CPU_SRC}" cuckatoo_lean_cpu_compat_19 "-DNSIPHASH=1 -DATOMIC -DEDGEBITS=19")
 build_cpu_target("${AT_LEAN_CPU_SRC}" cuckatoo_lean_cpu_compat_31 "-mno-avx2 -DNSIPHASH=4 -DATOMIC -DEDGEBITS=31")
-build_cpu_target("${AT_LEAN_CPU_SRC}" cuckatoo_lean_cpu_avx2_31 "-mavx2 -DNSIPHASH=8 -DATOMIC -DEDGEBITS=19")
+build_cpu_target("${AT_LEAN_CPU_SRC}" cuckatoo_lean_cpu_avx2_31 "-mavx2 -DNSIPHASH=8 -DATOMIC -DEDGEBITS=31")
 
 ### AT MEAN CPU TARGETS  #########################################
 
