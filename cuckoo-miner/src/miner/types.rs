@@ -67,6 +67,9 @@ pub struct JobSharedData {
 	/// ID of the current running job (not currently used)
 	pub job_id: u32,
 
+	/// block height of current running job
+	pub height: u64,
+
 	/// The part of the header before the nonce, which this
 	/// module will mutate in search of a solution
 	pub pre_nonce: String,
@@ -89,6 +92,7 @@ impl Default for JobSharedData {
 	fn default() -> JobSharedData {
 		JobSharedData {
 			job_id: 0,
+			height: 0,
 			pre_nonce: String::from(""),
 			post_nonce: String::from(""),
 			difficulty: 0,
@@ -102,6 +106,7 @@ impl JobSharedData {
 	pub fn new(num_solvers: usize) -> JobSharedData {
 		JobSharedData {
 			job_id: 0,
+			height: 0,
 			pre_nonce: String::from(""),
 			post_nonce: String::from(""),
 			difficulty: 1,
