@@ -57,9 +57,9 @@ stratum_server_tls_enabled = false
 
 #miner_plugin_dir = "target/debug/plugins"
 
-#################################################
-### CUCK(AT)(AR)OO MINER PLUGIN CONFIGURATION ###
-#################################################
+###############################################################
+### CUCKAROO (i.e. GPU-Friendly) MINER PLUGIN CONFIGURATION ###
+###############################################################
 
 # Multiple plugins can be specified, (e.g. a cpu
 # miner and a gpu miner running in parallel)
@@ -72,38 +72,25 @@ stratum_server_tls_enabled = false
 # but in CUDA plugins the device number can be set
 # corresponding to the device ID. (use nvidia-smi to find this)
 
-### CUCKATOO CPU SOLVERS
+### CUCKAROO CPU SOLVERS (Asic Resist, or GPU-Friendly)
 
-### cuckatoo_mean_compat_cpu
 # The fastest cpu algorithm, but consumes the most memory
 
 [[mining.miner_plugin_config]]
-plugin_name = "cuckatoo_mean_compat_cpu_30"
+plugin_name = "cuckaroo_cpu_compat_29"
 [mining.miner_plugin_config.parameters]
 nthreads = 4
 
-### cuckatoo_mean_avx2_cpu
 # As above, but for processors supporting avx2
-# To build and use this plugin, make sure the following build feature
-# is enabled in Cargo.toml:
-# cuckoo_miner = { path = "./cuckoo-miner", features = ["build-mean-avx2"]}
 
 #[[mining.miner_plugin_config]]
-#plugin_name = "cuckatoo_mean_avx2_cpu_30"
+#plugin_name = "cuckaroo_cpu_avx2_29"
 #[mining.miner_plugin_config.parameters]
 #nthreads = 4
 
-### cuckatoo_lean_cpu
-# Low memory requirements, but very slow
-
-#[[mining.miner_plugin_config]]
-#plugin_name = "cuckatoo_lean_cpu_30"
-#[mining.miner_plugin_config.parameters]
-#nthreads = 4
-
-# CUCKAROO CUDA SOLVERS
+# CUCKAROO CUDA SOLVER
 #
-# These plugins are not built by default. To build:
+# CUDA plugins are not built by default. To build:
 #1) Ensure the latest cuda toolkit is installed
 #   (nvcc should be in your PATH)
 #   Wrong gcc? install gcc-5 g++-5; export CC=`which gcc-5`; # then build
@@ -114,24 +101,16 @@ nthreads = 4
 # instance of each plugin.  device 0 is used by default
 #
 
-### mean cuda miner
-# The fastest cuda solver.
-# If you're getting 'out of memory' errors  when trying to run this
-# solver, increase the 'expand' parameter by 1, and try again. This
-# should work on 6 GB + Cards using the expand parameter, 8GB+ without.
-# All other configuration parameters have a sensible default value,
-# only uncomment them if you know what you're doing.
-
+# currently requires 7GB+ GPU memory
 #[[mining.miner_plugin_config]]
-#plugin_name = "cuckaroo_mean_cuda_29"
+#plugin_name = "cuckaroo_cuda_29"
 
 #[mining.miner_plugin_config.parameters]
 #device = 0
 #cpuload = 1
 #ntrims = 176
-#expand = 0
 #genablocks = 4096
-#genatpb = 256
+#genatpb = 128 
 #genbtpb = 128
 #trimtpb = 512
 #tailtpb = 1024
@@ -141,14 +120,55 @@ nthreads = 4
 # e.g. To enable multiple devices (copy params from above as needed)
 
 #[[mining.miner_plugin_config]]
-#plugin_name = "cuckaroo_mean_cuda_29"
+#plugin_name = "cuckaroo_cuda_29"
 #[mining.miner_plugin_config.parameters]
 #device = 1
 
-### lean cuda miner
-# much slower cuda solver, but should be usable on low-memory cards
+###############################################################
+### CUCKATOO (i.e. ASIC-Friendly) MINER PLUGIN CONFIGURATION ##
+###############################################################
+
+#mean cpu
 #[[mining.miner_plugin_config]]
-#plugin_name = "cuckaroo_lean_cuda_29"
+#plugin_name = "cuckatoo_mean_cpu_compat_31"
+#[mining.miner_plugin_config.parameters]
+#nthreads = 4
+
+#mean cpu avx2
+#[[mining.miner_plugin_config]]
+#plugin_name = "cuckatoo_mean_cpu_avx2_31"
+#[mining.miner_plugin_config.parameters]
+
+#mean cuda (unlikely to work on consumer cards, need 14GB+)
+#[[mining.miner_plugin_config]]
+#plugin_name = "cuckatoo_mean_cuda_31"
+
+#[mining.miner_plugin_config.parameters]
+#expand = 0
 #device = 0
-#blocks = 128
-#tpb = 128
+#cpuload = 1
+#ntrims = 176
+#genablocks = 4096
+#genatpb = 128 
+#genbtpb = 128
+#trimtpb = 512
+#tailtpb = 1024
+#recoverblocks = 1024
+#recovertpb = 1024
+
+#lean cuda
+#[[mining.miner_plugin_config]]
+#plugin_name = "cuckatoo_lean_cuda_31"
+
+#[mining.miner_plugin_config.parameters]
+#expand = 0
+#device = 0
+#cpuload = 1
+#ntrims = 176
+#genablocks = 4096
+#genatpb = 128 
+#genbtpb = 128
+#trimtpb = 512
+#tailtpb = 1024
+#recoverblocks = 1024
+#recovertpb = 1024

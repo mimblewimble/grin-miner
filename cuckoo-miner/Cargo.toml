@@ -12,8 +12,8 @@ build = "src/build.rs"
 default = []
 #feature to allow turing off plugin builds
 no-plugin-build = []
-#build mean avx2 CPU plugins
-build-mean-avx2 = []
+#whether to test avx2 CPU plugins
+test-avx2 = []
 #feature which defines whether to build cuda libs
 build-cuda-plugins = []
 

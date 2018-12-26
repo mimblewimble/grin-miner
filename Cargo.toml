@@ -35,10 +35,6 @@ cuckoo_miner = { path = "./cuckoo-miner", version = "0.4.2" }
 
 #use this alternative inclusion below to build cuda plugins
 #cuckoo_miner = { path = "./cuckoo-miner", features = ["build-cuda-plugins"]}
-#or to build avx2 CPU plugins
-#cuckoo_miner = { path = "./cuckoo-miner", features = ["build-mean-avx2"]}
-#or to build both
-#cuckoo_miner = { path = "./cuckoo-miner", features = ["build-cuda-plugins","build-mean-avx2"]}
 
 [build-dependencies]
 built = "0.2"
