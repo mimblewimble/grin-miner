@@ -110,6 +110,7 @@ impl CuckooMiner {
 					}
 					_ => {}
 				};
+				thread::sleep(std::time::Duration::from_millis(100));
 			}
 		});
 
@@ -170,6 +171,7 @@ impl CuckooMiner {
 				}
 			}
 			solver.solutions = SolverSolutions::default();
+			thread::sleep(std::time::Duration::from_millis(10));
 		}
 
 		let _ = stop_handle.join();
