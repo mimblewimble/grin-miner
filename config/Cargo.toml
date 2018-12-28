@@ -1,6 +1,6 @@
 [package]
 name = "grin_miner_config"
-version = "0.4.2"
+version = "0.5.0"
 authors = ["Grin Developers <mimblewimble@lists.launchpad.net>"]
 description = "Configuration handling for the grin miner"
 license = "Apache-2.0"
