@@ -18,8 +18,8 @@ test-avx2 = []
 build-cuda-plugins = []
 
 [dependencies]
-grin_miner_util = { path = "../util", version = "0.4.2" }
-grin_miner_plugin = { path = "../plugin", version = "0.4.2" }
+grin_miner_util = { path = "../util", version = "0.5.0" }
+grin_miner_plugin = { path = "../plugin", version = "0.5.0" }
 time = "^0.1"
 rust-crypto = "0.2.36"
 log = "^0.3"
