@@ -76,10 +76,10 @@ stratum_server_tls_enabled = false
 
 # The fastest cpu algorithm, but consumes the most memory
 
-#[[mining.miner_plugin_config]]
-#plugin_name = "cuckaroo_cpu_compat_29"
-#[mining.miner_plugin_config.parameters]
-#nthreads = 1
+[[mining.miner_plugin_config]]
+plugin_name = "cuckaroo_cpu_compat_29"
+[mining.miner_plugin_config.parameters]
+nthreads = 1
 
 # As above, but for processors supporting avx2
 
@@ -102,22 +102,10 @@ stratum_server_tls_enabled = false
 #
 
 # currently requires 7GB+ GPU memory
-[[mining.miner_plugin_config]]
-plugin_name = "cuckaroo_cuda_29"
-[mining.miner_plugin_config.parameters]
-device = 0
-
-[[mining.miner_plugin_config]]
-plugin_name = "cuckaroo_cuda_29"
-[mining.miner_plugin_config.parameters]
-device = 1
-
-[[mining.miner_plugin_config]]
-plugin_name = "cuckaroo_cuda_29"
-[mining.miner_plugin_config.parameters]
-device = 2
-
-#
+#[[mining.miner_plugin_config]]
+#plugin_name = "cuckaroo_cuda_29"
+#[mining.miner_plugin_config.parameters]
+#device = 0
 #cpuload = 1
 #ntrims = 176
 #genablocks = 4096
