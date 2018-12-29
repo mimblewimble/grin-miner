@@ -29,7 +29,7 @@ use plugin::{SolverCtxWrapper, SolverSolutions, SolverStats};
 use {CuckooMinerError, PluginLibrary};
 
 /// Miner control Messages
-
+#[derive(Debug)]
 enum ControlMessage {
 	/// Stop everything, pull down, exis
 	Stop,
@@ -100,6 +100,7 @@ impl CuckooMiner {
 		let stop_handle = thread::spawn(move || loop {
 			let ctx_ptr = control_ctx.0.as_ptr();
 			while let Some(message) = control_rx.try_iter().next() {
+				debug!(LOGGER, "solver_thread - control_rx got msg: {:?}", message);
 				match message {
 					ControlMessage::Stop => {
 						PluginLibrary::stop_solver_from_instance(stop_fn.clone(), ctx_ptr);
@@ -108,21 +109,26 @@ impl CuckooMiner {
 					ControlMessage::Pause => {
 						PluginLibrary::stop_solver_from_instance(stop_fn.clone(), ctx_ptr);
 					}
-					_ => {}
+					_ => {
+						info!(LOGGER, "solver_thread - control_rx got other msg: {:?}", message);
+					}
 				};
-				thread::sleep(std::time::Duration::from_millis(100));
 			}
+			thread::sleep(std::time::Duration::from_millis(100));
 		});
 
 		let mut iter_count = 0;
 		let mut paused = true;
 		loop {
 			if let Some(message) = solver_loop_rx.try_iter().next() {
+				debug!(LOGGER, "solver_thread - solver_loop_rx got msg: {:?}", message);
 				match message {
 					ControlMessage::Stop => break,
 					ControlMessage::Pause => paused = true,
 					ControlMessage::Resume => paused = false,
-					_ => {}
+					_ => {
+						info!(LOGGER, "solver_thread - solver_loop_rx got other msg: {:?}", message);
+					}
 				}
 			}
 			if paused {
