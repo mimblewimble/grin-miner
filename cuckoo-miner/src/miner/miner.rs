@@ -109,12 +109,10 @@ impl CuckooMiner {
 					ControlMessage::Pause => {
 						PluginLibrary::stop_solver_from_instance(stop_fn.clone(), ctx_ptr);
 					}
-					_ => {
-						info!(LOGGER, "solver_thread - control_rx got other msg: {:?}", message);
-					}
+					_ => {}
 				};
 			}
-			thread::sleep(std::time::Duration::from_millis(100));
+			thread::sleep(std::time::Duration::from_micros(100));
 		});
 
 		let mut iter_count = 0;
