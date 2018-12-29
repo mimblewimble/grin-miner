@@ -36,8 +36,21 @@ struct Solver {
 
 #[no_mangle]
 pub unsafe extern "C" fn create_solver_ctx(params: *mut SolverParams) -> *mut SolverCtx {
-	info!(LOGGER, "XXX Creating solver");
-	let trimmer = Trimmer::build(None, None, 31).expect("can't build trimmer");
+	let platform = match (*params).platform {
+		1 => Some("AMD"),
+		2 => Some("NVIDIA"),
+		_ => None,
+	};
+	let device_id = Some((*params).device as usize);
+	let mut edge_bits = (*params).edge_bits as u8;
+	if edge_bits < 31 || edge_bits > 64 {
+		edge_bits = 31;
+	}
+	println!(
+		"Platform {:?}, device {:?} bits {}",
+		platform, device_id, edge_bits
+	);
+	let trimmer = Trimmer::build(platform, device_id, edge_bits).expect("can't build trimmer");
 	let solver = Solver {
 		trimmer: trimmer,
 		graph: None,
@@ -45,7 +58,6 @@ pub unsafe extern "C" fn create_solver_ctx(params: *mut SolverParams) -> *mut So
 	};
 	let solver_box = Box::new(solver);
 	let solver_ref = Box::leak(solver_box);
-	info!(LOGGER, "XXX Created solver");
 	mem::transmute::<&mut Solver, *mut SolverCtx>(solver_ref)
 }
 

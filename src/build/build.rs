@@ -15,7 +15,6 @@
 //! Build hooks to spit out version+build time info
 
 extern crate built;
-
 use std::env;
 
 fn main() {
@@ -25,5 +24,6 @@ fn main() {
 		&opts,
 		env!("CARGO_MANIFEST_DIR"),
 		format!("{}{}", env::var("OUT_DIR").unwrap(), "/built.rs"),
-	).expect("Failed to acquire build-time information");
+	)
+	.expect("Failed to acquire build-time information");
 }

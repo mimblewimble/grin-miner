@@ -10,7 +10,7 @@ keywords = [ "crypto", "grin", "mimblewimble", "mining"]
 autobins = false
 
 [workspace]
-members = ["config", "util", "plugin", "ocl_cuckatoo"]
+members = ["config", "util", "plugin"]
 
 [[bin]]
 name = "grin-miner"
@@ -32,6 +32,8 @@ grin_miner_util = { path = "./util", version = "0.4.2" }
 grin_miner_plugin = { path = "./plugin", version = "0.4.2" }
 grin_miner_config = { path = "./config", version = "0.4.2" }
 #cuckoo_miner = { path = "./cuckoo-miner", version = "0.4.2" }
+# hack to install ocl plugin automaticaly
+ocl_cuckatoo = { path = "./ocl_cuckatoo", version = "0.1.0"}
 
 #use this alternative inclusion below to build cuda plugins
 cuckoo_miner = { path = "./cuckoo-miner", features = ["build-cuda-plugins"]}

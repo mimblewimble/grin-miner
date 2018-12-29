@@ -110,6 +110,10 @@ pub struct SolverParams {
 	pub recoverblocks: u32,
 	///
 	pub recovertpb: u32,
+	/// OCL platform ID, 0 - default, 1 - AMD, 2 - NVIDIA
+	pub platform: u32,
+	/// edge bits for OCL plugins
+	pub edge_bits: u32,
 }
 
 impl Default for SolverParams {
@@ -132,6 +136,8 @@ impl Default for SolverParams {
 			tailtpb: 0,
 			recoverblocks: 0,
 			recovertpb: 0,
+			platform: 0,
+			edge_bits: 31,
 		}
 	}
 }

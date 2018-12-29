@@ -154,5 +154,14 @@ stratum_server_tls_enabled = false
 #tpb = 128
 #
 
+
+#[[mining.miner_plugin_config]]
+#plugin_name = "cuckatoo_lean_cuda_31"
+#device = 0
+
 [[mining.miner_plugin_config]]
 plugin_name = "ocl_cuckatoo"
+[mining.miner_plugin_config.parameters]
+device = 0
+platform = 2
+edge_bits = 31
