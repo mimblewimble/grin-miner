@@ -94,7 +94,6 @@ impl CuckooMiner {
 		let control_ctx = SolverCtxWrapper(NonNull::new(ctx).unwrap());
 
 		let stop_fn = solver.lib.get_stop_solver_instance();
-		let sleep_dur = time::Duration::from_millis(100);
 		// monitor whether to send a stop signal to the solver, which should
 		// end the current solve attempt below
 		let stop_handle = thread::spawn(move || loop {
@@ -112,7 +111,7 @@ impl CuckooMiner {
 					_ => {}
 				};
 			}
-			thread::sleep(std::time::Duration::from_micros(100));
+			thread::yield_now();
 		});
 
 		let mut iter_count = 0;
@@ -124,13 +123,11 @@ impl CuckooMiner {
 					ControlMessage::Stop => break,
 					ControlMessage::Pause => paused = true,
 					ControlMessage::Resume => paused = false,
-					_ => {
-						info!(LOGGER, "solver_thread - solver_loop_rx got other msg: {:?}", message);
-					}
+					_ => {}
 				}
 			}
 			if paused {
-				thread::sleep(sleep_dur);
+				thread::yield_now();
 				continue;
 			}
 			{
@@ -175,7 +172,7 @@ impl CuckooMiner {
 				}
 			}
 			solver.solutions = SolverSolutions::default();
-			thread::sleep(std::time::Duration::from_millis(10));
+			thread::yield_now();
 		}
 
 		let _ = stop_handle.join();
