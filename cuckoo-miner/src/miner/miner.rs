@@ -111,7 +111,7 @@ impl CuckooMiner {
 					_ => {}
 				};
 			}
-			thread::yield_now();
+			thread::sleep(time::Duration::from_micros(100));
 		});
 
 		let mut iter_count = 0;
