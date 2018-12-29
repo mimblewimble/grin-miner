@@ -127,7 +127,7 @@ impl CuckooMiner {
 				}
 			}
 			if paused {
-				thread::yield_now();
+				thread::sleep(time::Duration::from_micros(100));
 				continue;
 			}
 			{
@@ -172,7 +172,7 @@ impl CuckooMiner {
 				}
 			}
 			solver.solutions = SolverSolutions::default();
-			thread::yield_now();
+			thread::sleep(time::Duration::from_micros(100));
 		}
 
 		let _ = stop_handle.join();
