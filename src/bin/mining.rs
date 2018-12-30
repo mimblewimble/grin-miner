@@ -109,7 +109,7 @@ impl Controller {
 							.unwrap()
 							.send(types::ClientMessage::FoundSolution(
 								self.current_height,
-								self.current_job_id,
+								ss.sols[i as usize].id,
 								edge_bits,
 								ss.sols[i as usize].nonce,
 								ss.sols[i as usize].proof.to_vec(),

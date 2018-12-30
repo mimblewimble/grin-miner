@@ -221,6 +221,8 @@ impl SolverStats {
 #[repr(C)]
 #[derive(Clone, Copy)]
 pub struct Solution {
+	/// Optional ID
+	pub id: uint64_t,
 	/// Nonce
 	pub nonce: uint64_t,
 	/// Proof
@@ -230,6 +232,7 @@ pub struct Solution {
 impl Default for Solution {
 	fn default() -> Solution {
 		Solution {
+			id: 0,
 			nonce: 0,
 			proof: [0u64; PROOFSIZE],
 		}

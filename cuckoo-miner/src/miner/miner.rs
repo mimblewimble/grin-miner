@@ -135,6 +135,7 @@ impl CuckooMiner {
 			let header_pre = { shared_data.read().unwrap().pre_nonce.clone() };
 			let header_post = { shared_data.read().unwrap().post_nonce.clone() };
 			let height = { shared_data.read().unwrap().height.clone() };
+			let job_id = { shared_data.read().unwrap().job_id.clone() };
 			let header = util::get_next_header_data(&header_pre, &header_post);
 			let nonce = header.0;
 			solver.lib.run_solver(
@@ -154,6 +155,7 @@ impl CuckooMiner {
 				if solver.solutions.num_sols > 0 {
 					for mut ss in solver.solutions.sols.iter_mut() {
 						ss.nonce = nonce;
+						ss.id = job_id as u64;
 					}
 					s.solutions.push(solver.solutions.clone());
 				}
