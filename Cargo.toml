@@ -1,6 +1,6 @@
 [package]
 name = "grin-miner"
-version = "0.4.2"
+version = "0.5.0"
 authors = ["Grin Developers <mimblewimble@lists.launchpad.net>"]
 description = "Mining software for Grin, supports CPU and CUDA GPUs."
 build = "src/build/build.rs"
@@ -28,10 +28,10 @@ term = "0.4"
 time = "0.1"
 cursive = "0.9.0"
 
-grin_miner_util = { path = "./util", version = "0.4.2" }
-grin_miner_plugin = { path = "./plugin", version = "0.4.2" }
-grin_miner_config = { path = "./config", version = "0.4.2" }
-cuckoo_miner = { path = "./cuckoo-miner", version = "0.4.2" }
+grin_miner_util = { path = "./util", version = "0.5.0" }
+grin_miner_plugin = { path = "./plugin", version = "0.5.0" }
+grin_miner_config = { path = "./config", version = "0.5.0" }
+cuckoo_miner = { path = "./cuckoo-miner", version = "0.5.0" }
 
 #use this alternative inclusion below to build cuda plugins
 #cuckoo_miner = { path = "./cuckoo-miner", features = ["build-cuda-plugins"]}

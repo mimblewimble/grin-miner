@@ -79,7 +79,7 @@ stratum_server_tls_enabled = false
 [[mining.miner_plugin_config]]
 plugin_name = "cuckaroo_cpu_compat_29"
 [mining.miner_plugin_config.parameters]
-nthreads = 4
+nthreads = 1
 
 # As above, but for processors supporting avx2
 
@@ -104,7 +104,6 @@ nthreads = 4
 # currently requires 7GB+ GPU memory
 #[[mining.miner_plugin_config]]
 #plugin_name = "cuckaroo_cuda_29"
-
 #[mining.miner_plugin_config.parameters]
 #device = 0
 #cpuload = 1
