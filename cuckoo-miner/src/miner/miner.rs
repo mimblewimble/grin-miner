@@ -176,7 +176,7 @@ impl CuckooMiner {
 
 		let _ = stop_handle.join();
 		solver.lib.destroy_solver_ctx(ctx);
-		solver.lib.unload();
+		solver.unload();
 		let _ = solver_stopped_tx.send(ControlMessage::SolverStopped(instance));
 	}
 
