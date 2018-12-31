@@ -249,7 +249,6 @@ impl CuckooMiner {
 		// when using fast test miners, in real cuckoo30 terms
 		// this shouldn't be an issue
 		// TODO: Make this less blocky
-		thread::sleep(time::Duration::from_millis(10));
 		// let time_pre_lock=Instant::now();
 		{
 			let mut s = self.shared_data.write().unwrap();
