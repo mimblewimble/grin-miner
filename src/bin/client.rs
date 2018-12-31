@@ -406,20 +406,28 @@ impl Controller {
 					let mut stats = self.stats.write().unwrap();
 					stats.client_stats.last_message_received =
 						format!("Last Message Received: Share Accepted!!");
+					stats.mining_stats.solution_stats.num_shares_accepted += 1;
 					let result = serde_json::to_string(&res.result).unwrap();
 					if result.contains("blockfound") {
 						info!(LOGGER, "Block Found!!");
 						stats.client_stats.last_message_received =
 							format!("Last Message Received: Block Found!!");
+						stats.mining_stats.solution_stats.num_blocks_found += 1;
 					}
 				} else {
 					let err = res.error.unwrap();
+					let err_str = format!("{}", err);
 					let mut stats = self.stats.write().unwrap();
 					stats.client_stats.last_message_received = format!(
 						"Last Message Received: Failed to submit a solution: {:?}",
-						err
+						err_str
 					);
-					error!(LOGGER, "Failed to submit a solution: {:?}", err);
+					if err_str.contains("too late") {
+						stats.mining_stats.solution_stats.num_staled += 1;
+					} else {
+						stats.mining_stats.solution_stats.num_rejected += 1;
+					}
+					error!(LOGGER, "Failed to submit a solution: {:?}", err_str);
 				}
 				()
 			}

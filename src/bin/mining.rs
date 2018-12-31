@@ -115,6 +115,8 @@ impl Controller {
 								ss.sols[i as usize].proof.to_vec(),
 							));
 				}
+				let mut s_stats = self.stats.write().unwrap();
+				s_stats.mining_stats.solution_stats.num_solutions_found += ss.num_sols;
 			}
 			thread::sleep(std::time::Duration::from_millis(100));
 		}

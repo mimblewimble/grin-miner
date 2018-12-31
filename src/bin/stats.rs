@@ -19,6 +19,33 @@
 /// back to interested callers (such as the TUI)
 use plugin;
 
+
+#[derive(Clone)]
+pub struct SolutionStats {
+	/// total solutions found
+	pub num_solutions_found: u32,
+	/// total shares accepted
+	pub num_shares_accepted: u32,
+	/// total solutions rejected
+	pub num_rejected: u32,
+	/// total solutions staled
+	pub num_staled: u32,
+	/// total blocks found
+	pub num_blocks_found: u32,
+}
+
+impl Default for SolutionStats {
+	fn default() -> SolutionStats {
+		SolutionStats {
+			num_solutions_found: 0,
+			num_shares_accepted: 0,
+			num_rejected: 0,
+			num_staled: 0,
+			num_blocks_found: 0,
+		}
+	}
+}
+
 #[derive(Clone)]
 pub struct MiningStats {
 	/// combined graphs per second
@@ -27,6 +54,8 @@ pub struct MiningStats {
 	pub block_height: u64,
 	/// current target for share difficulty we're working on
 	pub target_difficulty: u64,
+	/// solution statistics
+	pub solution_stats: SolutionStats,
 	/// Individual device status from Cuckoo-Miner
 	pub device_stats: Vec<plugin::SolverStats>,
 }
@@ -37,6 +66,7 @@ impl Default for MiningStats {
 			combined_gps: 0.0,
 			block_height: 0,
 			target_difficulty: 0,
+			solution_stats: SolutionStats::default(),
 			device_stats: vec![],
 		}
 	}
