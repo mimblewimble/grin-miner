@@ -212,7 +212,7 @@ impl TUIStatusListener for TUIMiningView {
 		});
 
 		if mining_stats.solution_stats.num_solutions_found > 0 {
-			let sol_stat = format!("Solutions found: {}. Accepted: {}, Rejected: {}, Staled: {}, Blocks found: {}",
+			let sol_stat = format!("Solutions found: {}. Accepted: {}, Rejected: {}, Stale: {}, Blocks found: {}",
 								   mining_stats.solution_stats.num_solutions_found,
 								   mining_stats.solution_stats.num_shares_accepted,
 								   mining_stats.solution_stats.num_rejected,
