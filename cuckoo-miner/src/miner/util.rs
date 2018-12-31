@@ -15,12 +15,7 @@
 //! header manipulation utility functions
 
 use byteorder::{BigEndian, ByteOrder};
-use plugin::Solution;
 use rand::{self, Rng};
-
-/// From grin
-/// The target is the 8-bytes hash block hashes must be lower than.
-const MAX_TARGET: [u8; 8] = [0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff];
 
 pub fn header_data(pre_nonce: &str, post_nonce: &str, nonce: u64) -> Vec<u8> {
 	// Turn input strings into vectors
@@ -41,14 +36,6 @@ pub fn header_data(pre_nonce: &str, post_nonce: &str, nonce: u64) -> Vec<u8> {
 pub fn get_next_header_data(pre_nonce: &str, post_nonce: &str) -> (u64, Vec<u8>) {
 	let nonce: u64 = rand::OsRng::new().unwrap().gen();
 	(nonce, header_data(pre_nonce, post_nonce, nonce))
-}
-
-/// Helper to determing whether a solution meets a target difficulty
-/// based on same algorithm from grin
-pub fn meets_difficulty(in_difficulty: u64, sol: Solution) -> bool {
-	let max_target = BigEndian::read_u64(&MAX_TARGET);
-	let num = BigEndian::read_u64(&sol.hash()[0..8]);
-	max_target / num >= in_difficulty
 }
 
 /// Helper to convert a hex string
