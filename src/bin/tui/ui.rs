@@ -15,7 +15,6 @@
 //! Basic TUI to better output the overall system status and status
 //! of various subsystems
 
-use std::{self, thread};
 use std::sync::{mpsc, Arc, RwLock};
 use time;
 
@@ -177,7 +176,6 @@ impl Controller {
 				self.ui.ui_tx.send(UIMessage::UpdateStatus(stats.clone())).unwrap();
 				next_stat_update = time::get_time().sec + stat_update_interval;
 			}
-			thread::sleep(std::time::Duration::from_millis(100));
 		}
 	}
 }

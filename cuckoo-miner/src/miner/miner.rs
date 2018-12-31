@@ -29,7 +29,7 @@ use plugin::{SolverCtxWrapper, SolverSolutions, SolverStats};
 use {CuckooMinerError, PluginLibrary};
 
 /// Miner control Messages
-#[derive(Debug)]
+
 enum ControlMessage {
 	/// Stop everything, pull down, exis
 	Stop,
@@ -94,19 +94,16 @@ impl CuckooMiner {
 		let control_ctx = SolverCtxWrapper(NonNull::new(ctx).unwrap());
 
 		let stop_fn = solver.lib.get_stop_solver_instance();
-
-		let mut iter_count = 0;
-		let mut paused = true;
-		let ctx_ptr = control_ctx.0.as_ptr();
-		'solver_loop: loop {
-			// monitor whether to send a stop signal to the solver, which should
-			// end the current solve attempt below
+		let sleep_dur = time::Duration::from_millis(100);
+		// monitor whether to send a stop signal to the solver, which should
+		// end the current solve attempt below
+		let stop_handle = thread::spawn(move || loop {
+			let ctx_ptr = control_ctx.0.as_ptr();
 			while let Some(message) = control_rx.try_iter().next() {
-				debug!(LOGGER, "solver_thread - control_rx got msg: {:?}", message);
 				match message {
 					ControlMessage::Stop => {
 						PluginLibrary::stop_solver_from_instance(stop_fn.clone(), ctx_ptr);
-						break 'solver_loop;
+						return;
 					}
 					ControlMessage::Pause => {
 						PluginLibrary::stop_solver_from_instance(stop_fn.clone(), ctx_ptr);
@@ -114,9 +111,12 @@ impl CuckooMiner {
 					_ => {}
 				};
 			}
+		});
 
+		let mut iter_count = 0;
+		let mut paused = true;
+		loop {
 			if let Some(message) = solver_loop_rx.try_iter().next() {
-				debug!(LOGGER, "solver_thread - solver_loop_rx got msg: {:?}", message);
 				match message {
 					ControlMessage::Stop => break,
 					ControlMessage::Pause => paused = true,
@@ -125,7 +125,7 @@ impl CuckooMiner {
 				}
 			}
 			if paused {
-				thread::sleep(time::Duration::from_micros(100));
+				thread::sleep(sleep_dur);
 				continue;
 			}
 			{
@@ -172,9 +172,9 @@ impl CuckooMiner {
 				}
 			}
 			solver.solutions = SolverSolutions::default();
-			thread::sleep(time::Duration::from_micros(100));
 		}
 
+		let _ = stop_handle.join();
 		solver.lib.destroy_solver_ctx(ctx);
 		solver.unload();
 		let _ = solver_stopped_tx.send(ControlMessage::SolverStopped(instance));
@@ -249,6 +249,7 @@ impl CuckooMiner {
 		// when using fast test miners, in real cuckoo30 terms
 		// this shouldn't be an issue
 		// TODO: Make this less blocky
+		thread::sleep(time::Duration::from_millis(10));
 		// let time_pre_lock=Instant::now();
 		{
 			let mut s = self.shared_data.write().unwrap();
