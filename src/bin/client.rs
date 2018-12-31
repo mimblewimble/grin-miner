@@ -416,18 +416,17 @@ impl Controller {
 					}
 				} else {
 					let err = res.error.unwrap();
-					let err_str = format!("{}", err);
 					let mut stats = self.stats.write().unwrap();
 					stats.client_stats.last_message_received = format!(
 						"Last Message Received: Failed to submit a solution: {:?}",
-						err_str
+						err.message
 					);
-					if err_str.contains("too late") {
+					if err.message.contains("too late") {
 						stats.mining_stats.solution_stats.num_staled += 1;
 					} else {
 						stats.mining_stats.solution_stats.num_rejected += 1;
 					}
-					error!(LOGGER, "Failed to submit a solution: {:?}", err_str);
+					error!(LOGGER, "Failed to submit a solution: {:?}", err);
 				}
 				()
 			}
