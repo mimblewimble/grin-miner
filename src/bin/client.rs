@@ -573,7 +573,7 @@ impl Controller {
 					self.stream = None;
 				}
 			}
-			thread::sleep(std::time::Duration::from_millis(100));
+			thread::sleep(std::time::Duration::from_millis(10));
 		} // loop
 	}
 }
