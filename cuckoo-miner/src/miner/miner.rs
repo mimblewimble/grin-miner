@@ -99,7 +99,7 @@ impl CuckooMiner {
 		// end the current solve attempt below
 		let stop_handle = thread::spawn(move || loop {
 			let ctx_ptr = control_ctx.0.as_ptr();
-			while let Some(message) = control_rx.try_iter().next() {
+			while let Some(message) = control_rx.iter().next() {
 				match message {
 					ControlMessage::Stop => {
 						PluginLibrary::stop_solver_from_instance(stop_fn.clone(), ctx_ptr);
