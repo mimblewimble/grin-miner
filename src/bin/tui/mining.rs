@@ -113,7 +113,7 @@ impl TUIStatusListener for TUIMiningView {
 				c.width_percent(20)
 			}).column(MiningDeviceColumn::EdgeBits, "Size", |c| c.width_percent(5))
 			.column(MiningDeviceColumn::ErrorStatus, "Status", |c| {
-				c.width_percent(5)
+				c.width_percent(8)
 			}).column(MiningDeviceColumn::LastGraphTime, "Graph Time", |c| {
 				c.width_percent(10)
 			}).column(MiningDeviceColumn::GraphsPerSecond, "GPS", |c| {
@@ -126,16 +126,19 @@ impl TUIStatusListener for TUIMiningView {
 					TextView::new("Connection Status: Starting...").with_id("mining_server_status"),
 				)).child(
 					LinearLayout::new(Orientation::Horizontal)
-						.child(TextView::new("Last Message Sent:  ").with_id("last_message_sent")),
-				).child(LinearLayout::new(Orientation::Horizontal).child(
-					TextView::new("Last Message Received:  ").with_id("last_message_received"),
-				)).child(
-					LinearLayout::new(Orientation::Horizontal)
 						.child(TextView::new("Mining Status: ").with_id("mining_status")),
 				).child(
 					LinearLayout::new(Orientation::Horizontal)
 						.child(TextView::new("  ").with_id("network_info")),
-				);
+				).child(
+				LinearLayout::new(Orientation::Horizontal)
+					.child(TextView::new("  ").with_id("mining_statistics")),
+				).child(
+				LinearLayout::new(Orientation::Horizontal)
+					.child(TextView::new("Last Message Sent:  ").with_id("last_message_sent")),
+				).child(LinearLayout::new(Orientation::Horizontal).child(
+				TextView::new("Last Message Received:  ").with_id("last_message_received"),
+				));
 
 		let mining_device_view = LinearLayout::new(Orientation::Vertical)
 			.child(status_view)
@@ -155,15 +158,19 @@ impl TUIStatusListener for TUIMiningView {
 
 	/// update
 	fn update(c: &mut Cursive, stats: Arc<RwLock<stats::Stats>>) {
-		let stats = stats.read().unwrap();
-		let client_stats = stats.client_stats.clone();
+
+		let (client_stats, mining_stats) = {
+			let stats = stats.read().unwrap();
+			(stats.client_stats.clone(), stats.mining_stats.clone())
+		};
+
 		c.call_on_id("mining_server_status", |t: &mut TextView| {
-			t.set_content(stats.client_stats.connection_status.clone());
+			t.set_content(client_stats.connection_status.clone());
 		});
 
 		let (basic_mining_status, basic_network_info) = {
-			if stats.client_stats.connected {
-				if stats.mining_stats.combined_gps == 0.0 {
+			if client_stats.connected {
+				if mining_stats.combined_gps == 0.0 {
 					(
 						"Mining Status: Starting miner and awaiting first graph time..."
 							.to_string(),
@@ -173,11 +180,11 @@ impl TUIStatusListener for TUIMiningView {
 					(
 						format!(
 							"Mining Status: Mining at height {} at {:.*} GPS",
-							stats.mining_stats.block_height, 4, stats.mining_stats.combined_gps
+							mining_stats.block_height, 4, mining_stats.combined_gps
 						),
 						format!(
 							"Cuck(at)oo - Target Share Difficulty {}",
-							stats.mining_stats.target_difficulty.to_string()
+							mining_stats.target_difficulty.to_string()
 						),
 					)
 				}
@@ -204,13 +211,23 @@ impl TUIStatusListener for TUIMiningView {
 			t.set_content(client_stats.last_message_received.clone());
 		});
 
-		let mining_stats = stats.mining_stats.clone();
-		let device_stats = mining_stats.device_stats;
+		if mining_stats.solution_stats.num_solutions_found > 0 {
+			let sol_stat = format!("Solutions found: {}. Accepted: {}, Rejected: {}, Stale: {}, Blocks found: {}",
+								   mining_stats.solution_stats.num_solutions_found,
+								   mining_stats.solution_stats.num_shares_accepted,
+								   mining_stats.solution_stats.num_rejected,
+								   mining_stats.solution_stats.num_staled,
+								   mining_stats.solution_stats.num_blocks_found,
+			);
+			c.call_on_id("mining_statistics", |t: &mut TextView| {
+				t.set_content(sol_stat);
+			});
+		}
 
 		let _ = c.call_on_id(
 			TABLE_MINING_STATUS,
 			|t: &mut TableView<SolverStats, MiningDeviceColumn>| {
-				t.set_items(device_stats);
+				t.set_items(mining_stats.device_stats);
 			},
 		);
 	}

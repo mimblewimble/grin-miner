@@ -17,117 +17,111 @@ set (CUDA_HOST_COMPILER_OVERRIDE $ENV{CUDA_HOST_COMPILER})
 #blake2b prerequisite
 set (BLAKE_2B "cuckoo/src/crypto/blake2b-ref.c")
 
-## CUCKATOO
+#common to all plugins
+set (PLUGIN_BUILD_FLAGS "-DC_CALL_CONVENTION=1 -DSQUASH_OUTPUT=1")
 
-#flags applying to all cuckatoo variants
-set (CUCKATOO_BUILD_FLAGS "-DC_CALL_CONVENTION=1 -DSQUASH_OUTPUT=1")
+#build CPU target
+function (build_cpu_target sources target props)
+	add_library(${target} SHARED ${sources})
+	set_target_properties(${target} PROPERTIES COMPILE_FLAGS "${GPP_FLAGS} ${props} ${PLUGIN_BUILD_FLAGS}" PREFIX "" SUFFIX ".cuckooplugin")
+endfunction()
 
-#cuckatoo lean (lean_cpu) sources
-set (CUCKATOO_LEAN_MINER_SOURCES cuckoo/src/crypto/siphash.h cuckoo/src/cuckatoo/cuckatoo.h cuckoo/src/cuckatoo/lean.hpp cuckoo/src/cuckatoo/lean.cpp ${BLAKE_2B})
+function (build_cuda_target sources target props)
+	if (BUILD_CUDA_PLUGINS)
+		include("cmake/find_cuda.cmake")
+		if (CUDA_FOUND)
+			set (CUDA_PROPAGATE_HOST_FLAGS ON)
+			cuda_add_library (${target} SHARED ${sources} OPTIONS "${props} ${PLUGIN_BUILD_FLAGS}")
+			set_target_properties(${target} PROPERTIES PREFIX "" SUFFIX ".cuckooplugin")
+		endif (CUDA_FOUND)
+	endif (BUILD_CUDA_PLUGINS)
+endfunction()
 
-#cuckatoo mean miner sources (mean_cpu)
-set (CUCKATOO_MEAN_MINER_SOURCES cuckoo/src/crypto/siphash.h cuckoo/src/cuckatoo/cuckatoo.h cuckoo/src/cuckatoo/mean.hpp cuckoo/src/cuckatoo/mean.cpp ${BLAKE_2B})
+##################################################################################
+### CUCKATOO (Asic Tuned) ########################################################
+##################################################################################
 
-#cuckatoo cuda mean miner source (mean_miner.cu)
-set (CUCKATOO_CUDA_MEAN_MINER_SOURCES cuckoo/src/cuckatoo/mean.cu ${BLAKE_2B} )
+### AT LEAN CPU TARGETS  #########################################
 
-#cuckatoo cuda LEAN miner source (mean.cu)
-set (CUCKATOO_CUDA_LEAN_MINER_SOURCES cuckoo/src/cuckatoo/lean.cu ${BLAKE_2B} )
+set (AT_LEAN_CPU_SRC
+			cuckoo/src/cuckatoo/cuckatoo.h
+			cuckoo/src/cuckatoo/bitmap.hpp
+			cuckoo/src/cuckatoo/graph.hpp
+			cuckoo/src/cuckatoo/compress.hpp
+			cuckoo/src/threads/barrier.hpp
+			cuckoo/src/crypto/siphash.hpp
+			cuckoo/src/cuckatoo/lean.hpp
+			cuckoo/src/cuckatoo/lean.cpp
+			${BLAKE_2B})
 
-### CUCKAROO
+build_cpu_target("${AT_LEAN_CPU_SRC}" cuckatoo_lean_cpu_compat_19 "-DNSIPHASH=1 -DATOMIC -DEDGEBITS=19")
+build_cpu_target("${AT_LEAN_CPU_SRC}" cuckatoo_lean_cpu_compat_31 "-mno-avx2 -DNSIPHASH=4 -DATOMIC -DEDGEBITS=31")
+build_cpu_target("${AT_LEAN_CPU_SRC}" cuckatoo_lean_cpu_avx2_31 "-mavx2 -DNSIPHASH=8 -DATOMIC -DEDGEBITS=31")
 
-#flags applying to all cuckatoo variants
-set (CUCKAROO_BUILD_FLAGS "-DC_CALL_CONVENTION=1 -DSQUASH_OUTPUT=1")
+### AT MEAN CPU TARGETS  #########################################
 
-#cuckaroo cuda mean miner source (mean.cu)
-set (CUCKAROO_CUDA_MEAN_MINER_SOURCES cuckoo/src/cuckaroo/mean.cu ${BLAKE_2B} )
+set (AT_MEAN_CPU_SRC
+			cuckoo/src/cuckatoo/cuckatoo.h
+			cuckoo/src/cuckatoo/bitmap.hpp
+			cuckoo/src/cuckatoo/graph.hpp
+			cuckoo/src/cuckatoo/compress.hpp
+			cuckoo/src/threads/barrier.hpp
+			cuckoo/src/crypto/siphash.hpp
+			cuckoo/src/cuckatoo/mean.hpp
+			cuckoo/src/cuckatoo/mean.cpp
+			${BLAKE_2B})
 
-###cuckatoo lean_cpu miner targets
-foreach(CUCKATOO_SIZE 19 29 30)
-    add_library(cuckatoo_lean_cpu_${CUCKATOO_SIZE} SHARED ${CUCKATOO_LEAN_MINER_SOURCES})
-    #get edgebits
-    math (EXPR EDGEBITS ${CUCKATOO_SIZE})
-    set_target_properties(cuckatoo_lean_cpu_${CUCKATOO_SIZE} PROPERTIES COMPILE_FLAGS "${GPP_FLAGS} ${CUCKATOO_BUILD_FLAGS} -DATOMIC -DEDGEBITS=${EDGEBITS}" PREFIX "" SUFFIX ".cuckooplugin" )
-endforeach(CUCKATOO_SIZE)
+build_cpu_target("${AT_MEAN_CPU_SRC}" cuckatoo_mean_cpu_compat_19 "-DXBITS=2 -DNSIPHASH=1 -DSAVEEDGES -DEDGEBITS=19")
+build_cpu_target("${AT_MEAN_CPU_SRC}" cuckatoo_mean_cpu_avx2_19 "-mavx2 -DXBITS=2 -DNSIPHASH=8 -DSAVEEDGES -DEDGEBITS=19")
+build_cpu_target("${AT_MEAN_CPU_SRC}" cuckatoo_mean_cpu_compat_31 "-mno-avx2 -DXBITS=8 -DNSIPHASH=4 -DEXPANDROUND=8 -DCOMPRESSROUND=22 -DSAVEEDGES -DEDGEBITS=31")
+build_cpu_target("${AT_MEAN_CPU_SRC}" cuckatoo_mean_cpu_avx2_31 "-mavx2 -DXBITS=8 -DNSIPHASH=8 -DEXPANDROUND=8 -DCOMPRESSROUND=22 -DSAVEEDGES -DEDGEBITS=31")
 
-set (CUCKATOO_MEAN_COMPAT_FLAGS "${CUCKATOO_BUILD_FLAGS} -mno-avx2 -DNSIPHASH=4 -DSAVEEDGES")
+### AT LEAN CUDA TARGETS  #########################################
 
-#cuckatoo_mean_compat_cpu compatible mode targets, for older processors
-foreach(CUCKATOO_SIZE 19 29 30 31)
-    set (DXBITSFLAG "")
-    set (DEXPANDFLAGS "")
-    if (CUCKATOO_SIZE EQUAL 19)
-       set (DXBITSFLAG "-DXBITS=2")
-    endif()
-    if (CUCKATOO_SIZE EQUAL 30)
-       set (DEXPANDFLAGS "-DEXPANDROUND=10 -DCOMPRESSROUND=22")
-    endif()
-    if (CUCKATOO_SIZE EQUAL 31)
-       set (DEXPANDFLAGS "-DEXPANDROUND=8 -DCOMPRESSROUND=22")
-       set (DXBITSFLAG "-DXBITS=8")
-    endif()
-    add_library(cuckatoo_mean_compat_cpu_${CUCKATOO_SIZE} SHARED ${CUCKATOO_MEAN_MINER_SOURCES})
-    #get edgebits
-    math (EXPR EDGEBITS ${CUCKATOO_SIZE})
-    set_target_properties(cuckatoo_mean_compat_cpu_${CUCKATOO_SIZE} PROPERTIES COMPILE_FLAGS "${GPP_FLAGS} ${DXBITSFLAG} ${CUCKATOO_MEAN_COMPAT_FLAGS} ${DEXPANDFLAGS} -DEDGEBITS=${EDGEBITS}" PREFIX "" SUFFIX ".cuckooplugin")
-endforeach(CUCKATOO_SIZE)
+set (AT_LEAN_CUDA_SRC
+			cuckoo/src/crypto/siphash.cuh
+			cuckoo/src/cuckatoo/lean.cu
+			${BLAKE_2B} )
 
-set (CUCKATOO_MEAN_AVX2_FLAGS "${CUCKATOO_BUILD_FLAGS} -mavx2 -DNSIPHASH=8 -DSAVEEDGES")
+build_cuda_target("${AT_LEAN_CUDA_SRC}" cuckatoo_lean_cuda_19 "-DEDGEBITS=19")
+build_cuda_target("${AT_LEAN_CUDA_SRC}" cuckatoo_lean_cuda_31 "-DEDGEBITS=31")
 
-#cuckatoo mean avx2 (cuckatoo_mean_avx2_cpu) targets
-foreach(CUCKATOO_SIZE 19 29 30 31)
-    set (DXBITSFLAG "")
-    set (DEXPANDFLAGS "")
-    if (CUCKATOO_SIZE EQUAL 19)
-       set (DXBITSFLAG "-DXBITS=2")
-    endif()
-    if (CUCKATOO_SIZE EQUAL 30)
-       set (DEXPANDFLAGS "-DEXPANDROUND=10 -DCOMPRESSROUND=22")
-    endif()
-    if (CUCKATOO_SIZE EQUAL 31)
-       set (DEXPANDFLAGS "-DEXPANDROUND=8 -DCOMPRESSROUND=22")
-       set (DXBITSFLAG "-DXBITS=8")
-    endif()
+### AT MEAN CUDA TARGETS  #########################################
 
-    add_library(cuckatoo_mean_avx2_cpu_${CUCKATOO_SIZE} SHARED ${CUCKATOO_MEAN_MINER_SOURCES})
-    #get edgebits
-    math (EXPR EDGEBITS ${CUCKATOO_SIZE})
-    set_target_properties(cuckatoo_mean_avx2_cpu_${CUCKATOO_SIZE} PROPERTIES COMPILE_FLAGS "${GPP_FLAGS} ${DXBITSFLAG} ${CUCKATOO_MEAN_AVX2_FLAGS} ${DEXPANDFLAGS} -DEDGEBITS=${EDGEBITS}" PREFIX "" SUFFIX ".cuckooplugin")
-endforeach(CUCKATOO_SIZE)
+set (AT_MEAN_CUDA_SRC
+			cuckoo/src/crypto/siphash.cuh
+			cuckoo/src/cuckatoo/mean.cu
+			${BLAKE_2B} )
 
-# Cuda
-if(BUILD_CUDA_PLUGINS)
-    include("cmake/find_cuda.cmake")
-    IF (CUDA_FOUND)
-      set (CUDA_PROPAGATE_HOST_FLAGS ON)
-        ##cuckatoo mean cuda mean miner targets
-        foreach(CUCKATOO_SIZE 29 30)
-            #get edgebits
-            math (EXPR EDGEBITS ${CUCKATOO_SIZE})
-        cuda_add_library (cuckatoo_mean_cuda_${CUCKATOO_SIZE} SHARED ${CUCKATOO_CUDA_MEAN_MINER_SOURCES} OPTIONS "-DEDGEBITS=${EDGEBITS} ${CUCKATOO_BUILD_FLAGS}")
-        set_target_properties(cuckatoo_mean_cuda_${CUCKATOO_SIZE} PROPERTIES PREFIX "" SUFFIX ".cuckooplugin")
-        endforeach(CUCKATOO_SIZE)
-        ##cuckatoo mean cuda mean miner targets
-        foreach(CUCKATOO_SIZE 31)
-            #get edgebits
-            math (EXPR EDGEBITS ${CUCKATOO_SIZE})
-        cuda_add_library (cuckatoo_mean_cuda_${CUCKATOO_SIZE} SHARED ${CUCKATOO_CUDA_MEAN_MINER_SOURCES} OPTIONS "-DXBITS=7 -DEDGEBITS=${EDGEBITS} ${CUCKATOO_BUILD_FLAGS}")
-        set_target_properties(cuckatoo_mean_cuda_${CUCKATOO_SIZE} PROPERTIES PREFIX "" SUFFIX ".cuckooplugin")
-        endforeach(CUCKATOO_SIZE)
-        ##cuckatoo lean cuda mean miner targets
-        foreach(CUCKATOO_SIZE 29 30 31)
-            #get edgebits
-            math (EXPR EDGEBITS ${CUCKATOO_SIZE})
-        cuda_add_library (cuckatoo_lean_cuda_${CUCKATOO_SIZE} SHARED ${CUCKATOO_CUDA_LEAN_MINER_SOURCES} OPTIONS "-DEDGEBITS=${EDGEBITS} ${CUCKATOO_BUILD_FLAGS}")
-        set_target_properties(cuckatoo_lean_cuda_${CUCKATOO_SIZE} PROPERTIES PREFIX "" SUFFIX ".cuckooplugin")
-        endforeach(CUCKATOO_SIZE)
+build_cuda_target("${AT_MEAN_CUDA_SRC}" cuckatoo_mean_cuda_19 "-DEPS_A=4 -DEPS_B=3 -DIDXSHIFT=6 -DEDGEBITS=19")
+build_cuda_target("${AT_MEAN_CUDA_SRC}" cuckatoo_mean_cuda_31 "-DXBITS=7 -DEDGEBITS=31")
 
-        ##cuckaroo mean cuda mean miner targets
-        foreach(CUCKAROO_SIZE 19 29)
-            #get edgebits
-            math (EXPR EDGEBITS ${CUCKAROO_SIZE})
-        cuda_add_library (cuckaroo_mean_cuda_${CUCKAROO_SIZE} SHARED ${CUCKAROO_CUDA_MEAN_MINER_SOURCES} OPTIONS "-DEDGEBITS=${EDGEBITS} ${CUCKAROO_BUILD_FLAGS}")
-        set_target_properties(cuckaroo_mean_cuda_${CUCKAROO_SIZE} PROPERTIES PREFIX "" SUFFIX ".cuckooplugin")
-        endforeach(CUCKAROO_SIZE)
-    endif(CUDA_FOUND)
-endif(BUILD_CUDA_PLUGINS)
+##################################################################################
+### CUCKAROO (Asic Resistant)  ###################################################
+##################################################################################
+
+### AR CPU BUILDING  #########################################
+
+set (AR_CPU_SRC
+			cuckoo/src/cuckaroo/cuckaroo.hpp
+			cuckoo/src/cuckaroo/bitmap.hpp
+			cuckoo/src/cuckaroo/graph.hpp
+			cuckoo/src/threads/barrier.hpp
+			cuckoo/src/crypto/siphash.hpp
+			cuckoo/src/cuckaroo/mean.hpp
+			cuckoo/src/cuckaroo/mean.cpp
+			${BLAKE_2B})
+
+### AR CPU TARGETS #########################################
+
+build_cpu_target("${AR_CPU_SRC}" cuckaroo_cpu_compat_19 "-DXBITS=2 -DNSIPHASH=1 -DEDGEBITS=19 -DSAVEEDGES")
+build_cpu_target("${AR_CPU_SRC}" cuckaroo_cpu_avx2_19 "-mavx2 -DXBITS=2 -DNSIPHASH=8 -DEDGEBITS=19 -DSAVEEDGES")
+build_cpu_target("${AR_CPU_SRC}" cuckaroo_cpu_compat_29 "-mno-avx2 -DNSIPHASH=4 -DEDGEBITS=29 -DSAVEEDGES")
+build_cpu_target("${AR_CPU_SRC}" cuckaroo_cpu_avx2_29 "-mavx2 -DNSIPHASH=8 -DEDGEBITS=29 -DSAVEEDGES")
+
+### AR CUDA TARGETS #########################################
+
+set (AR_CUDA_SRC cuckoo/src/cuckaroo/mean.cu ${BLAKE_2B} )
+
+build_cuda_target("${AR_CUDA_SRC}" cuckaroo_cuda_19 "-DEPS_A=4 -DEPS_B=3 -DIDXSHIFT=2 -DEDGEBITS=19")
+build_cuda_target("${AR_CUDA_SRC}" cuckaroo_cuda_29 "-DEDGEBITS=29")

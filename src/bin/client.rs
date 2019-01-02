@@ -406,19 +406,26 @@ impl Controller {
 					let mut stats = self.stats.write().unwrap();
 					stats.client_stats.last_message_received =
 						format!("Last Message Received: Share Accepted!!");
+					stats.mining_stats.solution_stats.num_shares_accepted += 1;
 					let result = serde_json::to_string(&res.result).unwrap();
 					if result.contains("blockfound") {
 						info!(LOGGER, "Block Found!!");
 						stats.client_stats.last_message_received =
 							format!("Last Message Received: Block Found!!");
+						stats.mining_stats.solution_stats.num_blocks_found += 1;
 					}
 				} else {
 					let err = res.error.unwrap();
 					let mut stats = self.stats.write().unwrap();
 					stats.client_stats.last_message_received = format!(
 						"Last Message Received: Failed to submit a solution: {:?}",
-						err
+						err.message
 					);
+					if err.message.contains("too late") {
+						stats.mining_stats.solution_stats.num_staled += 1;
+					} else {
+						stats.mining_stats.solution_stats.num_rejected += 1;
+					}
 					error!(LOGGER, "Failed to submit a solution: {:?}", err);
 				}
 				()
@@ -573,7 +580,7 @@ impl Controller {
 					self.stream = None;
 				}
 			}
-			thread::sleep(std::time::Duration::from_millis(100));
+			thread::sleep(std::time::Duration::from_millis(10));
 		} // loop
 	}
 }

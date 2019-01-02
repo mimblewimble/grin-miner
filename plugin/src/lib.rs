@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+//! Crate wrapping up the Grin miner plugins
+
 #![deny(non_upper_case_globals)]
 #![deny(non_camel_case_types)]
 #![deny(non_snake_case)]
@@ -227,6 +229,8 @@ impl SolverStats {
 #[repr(C)]
 #[derive(Clone, Copy)]
 pub struct Solution {
+	/// Optional ID
+	pub id: uint64_t,
 	/// Nonce
 	pub nonce: uint64_t,
 	/// Proof
@@ -236,6 +240,7 @@ pub struct Solution {
 impl Default for Solution {
 	fn default() -> Solution {
 		Solution {
+			id: 0,
 			nonce: 0,
 			proof: [0u64; PROOFSIZE],
 		}

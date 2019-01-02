@@ -55,6 +55,7 @@ impl PluginConfig {
 
 /// Error type wrapping config errors.
 #[derive(Debug)]
+#[allow(dead_code)]
 pub enum ConfigError {
 	/// Error with parsing of config file
 	ParseError(String, String),

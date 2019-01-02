@@ -75,7 +75,7 @@ impl Controller {
 						self.current_height = height;
 						self.current_job_id = job_id;
 						self.current_target_diff = diff;
-						miner.notify(self.current_job_id as u32, &pre_pow, "", 0)
+						miner.notify(self.current_job_id as u32, self.current_height, &pre_pow, "", 0)
 					}
 					types::MinerMessage::StopJob => {
 						debug!(LOGGER, "Stopping jobs");
@@ -109,12 +109,14 @@ impl Controller {
 							.unwrap()
 							.send(types::ClientMessage::FoundSolution(
 								self.current_height,
-								self.current_job_id,
+								ss.sols[i as usize].id,
 								edge_bits,
 								ss.sols[i as usize].nonce,
 								ss.sols[i as usize].proof.to_vec(),
 							));
 				}
+				let mut s_stats = self.stats.write().unwrap();
+				s_stats.mining_stats.solution_stats.num_solutions_found += ss.num_sols;
 			}
 			thread::sleep(std::time::Duration::from_millis(100));
 		}

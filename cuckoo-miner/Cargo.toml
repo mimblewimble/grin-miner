@@ -1,6 +1,6 @@
 [package]
 name = "cuckoo_miner"
-version = "0.4.2"
+version = "0.5.0"
 authors = ["yeastplume"]
 license = "MIT/Apache-2.0/BSD-3-Clause"
 description = "Rust bindings to John Tromp's Cuckoo Cycle Implementations"
@@ -12,14 +12,14 @@ build = "src/build.rs"
 default = []
 #feature to allow turing off plugin builds
 no-plugin-build = []
-#build mean avx2 CPU plugins
-build-mean-avx2 = []
+#whether to test avx2 CPU plugins
+test-avx2 = []
 #feature which defines whether to build cuda libs
 build-cuda-plugins = []
 
 [dependencies]
-grin_miner_util = { path = "../util", version = "0.4.2" }
-grin_miner_plugin = { path = "../plugin", version = "0.4.2" }
+grin_miner_util = { path = "../util", version = "0.5.0" }
+grin_miner_plugin = { path = "../plugin", version = "0.5.0" }
 time = "^0.1"
 rust-crypto = "0.2.36"
 log = "^0.3"

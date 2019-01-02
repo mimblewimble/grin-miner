@@ -38,13 +38,13 @@ pub struct RpcResponse {
 	pub method: String,
 	pub jsonrpc: String,
 	pub result: Option<Value>,
-	pub error: Option<Value>,
+	pub error: Option<RpcError>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct RpcError {
-	code: i32,
-	message: String,
+	pub code: i32,
+	pub message: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
