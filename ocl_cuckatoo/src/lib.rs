@@ -4,28 +4,22 @@ extern crate grin_miner_plugin as plugin;
 extern crate hashbrown;
 extern crate libc;
 extern crate ocl;
-#[macro_use]
-extern crate slog;
-
-extern crate grin_miner_util as util;
 
 use blake2_rfc::blake2b::blake2b;
 use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
+use libc::*;
+use plugin::*;
 use std::io::Cursor;
 use std::io::Error;
-use std::time::{Duration, SystemTime};
-use util::{init_logger, LOGGER};
-
-mod finder;
-mod trimmer;
 use std::mem;
 use std::ptr;
+use std::time::{Duration, SystemTime};
 
 pub use self::finder::Graph;
 pub use self::trimmer::Trimmer;
 
-use libc::*;
-use plugin::*;
+mod finder;
+mod trimmer;
 
 #[repr(C)]
 struct Solver {
@@ -46,10 +40,6 @@ pub unsafe extern "C" fn create_solver_ctx(params: *mut SolverParams) -> *mut So
 	if edge_bits < 31 || edge_bits > 64 {
 		edge_bits = 31;
 	}
-	println!(
-		"Platform {:?}, device {:?} bits {}",
-		platform, device_id, edge_bits
-	);
 	let trimmer = Trimmer::build(platform, device_id, edge_bits).expect("can't build trimmer");
 	let solver = Solver {
 		trimmer: trimmer,
@@ -69,10 +59,14 @@ pub unsafe extern "C" fn destroy_solver_ctx(solver_ctx_ptr: *mut SolverCtx) {
 }
 
 #[no_mangle]
-pub unsafe extern "C" fn stop_solver(solver_ctx_ptr: *mut SolverCtx) {}
+pub unsafe extern "C" fn stop_solver(_solver_ctx_ptr: *mut SolverCtx) {}
 
 #[no_mangle]
-pub unsafe extern "C" fn fill_default_params(params: *mut SolverParams) {}
+pub unsafe extern "C" fn fill_default_params(params: *mut SolverParams) {
+	(*params).device = 0;
+	(*params).platform = 0;
+	(*params).edge_bits = 31;
+}
 
 #[no_mangle]
 pub unsafe extern "C" fn run_solver(
@@ -80,11 +74,10 @@ pub unsafe extern "C" fn run_solver(
 	header_ptr: *const c_uchar,
 	header_length: uint32_t,
 	nonce: uint64_t,
-	range: uint32_t,
+	_range: uint32_t,
 	solutions: *mut SolverSolutions,
 	stats: *mut SolverStats,
 ) -> uint32_t {
-	info!(LOGGER, "XXX Solving");
 	let start = SystemTime::now();
 	let solver_ptr = mem::transmute::<*mut SolverCtx, *mut Solver>(ctx);
 	let solver = &*solver_ptr;
@@ -94,15 +87,12 @@ pub unsafe extern "C" fn run_solver(
 	header.set_len(header_length as usize);
 	let n = nonce as u32;
 	let k = match set_header_nonce(&header, Some(n), solver.mutate_nonce) {
-		Err(e) => {
-			debug!(LOGGER, "can't process header");
+		Err(_e) => {
 			return 2;
 		}
 		Ok(v) => v,
 	};
-	//println!("K is {:x?}", k);
 	let res = solver.trimmer.run(&k).unwrap();
-	debug!(LOGGER, "Trimmed to {}", res.len());
 
 	let sols = Graph::search(&res).unwrap();
 	let end = SystemTime::now();
@@ -111,7 +101,6 @@ pub unsafe extern "C" fn run_solver(
 	(*solutions).edge_bits = 31;
 	(*solutions).num_sols = sols.len() as u32;
 	for sol in sols {
-		debug!(LOGGER, "Solution: {:x?}", sol.nonces);
 		(*solutions).sols[i].nonce = nonce;
 		(*solutions).sols[i]
 			.proof
@@ -143,7 +132,7 @@ pub fn set_header_nonce(
 		let len = header.len();
 		let mut header = header.to_owned();
 		if mutate_nonce {
-			header.truncate(len - 4); // drop last 4 bytes (u32) off the end
+			header.truncate(len - 4);
 			header.write_u32::<LittleEndian>(n)?;
 		}
 		create_siphash_keys(&header)
@@ -171,14 +160,14 @@ mod tests {
 	fn test_solve() {
 		let trimmer = Trimmer::build(None, None, 29).expect("can't build trimmer");
 		let k = [
-			0x5947f1297c7cd34a,
-			0x802becf646e29b67,
-			0xe0c878d10d3af2ed,
-			0x5843ba0843699326,
+			0x27580576fe290177,
+			0xf9ea9b2031f4e76e,
+			0x1663308c8607868f,
+			0xb88839b0fa180d0e,
 		];
 
 		let res = trimmer.run(&k).unwrap();
-		debug!(LOGGER, "Trimmed to {}", res.len());
+		println!("Trimmed to {}", res.len());
 
 		let sols = Graph::search(&res).unwrap();
 		assert_eq!(1, sols.len());

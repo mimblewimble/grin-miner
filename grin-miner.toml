@@ -1,4 +1,4 @@
-# Sample Server Configuration File for Grin-Miner
+ample Server Configuration File for Grin-Miner
 #
 # Grin-Miner will look for this file in these places: in the following
 # order:
@@ -76,10 +76,10 @@ stratum_server_tls_enabled = false
 
 # The fastest cpu algorithm, but consumes the most memory
 
-#[[mining.miner_plugin_config]]
-#plugin_name = "cuckaroo_cpu_compat_29"
-#[mining.miner_plugin_config.parameters]
-#nthreads = 1
+[[mining.miner_plugin_config]]
+plugin_name = "cuckaroo_cpu_compat_29"
+[mining.miner_plugin_config.parameters]
+nthreads = 1
 
 # As above, but for processors supporting avx2
 
@@ -138,28 +138,35 @@ stratum_server_tls_enabled = false
 #plugin_name = "cuckatoo_mean_cpu_avx2_31"
 #[mining.miner_plugin_config.parameters]
 
-#mean cuda (unlikely to work on consumer cards, need 14GB+)
+#mean cuda, will work on a 1080TI with expand rounds set to 2
+#memory requirements are tight, don't drive a display
+#off the same card while trying to mine with an 11GB card
+
 #[[mining.miner_plugin_config]]
 #plugin_name = "cuckatoo_mean_cuda_31"
-
 #[mining.miner_plugin_config.parameters]
-#expand = 0
 #device = 0
-#blocks = 128
-#tpb = 128
-#
+#expand = 2
+#cpuload = 1
+#ntrims = 176
+#genablocks = 4096
+#genatpb = 128 
+#genbtpb = 128
+#trimtpb = 512
+#tailtpb = 1024
+#recoverblocks = 1024
+#recovertpb = 1024
 
+#mean cuda optimised to use slightly less memory,
+#will work on a 2080TI with expand rounds set to 2
+#as above, memory requirements are tight, don't drive a display
+#off the same card while trying to mine with an 11GB card
 
 #[[mining.miner_plugin_config]]
-#plugin_name = "cuckatoo_lean_cuda_31"
+#plugin_name = "cuckatoo_mean_lessmem_cuda_31"
+#[mining.miner_plugin_config.parameters]
 #device = 0
-
-[[mining.miner_plugin_config]]
-plugin_name = "ocl_cuckatoo"
-[mining.miner_plugin_config.parameters]
-device = 0
-platform = 2
-edge_bits = 31
+#expand = 2
 #cpuload = 1
 #ntrims = 176
 #genablocks = 4096
@@ -173,7 +180,6 @@ edge_bits = 31
 #lean cuda
 #[[mining.miner_plugin_config]]
 #plugin_name = "cuckatoo_lean_cuda_31"
-
 #[mining.miner_plugin_config.parameters]
 #expand = 0
 #device = 0
@@ -186,3 +192,17 @@ edge_bits = 31
 #tailtpb = 1024
 #recoverblocks = 1024
 #recovertpb = 1024
+
+# lean OpenCL supports both NVidia and AMD
+# very slow but requires ~ 3GB of RAM
+# to install run ./install_ocl_plugins.sh script
+#[[mining.miner_plugin_config]]
+#plugin_name = "ocl_cuckatoo"
+#[mining.miner_plugin_config.parameters]
+# 0 for default, 1 for AMD, 2 for NVidia, specify if you have 
+# cards from both vendors
+#platform = 0
+# ID withing the platform
+#device = 0
+#edge_bits = 31
+

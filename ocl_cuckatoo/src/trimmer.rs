@@ -1,7 +1,5 @@
 use ocl;
 use ocl::{Buffer, Context, Device, Kernel, Platform, Program, Queue, SpatialDims};
-use std::time::SystemTime;
-use util::{init_logger, LOGGER};
 
 const RES_BUFFER_SIZE: usize = 4_000_000;
 const LOCAL_WORK_SIZE: usize = 256;
@@ -15,7 +13,6 @@ enum Mode {
 
 pub struct Trimmer {
 	edge_bits: u8,
-	context: Context,
 	q: Queue,
 	program: Program,
 	edges: Buffer<u32>,
@@ -32,18 +29,12 @@ impl Trimmer {
 		device_id: Option<usize>,
 		edge_bits: u8,
 	) -> ocl::Result<Trimmer> {
-		let start = SystemTime::now();
 		let platform = find_paltform(platform_name)
 			.ok_or::<ocl::Error>("Can't find OpenCL platform".into())?;
-		// debug!(LOGGER,"Platform selected: {}", platform.vendor()?);
 		let device = find_device(&platform, device_id)?;
-		//debug!(LOGGER,"Device selected: {}", device.to_string());
 
-		let el_count = 1024 * 1024 * 64; //(1024 * 1024 * 512 / 32) << edge_bits - 29;
+		let el_count = (1024 * 1024 * 16) << (edge_bits - 29);
 		let res_buf: Vec<u32> = vec![0; RES_BUFFER_SIZE];
-
-		let m1 = SystemTime::now();
-		//debug!(LOGGER,"Preparing {:?}", m1.duration_since(start).unwrap());
 
 		let context = Context::builder()
 			.platform(platform)
@@ -55,6 +46,7 @@ impl Trimmer {
 		let program = Program::builder()
 			.devices(device)
 			.src(SRC)
+			.cmplr_def("EDGEBITS", edge_bits as i32)
 			.build(&context)?;
 
 		let edges = Buffer::<u32>::builder()
@@ -78,7 +70,6 @@ impl Trimmer {
 
 		Ok(Trimmer {
 			edge_bits,
-			context,
 			q,
 			program,
 			edges,
@@ -91,10 +82,10 @@ impl Trimmer {
 	}
 
 	pub fn run(&self, k: &[u64; 4]) -> ocl::Result<Vec<u32>> {
-		let m1 = SystemTime::now();
 		let mut current_mode = Mode::SetCnt;
 		let mut current_uorv: u32 = 0;
-		let trims = 256; //128 << (self.edge_bits - 29);
+		let trims = if self.edge_bits >= 29 { 128 } else { 256 };
+		let enqs = 8 << (self.edge_bits - 29);
 
 		let mut kernel = Kernel::builder()
 			.name("LeanRound")
@@ -113,9 +104,6 @@ impl Trimmer {
 			.arg(current_uorv)
 			.build()?;
 
-		// CUCKATOO 29 ONLY at this time, otherwise universal !!!
-		//let logsize: u32 = 29; // this needs to be passed to kernel as well AND loops below updated
-		//let edges = 1 << logsize;
 		let mut offset;
 
 		macro_rules! kernel_enq (
@@ -135,7 +123,7 @@ impl Trimmer {
 			current_mode = Mode::SetCnt;
 			kernel.set_arg(7, current_mode as u32)?;
 			kernel.set_arg(8, current_uorv)?;
-			kernel_enq!(32);
+			kernel_enq!(enqs);
 
 			current_mode = if l == (trims - 1) {
 				Mode::Extract
@@ -143,18 +131,14 @@ impl Trimmer {
 				Mode::Trim
 			};
 			kernel.set_arg(7, current_mode as u32)?;
-			kernel_enq!(32);
+			kernel_enq!(enqs);
 			// prepare for the next round
 			self.counters.cmd().fill(0, None).enq()?;
 		}
 		unsafe {
 			self.result.map().enq()?;
-			//result.read(&mut res_buf).enq()?;
 		}
 		self.q.finish()?;
-		let m2 = SystemTime::now();
-		//println!("Trimming {:?}", m2.duration_since(m1).unwrap());
-		//println!("Trimmed to {} edges", self.res_buf[1]);
 		let ret = self.res_buf.clone();
 		self.edges.cmd().fill(0xFFFFFFFF, None).enq()?;
 		self.result.cmd().fill(0, None).enq()?;
@@ -193,8 +177,6 @@ typedef u64 nonce_t;
 
 #define DEBUG 0
 
-// this define should be set from host code to be completely universal
-#define EDGEBITS 31
 // number of edges
 #define NEDGES ((u64)1 << EDGEBITS)
 // used to mask siphash output

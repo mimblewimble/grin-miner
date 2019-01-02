@@ -1,6 +1,4 @@
 use hashbrown::HashMap;
-use std::time::SystemTime;
-use util::{init_logger, LOGGER};
 
 #[derive(Clone)]
 pub struct Solution {
@@ -57,8 +55,7 @@ impl Search {
 	}
 
 	#[inline]
-	fn leave(&mut self, node: u32) {
-		self.state.insert(node, NodeState::NotVisited);
+	fn leave(&mut self, _node: u32) {
 		self.path.pop();
 	}
 
@@ -86,21 +83,7 @@ impl Search {
 		}
 	}
 
-	#[inline]
-	fn clear(&mut self) {
-		self.path.clear();
-		//self.state.clear();
-	}
-
 	fn is_cycle(&mut self, node: u32, is_first: bool) -> bool {
-		//  TODO remove after tests
-		if self.path.contains(&node) {
-			let pos = self.path.iter().position(|&v| v == node).unwrap();
-			let diff = (self.path.len() - pos) / 2;
-			//if diff > 1 {
-			//	println!("Found {}-cycle {}", diff, node);
-			//}
-		}
 		let res =
 			self.path.len() > self.length - 1 && self.path[self.path.len() - self.length] == node;
 		if res && !is_first {
@@ -176,20 +159,22 @@ impl Graph {
 			nonces: HashMap::with_capacity_and_hasher(edge_count, Default::default()),
 			adj_store: Vec::with_capacity(edge_count * 2),
 		};
+		let mut search = Search::new(edge_count * 2, 42);
 		const STEP: usize = 4;
-		let mut sols = vec![];
 		for i in 1..=edge_count {
 			let n1 = edges[i * STEP];
 			let n2 = edges[i * STEP + 1];
 			let nonce = edges[i * STEP + 2];
 			g.add_edge(n1, n2);
 			g.nonces.insert(nonce_key(n1, n2), nonce);
-			let pair_sols = g.check_pair(n1, n2)?;
-			if pair_sols.len() > 0 {
-				sols.extend(pair_sols);
-			}
 		}
-		Ok(sols)
+
+		for i in 1..=edge_count {
+			let n1 = edges[i * STEP];
+			let n2 = edges[i * STEP + 1];
+			g.check_pair(n1, n2, &mut search)?;
+		}
+		Ok(search.solutions.clone())
 	}
 
 	fn get_nonce(&self, node1: u32, node2: u32) -> Result<u64, String> {
@@ -237,22 +222,10 @@ impl Graph {
 		self.adj_index.keys()
 	}
 
-	fn check_pair(&self, u: u32, v: u32) -> Result<Vec<Solution>, String> {
-		let mut search = Search::new(self.node_count(), 42);
-		self.walk_graph(u, &mut search)?;
-		Ok(search.solutions.clone())
+	fn check_pair(&self, u: u32, v: u32, search: &mut Search) -> Result<(), String> {
+		self.walk_graph(u, search)?;
+		self.walk_graph(v, search)
 	}
-
-	//pub fn find(&self) -> Result<Vec<Solution>, String> {
-	//	let mut search = Search::new(self.node_count(), 42);
-	//	for node in self.nodes() {
-	//		self.walk_graph(*node, &mut search)?;
-	//		search.clear();
-	//	}
-	//	debug!(LOGGER, "Explored nodes: {}", search.node_explored);
-	//	debug!(LOGGER, "Found cycles: {}", search.solutions.len());
-	//	Ok(search.solutions.clone())
-	//}
 
 	fn add_solution(&self, s: &mut Search) -> Result<(), String> {
 		let res: Result<Vec<_>, _> = s.path[s.path.len() - s.length..]
