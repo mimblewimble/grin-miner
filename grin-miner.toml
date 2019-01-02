@@ -138,13 +138,35 @@ nthreads = 1
 #plugin_name = "cuckatoo_mean_cpu_avx2_31"
 #[mining.miner_plugin_config.parameters]
 
-#mean cuda (unlikely to work on consumer cards, need 14GB+)
+#mean cuda, will work on a 1080TI with expand rounds set to 2
+#memory requirements are tight, don't drive a display
+#off the same card while trying to mine with an 11GB card
+
 #[[mining.miner_plugin_config]]
 #plugin_name = "cuckatoo_mean_cuda_31"
-
 #[mining.miner_plugin_config.parameters]
-#expand = 0
 #device = 0
+#expand = 2
+#cpuload = 1
+#ntrims = 176
+#genablocks = 4096
+#genatpb = 128 
+#genbtpb = 128
+#trimtpb = 512
+#tailtpb = 1024
+#recoverblocks = 1024
+#recovertpb = 1024
+
+#mean cuda optimised to use slightly less memory,
+#will work on a 2080TI with expand rounds set to 2
+#as above, memory requirements are tight, don't drive a display
+#off the same card while trying to mine with an 11GB card
+
+#[[mining.miner_plugin_config]]
+#plugin_name = "cuckatoo_mean_lessmem_cuda_31"
+#[mining.miner_plugin_config.parameters]
+#device = 0
+#expand = 2
 #cpuload = 1
 #ntrims = 176
 #genablocks = 4096
@@ -158,7 +180,6 @@ nthreads = 1
 #lean cuda
 #[[mining.miner_plugin_config]]
 #plugin_name = "cuckatoo_lean_cuda_31"
-
 #[mining.miner_plugin_config.parameters]
 #expand = 0
 #device = 0
