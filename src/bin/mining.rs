@@ -118,7 +118,7 @@ impl Controller {
 				let mut s_stats = self.stats.write().unwrap();
 				s_stats.mining_stats.solution_stats.num_solutions_found += ss.num_sols;
 			}
-			thread::sleep(std::time::Duration::from_millis(100));
+			thread::sleep(std::time::Duration::from_micros(100));
 		}
 	}
 
