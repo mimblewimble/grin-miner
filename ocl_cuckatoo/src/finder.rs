@@ -55,8 +55,9 @@ impl Search {
 	}
 
 	#[inline]
-	fn leave(&mut self, _node: u32) {
+	fn leave(&mut self, node: u32) {
 		self.path.pop();
+		self.state.insert(node, NodeState::NotVisited);
 	}
 
 	#[inline]
@@ -167,13 +168,13 @@ impl Graph {
 			let nonce = edges[i * STEP + 2];
 			g.add_edge(n1, n2);
 			g.nonces.insert(nonce_key(n1, n2), nonce);
-		}
-
-		for i in 1..=edge_count {
-			let n1 = edges[i * STEP];
-			let n2 = edges[i * STEP + 1];
 			g.check_pair(n1, n2, &mut search)?;
 		}
+
+		//	for i in 1..=edge_count {
+		//		let n1 = edges[i * STEP];
+		//		let n2 = edges[i * STEP + 1];
+		//	}
 		Ok(search.solutions.clone())
 	}
 
@@ -223,8 +224,8 @@ impl Graph {
 	}
 
 	fn check_pair(&self, u: u32, v: u32, search: &mut Search) -> Result<(), String> {
-		self.walk_graph(u, search)?;
-		self.walk_graph(v, search)
+		self.walk_graph(u, search)
+		//self.walk_graph(v, search)
 	}
 
 	fn add_solution(&self, s: &mut Search) -> Result<(), String> {
