@@ -32,16 +32,10 @@ grin_miner_util = { path = "./util", version = "0.5.0" }
 grin_miner_plugin = { path = "./plugin", version = "0.5.0" }
 grin_miner_config = { path = "./config", version = "0.5.0" }
 cuckoo_miner = { path = "./cuckoo-miner", version = "0.5.0" }
-#cuckoo_miner = { path = "./cuckoo-miner", version = "0.4.2" }
-# hack to install ocl plugin automaticaly
-ocl_cuckatoo = { path = "./ocl_cuckatoo", version = "0.1.0"}
+ocl_cuckatoo = { path = "./ocl_cuckatoo", version = "0.5.0"}
 
 #use this alternative inclusion below to build cuda plugins
 #cuckoo_miner = { path = "./cuckoo-miner", features = ["build-cuda-plugins"]}
-#or to build avx2 CPU plugins
-#cuckoo_miner = { path = "./cuckoo-miner", features = ["build-mean-avx2"]}
-#or to build both
-#cuckoo_miner = { path = "./cuckoo-miner", features = ["build-cuda-plugins","build-mean-avx2"]}
 
 [build-dependencies]
 built = "0.2"

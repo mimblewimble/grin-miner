@@ -1,4 +1,4 @@
-ample Server Configuration File for Grin-Miner
+# Sample Server Configuration File for Grin-Miner
 #
 # Grin-Miner will look for this file in these places: in the following
 # order:
