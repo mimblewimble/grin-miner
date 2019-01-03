@@ -143,7 +143,7 @@ nthreads = 1
 #off the same card while trying to mine with an 11GB card
 
 #[[mining.miner_plugin_config]]
-#plugin_name = "cuckatoo_mean_cuda_31"
+#plugin_name = "cuckatoo_mean_gtx_cuda_31"
 #[mining.miner_plugin_config.parameters]
 #device = 0
 #expand = 2
@@ -163,7 +163,7 @@ nthreads = 1
 #off the same card while trying to mine with an 11GB card
 
 #[[mining.miner_plugin_config]]
-#plugin_name = "cuckatoo_mean_lessmem_cuda_31"
+#plugin_name = "cuckatoo_mean_rtx_cuda_31"
 #[mining.miner_plugin_config.parameters]
 #device = 0
 #expand = 2

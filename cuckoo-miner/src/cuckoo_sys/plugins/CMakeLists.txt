@@ -94,8 +94,8 @@ set (AT_MEAN_CUDA_SRC
 			${BLAKE_2B} )
 
 build_cuda_target("${AT_MEAN_CUDA_SRC}" cuckatoo_mean_cuda_19 "-DEPS_A=512 -DEPS_B=384 -DIDXSHIFT=6 -DEDGEBITS=19")
-build_cuda_target("${AT_MEAN_CUDA_SRC}" cuckatoo_mean_lessmem_31 "-DNEPS_A=128 -DNEPS_B=80 -DPART_BITS=0 -DEDGEBITS=31")
-build_cuda_target("${AT_MEAN_CUDA_SRC}" cuckatoo_mean_cuda_31 "-DNEPS_A=130 -DNEPS_B=84 -DPART_BITS=1 -DEDGEBITS=31")
+build_cuda_target("${AT_MEAN_CUDA_SRC}" cuckatoo_mean_cuda_rtx_31 "-DNEPS_A=128 -DNEPS_B=80 -DPART_BITS=0 -DEDGEBITS=31")
+build_cuda_target("${AT_MEAN_CUDA_SRC}" cuckatoo_mean_cuda_gtx_31 "-DNEPS_A=130 -DNEPS_B=84 -DPART_BITS=1 -DEDGEBITS=31")
 
 ##################################################################################
 ### CUCKAROO (Asic Resistant)  ###################################################
