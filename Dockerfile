@@ -10,13 +10,15 @@ RUN set -ex && \
         libncursesw5-dev \
         cmake \
         git \
-        curl
+        curl \
+        libssl-dev \
+        pkg-config
 
 RUN curl https://sh.rustup.rs -sSf | sh -s -- -y
 
 RUN git clone https://github.com/mimblewimble/grin-miner && cd grin-miner && git submodule update --init
 
-RUN cd grin-miner && sed -i '/cuckoo-miner" }/s/^/#/' Cargo.toml && sed -i '/^#.*build-cuda-plugins"]/s/^#//' Cargo.toml
+RUN cd grin-miner && sed -i '/^cuckoo_miner = {/s/^/#/' Cargo.toml && sed -i '/^#.*build-cuda-plugins"]/s/^#//' Cargo.toml
 
 RUN cd grin-miner && $HOME/.cargo/bin/cargo build --release
 
