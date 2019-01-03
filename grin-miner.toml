@@ -192,3 +192,17 @@ nthreads = 1
 #tailtpb = 1024
 #recoverblocks = 1024
 #recovertpb = 1024
+
+# lean OpenCL supports both NVidia and AMD
+# very slow but requires ~ 3GB of RAM
+# to install run ./install_ocl_plugins.sh script
+#[[mining.miner_plugin_config]]
+#plugin_name = "ocl_cuckatoo"
+#[mining.miner_plugin_config.parameters]
+# 0 for default, 1 for AMD, 2 for NVidia, specify if you have 
+# cards from both vendors
+#platform = 0
+# ID withing the platform
+#device = 0
+#edge_bits = 31
+

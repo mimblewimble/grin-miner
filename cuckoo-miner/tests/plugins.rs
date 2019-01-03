@@ -232,3 +232,12 @@ fn sanity_cuckatoo_lean_cuda_31() {
 	let params = pl.get_default_params();
 	run_solver(&pl, params);
 }
+
+#[ignore]
+#[test]
+fn sanity_ocl_cuckatoo() {
+	let pl = load_plugin_lib("ocl_cuckatoo").unwrap();
+	let mut params = pl.get_default_params();
+	params.nthreads = 4;
+	run_solver(&pl, params);
+}
