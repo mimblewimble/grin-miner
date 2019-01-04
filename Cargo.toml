@@ -1,5 +1,5 @@
 [package]
-name = "grin-miner"
+name = "grin_miner"
 version = "0.5.0"
 authors = ["Grin Developers <mimblewimble@lists.launchpad.net>"]
 description = "Mining software for Grin, supports CPU and CUDA GPUs."
