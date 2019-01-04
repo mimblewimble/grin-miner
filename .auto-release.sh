@@ -4,14 +4,15 @@ repo_slug="mimblewimble/grin-miner"
 token="$GITHUB_TOKEN"
 
 tagname=`git describe --tags --exact-match 2>/dev/null || git symbolic-ref -q --short HEAD`
+deploy_dir="deploy/grin-miner-$tagname"
 
 echo 'make a tarball for the release binary...\n'
 
 if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 
     # Do some custom requirements on OS X
-    mkdir deploy; cp grin-miner.toml deploy; cp -R target/release/plugins deploy/plugins
-    cp target/release/grin-miner deploy
+    mkdir -p $deploy_dir; cp grin-miner.toml $deploy_dir; cp -R target/release/plugins $deploy_dir
+    cp target/release/grin-miner $deploy_dir
     cd deploy ; rm -f *.tgz; tar zcf "grin-miner-$tagname-$TRAVIS_JOB_ID-osx.tgz" *
     /bin/ls -ls *.tgz  | awk '{print $6,$7,$8,$9,$10}'
     md5 "grin-miner-$tagname-$TRAVIS_JOB_ID-osx.tgz" > "grin-miner-$tagname-$TRAVIS_JOB_ID-osx.tgz"-md5sum.txt
@@ -23,9 +24,9 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
     exit 0
 else
     # Do some custom requirements on Linux
-    mkdir deploy; cp grin-miner.toml deploy; cp -R target/release/plugins deploy/plugins
-    cp target/release/deps/libocl_cuckatoo.so deploy/plugins/ocl_cuckatoo.cuckooplugin
-    cp target/release/grin-miner deploy
+    mkdir -p $deploy_dir; cp grin-miner.toml $deploy_dir; cp -R target/release/plugins $deploy_dir
+    cp target/release/deps/libocl_cuckatoo.so "$deploy_dir/ocl_cuckatoo.cuckooplugin"
+    cp target/release/grin-miner $deploy_dir
     cd deploy ; rm -f *.tgz; tar zcf "grin-miner-$tagname-$TRAVIS_JOB_ID-linux-amd64.tgz" *
     /bin/ls -ls *.tgz  | awk '{print $6,$7,$8,$9,$10}'
     md5sum "grin-miner-$tagname-$TRAVIS_JOB_ID-linux-amd64.tgz" > "grin-miner-$tagname-$TRAVIS_JOB_ID-linux-amd64.tgz"-md5sum.txt
