@@ -64,8 +64,8 @@ script:
 
 before_deploy:
   - if [[ "$TEST_SUITE" == "release" ]]; then
-      sed -i.bak 's/cuckoo_miner =/#cuckoo_miner =/g; s/##cuckoo_miner/cuckoo_miner/g' Cargo.toml
-      cargo clean; cargo build --release --features opencl && ./.auto-release.sh;
+      sed -i.bak 's/cuckoo_miner =/#cuckoo_miner =/g; s/##cuckoo_miner/cuckoo_miner/g' Cargo.toml;
+      cargo clean; SKIP_CUCKATOO_GPU=1 cargo build --release --features opencl && ./.auto-release.sh;
     fi
 
 deploy:
