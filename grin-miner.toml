@@ -63,7 +63,7 @@ stratum_server_tls_enabled = false
 
 # Multiple plugins can be specified, (e.g. a cpu
 # miner and a gpu miner running in parallel)
-# Use a single plugin instance per device, as 
+# Use a single plugin instance per device, as
 # demonstrated below.
 
 # Multiple instances of the same plugin can be loaded
@@ -97,7 +97,7 @@ nthreads = 1
 #2) Ensure the 'build-cuda-plugin' feature is included in Cargo.toml, e.g:
 #   cuckoo_miner = { path = "./cuckoo-miner", features = ["build-cuda-plugins"]}
 #
-# Parameters can be set individually for each device by using multiple 
+# Parameters can be set individually for each device by using multiple
 # instance of each plugin.  device 0 is used by default
 #
 
@@ -109,7 +109,7 @@ nthreads = 1
 #cpuload = 1
 #ntrims = 176
 #genablocks = 4096
-#genatpb = 128 
+#genatpb = 128
 #genbtpb = 128
 #trimtpb = 512
 #tailtpb = 1024
@@ -143,14 +143,14 @@ nthreads = 1
 #off the same card while trying to mine with an 11GB card
 
 #[[mining.miner_plugin_config]]
-#plugin_name = "cuckatoo_mean_gtx_cuda_31"
+#plugin_name = "cuckatoo_mean_cuda_gtx_31"
 #[mining.miner_plugin_config.parameters]
 #device = 0
 #expand = 2
 #cpuload = 1
 #ntrims = 176
 #genablocks = 4096
-#genatpb = 128 
+#genatpb = 128
 #genbtpb = 128
 #trimtpb = 512
 #tailtpb = 1024
@@ -163,14 +163,14 @@ nthreads = 1
 #off the same card while trying to mine with an 11GB card
 
 #[[mining.miner_plugin_config]]
-#plugin_name = "cuckatoo_mean_rtx_cuda_31"
+#plugin_name = "cuckatoo_mean_cuda_rtx_31"
 #[mining.miner_plugin_config.parameters]
 #device = 0
 #expand = 2
 #cpuload = 1
 #ntrims = 176
 #genablocks = 4096
-#genatpb = 128 
+#genatpb = 128
 #genbtpb = 128
 #trimtpb = 512
 #tailtpb = 1024
@@ -186,7 +186,7 @@ nthreads = 1
 #cpuload = 1
 #ntrims = 176
 #genablocks = 4096
-#genatpb = 128 
+#genatpb = 128
 #genbtpb = 128
 #trimtpb = 512
 #tailtpb = 1024
@@ -199,7 +199,7 @@ nthreads = 1
 #[[mining.miner_plugin_config]]
 #plugin_name = "ocl_cuckatoo"
 #[mining.miner_plugin_config.parameters]
-# 0 for default, 1 for AMD, 2 for NVidia, specify if you have 
+# 0 for default, 1 for AMD, 2 for NVidia, specify if you have
 # cards from both vendors
 #platform = 0
 # ID withing the platform
