@@ -3,7 +3,7 @@ language: rust
 git:
   depth: false
 
-dist: trusty
+dist: xenial
 sudo: required
 
 cache:
@@ -32,9 +32,7 @@ addons:
       - cmake
       - gcc
       - binutils-dev
-      - nvidia-common
-      - nvidia-cuda-dev
-      - nvidia-opencl-dev
+      - nvidia-cuda-toolkit
 
 env:
   global:
