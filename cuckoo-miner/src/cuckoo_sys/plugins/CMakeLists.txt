@@ -84,8 +84,10 @@ set (AT_LEAN_CUDA_SRC
 			cuckoo/src/cuckatoo/lean.cu
 			${BLAKE_2B} )
 
-build_cuda_target("${AT_LEAN_CUDA_SRC}" cuckatoo_lean_cuda_19 "-DEDGEBITS=19")
-build_cuda_target("${AT_LEAN_CUDA_SRC}" cuckatoo_lean_cuda_31 "-DEDGEBITS=31")
+if (NOT SKIP_CUCKATOO_GPU)
+  build_cuda_target("${AT_LEAN_CUDA_SRC}" cuckatoo_lean_cuda_19 "-DEDGEBITS=19")
+  build_cuda_target("${AT_LEAN_CUDA_SRC}" cuckatoo_lean_cuda_31 "-DEDGEBITS=31")
+endif()
 
 ### AT MEAN CUDA TARGETS  #########################################
 
