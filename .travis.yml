@@ -32,6 +32,7 @@ addons:
       - cmake
       - gcc
       - binutils-dev
+      - ocl-icd-opencl-dev
       - wget
 
 env:
