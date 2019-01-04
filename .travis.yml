@@ -1,4 +1,4 @@
-nguage: rust
+language: rust
 
 git:
   depth: false
@@ -32,7 +32,9 @@ addons:
       - cmake
       - gcc
       - binutils-dev
-      - nvidia-cuda-toolkit
+      - nvidia-common
+      - nvidia-cuda-dev
+      - nvidia-opencl-dev
 
 env:
   global:
