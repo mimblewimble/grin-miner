@@ -40,8 +40,8 @@ env:
 
 matrix:
   include:
-    - os: linux
-      env: TEST_SUITE=cuckoo-miner,
+#    - os: linux
+#      env: TEST_SUITE=cuckoo-miner,
     - os: linux
       env: TEST_SUITE=release
 
