@@ -1,7 +1,21 @@
 language: rust
-cache: cargo
+
+git:
+  depth: false
+
 dist: trusty
-sudo: true
+sudo: required
+
+cache:
+  cargo: true
+  timeout: 240
+  directories:
+    - $HOME/.cargo
+    - $TRAVIS_BUILD_DIR/target
+
+before_cache:
+  - rm -rf $TRAVIS_BUILD_DIR/target/tmp
+
 rust:
   - stable
 
@@ -12,12 +26,52 @@ addons:
     packages:
       - g++-5
       - cmake
+      - libcurl4-openssl-dev
+      - libelf-dev
+      - libdw-dev
+      - cmake
+      - gcc
+      - binutils-dev
 
 env:
   global:
     - RUST_BACKTRACE="1"
-  matrix:
-    - TEST_DIR=.
+    - RUST_FLAGS="-C debug-assertions"
 
-script: 
-- cd cuckoo-miner && RUST_TEST_THREADS=1 cargo test --release --verbose
+matrix:
+  include:
+    - os: linux
+      env: TEST_SUITE=cuckoo-miner,
+    - os: linux
+      env: TEST_SUITE=release
+
+script:
+  - IFS=',' read -r -a DIRS <<< "$TEST_SUITE"; DIR=${DIRS[0]};
+    echo "start testing on folder $DIR...";
+    if [[ -n "$DIR" ]] && [[ "$TRAVIS_OS_NAME" == "linux" ]];  then cd $DIR && cargo test --release && cd - > /dev/null; fi;
+  - IFS='-' read -r -a DIRS <<< "$TEST_SUITE"; DIR=${DIRS[1]};
+    if [[ -n "$DIR" ]];  then
+      echo "start testing on folder $DIR...";
+      cd $DIR && cargo test --release && cd - > /dev/null;
+    fi;
+  - IFS='-' read -r -a DIRS <<< "$TEST_SUITE"; DIR=${DIRS[2]};
+    if [[ -n "$DIR" ]];  then
+      echo "start testing on folder $DIR...";
+      cd $DIR && cargo test --release && cd - > /dev/null;
+    fi;
+
+before_deploy:
+  - if [[ "$TEST_SUITE" == "release" ]]; then
+      cargo clean && cargo build --release && ./.auto-release.sh;
+    fi
+
+deploy:
+  provider: releases
+  api_key:
+    secure: Id9eq5BKrjORrmy119ywApp3KLrxRx+0X87nhplRALDB+KcDaiMZ9cBXJ8aotsqtYjTgeDFkE4hMHibVJPQv36THlTyVC+0Tck+B6r8xmTQDpZAsWtr7SoB33m0u1kg7R+8ZNR8X0I+5dRJheW3B/OJlerR9KzIOwb1bx/jLiEgU+zQE6wDDLTRXmiHsJoio1BuGkku8tydBtms1b6dlMqVH6uhc1XIL9kIVkZ10O/uBfyKFpJnCFXAdTADY+yHdL9Nz0wo6/PpnBNraXlX2QeHU/TgxLuTCJWoXmka/m3kiMAyP5KvUICLe9gp6mf4oEAjjPTyja5NUHpuTH8RWfutmK87T54TM8sWmVKAFzmtbe64oj3lMHEKkHQNyGmPBX9uU24kWiSQAMrpEedy2E1Wnh24DhPD5mGUx0+P3STpgqOvIKAADs+ZcPLNbrb8O7VUlIXUNTKBeNcK+Lu5YdNZumt/a1y26A017XZ4HqxTF0iwdRby5NwZ6+o7LpPD2dk6rouNjS0W6w5QdLYIP3v6TF8BODAMt2WLYTAA6wRZLLyu7nvXYNu+x6f/QZ/PiKbooBivpqH6m1YtvyJzqcDvdukb7BQmmlEgRA31sp3fEBRu1k3FCDftO+zq3BlU4lPBkBgkBceHVn+/9HWkB4lUIo8Qw+ZQh1ZUn9TNZsVM=
+  file_glob: true
+  file: target/release/grin-*.tgz*
+  skip_cleanup: true
+  on:
+    repo: mimblewimble/grin-miner
+    tags: true
