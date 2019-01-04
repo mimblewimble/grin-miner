@@ -75,7 +75,7 @@ before_deploy:
     fi
   - if [[ "$TEST_SUITE" == "release" ]] && [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
       brew update;
-      cargo clean; cargo build --release ./.auto-release.sh;
+      cargo clean; cargo build --release; ./.auto-release.sh;
     fi
 
 deploy:
