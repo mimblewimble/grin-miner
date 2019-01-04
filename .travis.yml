@@ -60,10 +60,11 @@ script:
       cd $DIR && cargo test --release && cd - > /dev/null;
     fi;
 
+#Include Cuda plugins in build
+#sed 's/cuckoo_miner =/#cuckoo_miner =/g' Cargo.toml | sed 's/##cuckoo_miner/cuckoo_miner/g' > Cargo.toml
+
 before_deploy:
   - if [[ "$TEST_SUITE" == "release" ]]; then
-      #Include Cuda plugins in build
-      #sed 's/cuckoo_miner =/#cuckoo_miner =/g' Cargo.toml | sed 's/##cuckoo_miner/cuckoo_miner/g' > Cargo.toml
       cargo clean && cargo build --release && ./.auto-release.sh;
     fi
 
