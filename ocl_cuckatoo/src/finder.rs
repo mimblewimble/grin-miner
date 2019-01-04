@@ -223,7 +223,7 @@ impl Graph {
 		self.adj_index.keys()
 	}
 
-	fn check_pair(&self, u: u32, v: u32, search: &mut Search) -> Result<(), String> {
+	fn check_pair(&self, u: u32, _v: u32, search: &mut Search) -> Result<(), String> {
 		self.walk_graph(u, search)
 		//self.walk_graph(v, search)
 	}

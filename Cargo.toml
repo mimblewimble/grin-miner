@@ -12,6 +12,10 @@ autobins = false
 [workspace]
 members = ["config", "util", "plugin"]
 
+[features]
+default = []
+opencl = ["ocl_cuckatoo"]
+
 [[bin]]
 name = "grin-miner"
 path = "src/bin/grin_miner.rs"
@@ -32,10 +36,9 @@ grin_miner_util = { path = "./util", version = "0.5.0" }
 grin_miner_plugin = { path = "./plugin", version = "0.5.0" }
 grin_miner_config = { path = "./config", version = "0.5.0" }
 cuckoo_miner = { path = "./cuckoo-miner", version = "0.5.0" }
-ocl_cuckatoo = { path = "./ocl_cuckatoo", version = "0.5.0"}
-
 #use this alternative inclusion below to build cuda plugins
 #cuckoo_miner = { path = "./cuckoo-miner", features = ["build-cuda-plugins"]}
+ocl_cuckatoo = { path = "./ocl_cuckatoo", version = "0.5.0", optional = true}
 
 [build-dependencies]
 built = "0.2"

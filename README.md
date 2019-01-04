@@ -46,6 +46,19 @@ supports avx2 instructions:
 cuckoo_miner = { path = "./cuckoo-miner", features = ["build-mean-avx2"]}
 ```
 
+### Building the OpenCL plugins
+OpenCL plugins are not enabled by default. Run `install_ocl_plugins.sh` script to build and install them.
+
+```
+./install_ocl_plugins.sh
+```
+You must install OpenCL libraries for your operating system before.
+If you just need to compile them (for development or testing purposes) build grin-miner the following way:
+
+```
+cargo build --features opencl
+```
+
 ### Build errors
 
 See [Troubleshooting](https://github.com/mimblewimble/docs/wiki/Troubleshooting)

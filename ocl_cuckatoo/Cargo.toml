@@ -3,7 +3,6 @@ name = "ocl_cuckatoo"
 version = "0.5.0"
 workspace = ".."
 
-
 [dependencies]
 grin_miner_plugin = { path = "../plugin" }
 ocl = "0.19"
@@ -11,7 +10,6 @@ hashbrown = "0.1"
 libc = "0.2.24"
 blake2-rfc = "0.2"
 byteorder = "1"
-
 
 [lib]
 name = "ocl_cuckatoo"
