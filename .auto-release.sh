@@ -7,22 +7,24 @@ tagname=`git describe --tags --exact-match 2>/dev/null || git symbolic-ref -q --
 
 echo 'make a tarball for the release binary...\n'
 
-#if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
-#
+if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
+
     # Do some custom requirements on OS X
-#    cd target/release ; rm -f *.tgz; tar zcf "grin-$tagname-$TRAVIS_JOB_ID-osx.tgz" grin
-#    /bin/ls -ls *.tgz  | awk '{print $6,$7,$8,$9,$10}'
-#    md5 "grin-$tagname-$TRAVIS_JOB_ID-osx.tgz" > "grin-$tagname-$TRAVIS_JOB_ID-osx.tgz"-md5sum.txt
-#    /bin/ls -ls *-md5sum.txt  | awk '{print $6,$7,$8,$9,$10}'
-#    cd - > /dev/null;
-#    echo "tarball generated\n"
+    mkdir deploy; cp grin-miner.toml deploy; cp -R target/release/plugins deploy/plugins
+    cp target/release/grin-miner deploy
+    cd deploy ; rm -f *.tgz; tar zcf "grin-miner-$tagname-$TRAVIS_JOB_ID-osx.tgz" grin
+    /bin/ls -ls *.tgz  | awk '{print $6,$7,$8,$9,$10}'
+    md5 "grin-miner-$tagname-$TRAVIS_JOB_ID-osx.tgz" > "grin-miner-$tagname-$TRAVIS_JOB_ID-osx.tgz"-md5sum.txt
+    /bin/ls -ls *-md5sum.txt  | awk '{print $6,$7,$8,$9,$10}'
+    cd - > /dev/null;
+    echo "tarball generated\n"
 
     # Only generate changelog on Linux platform, to avoid duplication
-#    exit 0
-#else
+    exit 0
+else
     # Do some custom requirements on Linux
     mkdir deploy; cp grin-miner.toml deploy; cp -R target/release/plugins deploy/plugins
-    cp target/release/libocl_cuckatoo.so deploy/plugins/ocl_cuckatoo.cuckooplugin
+    cp target/release/deps/libocl_cuckatoo.so deploy/plugins/ocl_cuckatoo.cuckooplugin
     cp target/release/grin-miner deploy
     cd deploy ; rm -f *.tgz; tar zcf "grin-miner-$tagname-$TRAVIS_JOB_ID-linux-amd64.tgz" *
     /bin/ls -ls *.tgz  | awk '{print $6,$7,$8,$9,$10}'
@@ -30,7 +32,7 @@ echo 'make a tarball for the release binary...\n'
     /bin/ls -ls *-md5sum.txt  | awk '{print $6,$7,$8,$9,$10}'
     cd - > /dev/null;
     echo "tarball generated\n"
-#fi
+fi
 
 version="$tagname"
 branch="`git symbolic-ref -q --short HEAD`"

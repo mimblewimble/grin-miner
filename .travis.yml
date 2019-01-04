@@ -45,6 +45,8 @@ matrix:
 #      env: TEST_SUITE=cuckoo-miner
     - os: linux
       env: TEST_SUITE=release
+    - os: osx
+      env: TEST_SUITE=release
 
 script:
   - IFS=',' read -r -a DIRS <<< "$TEST_SUITE"; DIR=${DIRS[0]};
@@ -61,11 +63,19 @@ script:
       cd $DIR && cargo test --release && cd - > /dev/null;
     fi;
 
+# NB, we won't be able to build cuckatoo 31 + CUDA plugins until travis supports
+# ubuntu bionic beaver (18.04), which contains CUDA 10
+# For now, we need to use xenial (16.04) which uses CUDA 7.5, sufficient to build
+# cuckaroo29 using sm_35 architecture
 
 before_deploy:
-  - if [[ "$TEST_SUITE" == "release" ]]; then
+  - if [[ "$TEST_SUITE" == "release" ]] && [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
       sed -i.bak 's/cuckoo_miner =/#cuckoo_miner =/g; s/##cuckoo_miner/cuckoo_miner/g' Cargo.toml;
       cargo clean; SKIP_CUCKATOO_GPU=1 cargo build --release --features opencl && ./.auto-release.sh;
+    fi
+  - if [[ "$TEST_SUITE" == "release" ]] && [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
+      brew update;
+      cargo clean; cargo build --release ./.auto-release.sh;
     fi
 
 deploy:
