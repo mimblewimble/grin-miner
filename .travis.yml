@@ -61,12 +61,11 @@ script:
       cd $DIR && cargo test --release && cd - > /dev/null;
     fi;
 
-#Include Cuda plugins in build
-#sed 's/cuckoo_miner =/#cuckoo_miner =/g' Cargo.toml | sed 's/##cuckoo_miner/cuckoo_miner/g' > Cargo.toml
 
 before_deploy:
   - if [[ "$TEST_SUITE" == "release" ]]; then
-      cargo clean && cargo build --release --features opencl && ./install_ocl_plugins.sh && ./.auto-release.sh;
+      sed 's/cuckoo_miner =/#cuckoo_miner =/g' Cargo.toml | sed 's/##cuckoo_miner/cuckoo_miner/g' > Cargo.toml;
+      cargo clean && cargo build --release --features opencl && ./.auto-release.sh;
     fi
 
 deploy:

@@ -22,6 +22,7 @@ echo 'make a tarball for the release binary...\n'
 #else
     # Do some custom requirements on Linux
     mkdir deploy; cp grin-miner.toml deploy; cp -R target/release/plugins deploy/plugins
+    cp target/release/libocl_cuckatoo.so deploy/plugins/ocl_cuckatoo.cuckooplugin
     cp target/release/grin-miner deploy
     cd deploy ; rm -f *.tgz; tar zcf "grin-miner-$tagname-$TRAVIS_JOB_ID-linux-amd64.tgz" *
     /bin/ls -ls *.tgz  | awk '{print $6,$7,$8,$9,$10}'
