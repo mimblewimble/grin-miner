@@ -71,8 +71,7 @@ before_deploy:
 
 deploy:
   provider: releases
-  api_key:
-    secure: Id9eq5BKrjORrmy119ywApp3KLrxRx+0X87nhplRALDB+KcDaiMZ9cBXJ8aotsqtYjTgeDFkE4hMHibVJPQv36THlTyVC+0Tck+B6r8xmTQDpZAsWtr7SoB33m0u1kg7R+8ZNR8X0I+5dRJheW3B/OJlerR9KzIOwb1bx/jLiEgU+zQE6wDDLTRXmiHsJoio1BuGkku8tydBtms1b6dlMqVH6uhc1XIL9kIVkZ10O/uBfyKFpJnCFXAdTADY+yHdL9Nz0wo6/PpnBNraXlX2QeHU/TgxLuTCJWoXmka/m3kiMAyP5KvUICLe9gp6mf4oEAjjPTyja5NUHpuTH8RWfutmK87T54TM8sWmVKAFzmtbe64oj3lMHEKkHQNyGmPBX9uU24kWiSQAMrpEedy2E1Wnh24DhPD5mGUx0+P3STpgqOvIKAADs+ZcPLNbrb8O7VUlIXUNTKBeNcK+Lu5YdNZumt/a1y26A017XZ4HqxTF0iwdRby5NwZ6+o7LpPD2dk6rouNjS0W6w5QdLYIP3v6TF8BODAMt2WLYTAA6wRZLLyu7nvXYNu+x6f/QZ/PiKbooBivpqH6m1YtvyJzqcDvdukb7BQmmlEgRA31sp3fEBRu1k3FCDftO+zq3BlU4lPBkBgkBceHVn+/9HWkB4lUIo8Qw+ZQh1ZUn9TNZsVM=
+  github_token: $GITHUB_TOKEN
   file_glob: true
   file: deploy/grin-miner-*.tgz*
   skip_cleanup: true
