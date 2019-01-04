@@ -48,7 +48,7 @@ matrix:
 script:
   - IFS=',' read -r -a DIRS <<< "$TEST_SUITE"; DIR=${DIRS[0]};
     echo "start testing on folder $DIR...";
-    if [[ -n "$DIR" ]] && [[ "$TRAVIS_OS_NAME" == "linux" ]];  then cd $DIR && cargo test --release && cd - > /dev/null; fi;
+    if [[ -n "$DIR" ]] && [[ "$TRAVIS_OS_NAME" == "linux" ]] && [[ "$DIR" != "release" ]];  then cd $DIR && cargo test --release && cd - > /dev/null; fi;
   - IFS='-' read -r -a DIRS <<< "$TEST_SUITE"; DIR=${DIRS[1]};
     if [[ -n "$DIR" ]];  then
       echo "start testing on folder $DIR...";
