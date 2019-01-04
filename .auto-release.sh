@@ -12,7 +12,7 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 
     # Do some custom requirements on OS X
     mkdir -p $deploy_dir; cp grin-miner.toml $deploy_dir; cp -R target/release/plugins $deploy_dir
-    cp target/release/grin-miner "$deploy_dir/plugins"
+    cp target/release/grin-miner $deploy_dir
     cd deploy ; rm -f *.tgz; tar zcf "grin-miner-$tagname-$TRAVIS_JOB_ID-osx.tgz" *
     /bin/ls -ls *.tgz  | awk '{print $6,$7,$8,$9,$10}'
     md5 "grin-miner-$tagname-$TRAVIS_JOB_ID-osx.tgz" > "grin-miner-$tagname-$TRAVIS_JOB_ID-osx.tgz"-md5sum.txt
@@ -25,7 +25,7 @@ if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
 else
     # Do some custom requirements on Linux
     mkdir -p $deploy_dir; cp grin-miner.toml $deploy_dir; cp -R target/release/plugins $deploy_dir
-    cp target/release/deps/libocl_cuckatoo.so "$deploy_dir/ocl_cuckatoo.cuckooplugin"
+    cp target/release/deps/libocl_cuckatoo.so "$deploy_dir/plugins/ocl_cuckatoo.cuckooplugin"
     cp target/release/grin-miner $deploy_dir
     cd deploy ; rm -f *.tgz; tar zcf "grin-miner-$tagname-$TRAVIS_JOB_ID-linux-amd64.tgz" *
     /bin/ls -ls *.tgz  | awk '{print $6,$7,$8,$9,$10}'
