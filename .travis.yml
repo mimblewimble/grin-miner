@@ -32,7 +32,6 @@ addons:
       - cmake
       - gcc
       - binutils-dev
-      - nvidia-cuda-toolkit
 
 env:
   global:
@@ -48,7 +47,14 @@ matrix:
     - os: osx
       env: TEST_SUITE=release
 
+# install CUDA 10 on ubuntu 16.04 via DEB from directions here 
+# https://developer.nvidia.com/cuda-downloads?target_os=Linux&target_arch=x86_64&target_distro=Ubuntu&target_version=1604&target_type=debnetwork
+
 script:
+  - sudo dpkg -i cuda-repo-ubuntu1604_10.0.130-1_amd64.deb
+  - sudo apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1604/x86_64/7fa2af80.pub
+  - sudo apt-get update
+  - sudo apt-get install cuda
   - IFS=',' read -r -a DIRS <<< "$TEST_SUITE"; DIR=${DIRS[0]};
     echo "start testing on folder $DIR...";
     if [[ -n "$DIR" ]] && [[ "$TRAVIS_OS_NAME" == "linux" ]] && [[ "$DIR" != "release" ]];  then cd $DIR && cargo test --release && cd - > /dev/null; fi;
