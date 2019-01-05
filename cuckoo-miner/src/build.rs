@@ -47,8 +47,6 @@ pub fn fail_on_empty_directory(name: &str) {
 fn main() {
 	#[cfg(feature = "no-plugin-build")]
 	return;
-	let mut command_finder = Finder::new();
-
 	fail_on_empty_directory("src/cuckoo_sys/plugins/cuckoo");
 	let path_str = env::var("OUT_DIR").unwrap();
 	let mut out_path = PathBuf::from(&path_str);
