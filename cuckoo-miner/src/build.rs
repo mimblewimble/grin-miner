@@ -48,13 +48,6 @@ fn main() {
 	#[cfg(feature = "no-plugin-build")]
 	return;
 	let mut command_finder = Finder::new();
-	// dumb and quick test for windows, can parse later
-	let windows_sysinfo = command_finder.maybe_have("systeminfo");
-	if let Some(_) = windows_sysinfo {
-		// Windows plugins not supported for now.. bye!
-		return;
-	}
-
 
 	fail_on_empty_directory("src/cuckoo_sys/plugins/cuckoo");
 	let path_str = env::var("OUT_DIR").unwrap();
