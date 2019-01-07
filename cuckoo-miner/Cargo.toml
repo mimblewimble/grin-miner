@@ -1,6 +1,6 @@
 [package]
 name = "cuckoo_miner"
-version = "0.5.0"
+version = "0.5.1"
 authors = ["yeastplume"]
 license = "MIT/Apache-2.0/BSD-3-Clause"
 description = "Rust bindings to John Tromp's Cuckoo Cycle Implementations"
