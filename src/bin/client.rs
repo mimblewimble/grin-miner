@@ -453,8 +453,11 @@ impl Controller {
 				} else {
 					// This is a fatal error
 					let err = res.error.unwrap();
+					let mut stats = self.stats.write().unwrap();
+					stats.client_stats.last_message_received = format!("Last Message Received: Failed to log in: {:?}", err);
+					stats.client_stats.connection_status = "Connection Status: Server requires login".to_string();
+					stats.client_stats.connected = false;
 					error!(LOGGER, "Failed to log in: {:?}", err);
-					panic!("Failed to log in to stratum server: {:?}", err);
 				}
 			}
 			// unknown method response
