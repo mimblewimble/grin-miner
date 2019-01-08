@@ -36,10 +36,7 @@ pub unsafe extern "C" fn create_solver_ctx(params: *mut SolverParams) -> *mut So
 		_ => None,
 	};
 	let device_id = Some((*params).device as usize);
-	let mut edge_bits = (*params).edge_bits as u8;
-	if edge_bits < 31 || edge_bits > 64 {
-		edge_bits = 31;
-	}
+
 	let trimmer = Trimmer::build(platform, device_id).expect("can't build trimmer");
 	let solver = Solver {
 		trimmer: trimmer,
@@ -65,7 +62,7 @@ pub unsafe extern "C" fn stop_solver(_solver_ctx_ptr: *mut SolverCtx) {}
 pub unsafe extern "C" fn fill_default_params(params: *mut SolverParams) {
 	(*params).device = 0;
 	(*params).platform = 0;
-	(*params).edge_bits = 31;
+	(*params).edge_bits = 29;
 }
 
 #[no_mangle]
@@ -95,19 +92,24 @@ pub unsafe extern "C" fn run_solver(
 	let res = solver.trimmer.run(&k).unwrap();
 
 	let sols = Graph::search(&res).unwrap();
-	let end = SystemTime::now();
-	let elapsed = end.duration_since(start).unwrap();
 	let mut i = 0;
-	(*solutions).edge_bits = 31;
+	(*solutions).edge_bits = 29;
 	(*solutions).num_sols = sols.len() as u32;
 	for sol in sols {
+		let nonces = solver
+			.trimmer
+			.recover(sol.nodes.clone(), &k)
+			.unwrap()
+			.into_iter()
+			.map(|v| v as u64)
+			.collect::<Vec<u64>>();
 		(*solutions).sols[i].nonce = nonce;
-		(*solutions).sols[i]
-			.proof
-			.copy_from_slice(&sol.nonces[..sol.nonces.len()]);
+		(*solutions).sols[i].proof.copy_from_slice(&nonces[..]);
 		i += 1;
 	}
-	(*stats).edge_bits = 31;
+	let end = SystemTime::now();
+	let elapsed = end.duration_since(start).unwrap();
+	(*stats).edge_bits = 29;
 	(*stats).device_id = solver.trimmer.device_id as u32;
 	let name_bytes = solver.trimmer.device_name.as_bytes();
 	let n = std::cmp::min((*stats).device_name.len(), name_bytes.len());

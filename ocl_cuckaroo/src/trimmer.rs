@@ -7,7 +7,7 @@ use ocl::{
 use std::time::SystemTime;
 
 const DUCK_SIZE_A: usize = 129; // AMD 126 + 3
-const DUCK_SIZE_B: usize = 82;
+const DUCK_SIZE_B: usize = 83;
 const BUFFER_SIZE_A1: usize = DUCK_SIZE_A * 1024 * (4096 - 128) * 2;
 const BUFFER_SIZE_A2: usize = DUCK_SIZE_A * 1024 * 256 * 2;
 const BUFFER_SIZE_B: usize = DUCK_SIZE_B * 1024 * 4096 * 2;
@@ -17,11 +17,13 @@ const INDEX_SIZE: usize = 256 * 256 * 4;
 pub struct Trimmer {
 	q: Queue,
 	program: Program,
-	bufferA1: Buffer<u32>,
-	bufferA2: Buffer<u32>,
-	bufferB: Buffer<u32>,
-	bufferI1: Buffer<u32>,
-	bufferI2: Buffer<u32>,
+	buffer_a1: Buffer<u32>,
+	buffer_a2: Buffer<u32>,
+	buffer_b: Buffer<u32>,
+	buffer_i1: Buffer<u32>,
+	buffer_i2: Buffer<u32>,
+	buffer_r: Buffer<u32>,
+	buffer_nonces: Buffer<u32>,
 	pub device_name: String,
 	pub device_id: usize,
 }
@@ -48,31 +50,44 @@ impl Trimmer {
 			.src(SRC)
 			.build(&context)?;
 
-		let bufferA1 = Buffer::<u32>::builder()
+		let buffer_a1 = Buffer::<u32>::builder()
 			.queue(q.clone())
 			.len(BUFFER_SIZE_A1)
 			.fill_val(0)
 			.build()?;
 
-		let bufferA2 = Buffer::<u32>::builder()
+		let buffer_a2 = Buffer::<u32>::builder()
 			.queue(q.clone())
 			.len(BUFFER_SIZE_A2)
 			.fill_val(0)
 			.build()?;
 
-		let bufferB = Buffer::<u32>::builder()
+		let buffer_b = Buffer::<u32>::builder()
 			.queue(q.clone())
 			.len(BUFFER_SIZE_B)
 			.fill_val(0)
 			.build()?;
 
-		let bufferI1 = Buffer::<u32>::builder()
+		let buffer_i1 = Buffer::<u32>::builder()
 			.queue(q.clone())
 			.len(INDEX_SIZE)
 			.fill_val(0)
 			.build()?;
 
-		let bufferI2 = Buffer::<u32>::builder()
+		let buffer_i2 = Buffer::<u32>::builder()
+			.queue(q.clone())
+			.len(INDEX_SIZE)
+			.fill_val(0)
+			.build()?;
+
+		let buffer_r = Buffer::<u32>::builder()
+			.queue(q.clone())
+			.len(42 * 2)
+			.flags(ocl::flags::MemFlags::READ_ONLY)
+			.fill_val(0)
+			.build()?;
+
+		let buffer_nonces = Buffer::<u32>::builder()
 			.queue(q.clone())
 			.len(INDEX_SIZE)
 			.fill_val(0)
@@ -90,19 +105,73 @@ impl Trimmer {
 		Ok(Trimmer {
 			q,
 			program,
-			bufferA1,
-			bufferA2,
-			bufferB,
-			bufferI1,
-			bufferI2,
+			buffer_a1,
+			buffer_a2,
+			buffer_b,
+			buffer_i1,
+			buffer_i2,
+			buffer_r,
+			buffer_nonces,
 			device_name: device.name()?,
 			device_id: device_id.unwrap_or(0),
 		})
 	}
 
-	pub fn run(&self, k: &[u64; 4]) -> ocl::Result<Vec<u32>> {
-		let mut start = SystemTime::now();
-		let mut kernelSeedA = Kernel::builder()
+	pub unsafe fn recover(&self, mut nodes: Vec<u32>, k: &[u64; 4]) -> ocl::Result<Vec<u32>> {
+		let mut event_list = EventList::new();
+		let mut names = vec![];
+
+		let mut kernel_recovery = Kernel::builder()
+			.name("FluffyRecovery")
+			.program(&self.program)
+			.queue(self.q.clone())
+			.global_work_size(2048 * 256)
+			.local_work_size(SpatialDims::One(256))
+			.arg(k[0])
+			.arg(k[1])
+			.arg(k[2])
+			.arg(k[3])
+			.arg(&self.buffer_r)
+			.arg(&self.buffer_nonces)
+			.build()?;
+
+		nodes.push(nodes[0]);
+
+		println!("Sending nodes {}", nodes.len());
+		let edges = nodes.windows(2).flatten().map(|v| *v).collect::<Vec<u32>>();
+		println!("Sending edges {}", edges.len());
+		self.buffer_r
+			.cmd()
+			.enew(&mut event_list)
+			.write(edges.as_slice())
+			.enq()?;
+		names.push("write edges");
+		self.buffer_nonces
+			.cmd()
+			.enew(&mut event_list)
+			.fill(0, None)
+			.enq()?;
+		names.push("fill res");
+		kernel_recovery.cmd().enew(&mut event_list).enq()?;
+		names.push("recovery");
+		let mut nonces: Vec<u32> = vec![0; 42];
+
+		self.buffer_nonces
+			.cmd()
+			.enew(&mut event_list)
+			.read(&mut nonces)
+			.enq()?;
+		self.q.finish()?;
+		nonces.sort();
+		for i in 0..names.len() {
+			print_event(names[i], &event_list[i]);
+		}
+		Ok(nonces)
+	}
+
+	pub unsafe fn run(&self, k: &[u64; 4]) -> ocl::Result<Vec<u32>> {
+		let start = SystemTime::now();
+		let mut kernel_seed_a = Kernel::builder()
 			.name("FluffySeed2A")
 			.program(&self.program)
 			.queue(self.q.clone())
@@ -112,92 +181,92 @@ impl Trimmer {
 			.arg(k[1])
 			.arg(k[2])
 			.arg(k[3])
-			.arg(&self.bufferB)
-			.arg(&self.bufferA1)
-			.arg(&self.bufferI1)
+			//.arg(&self.buffer_b)
+			//.arg(&self.buffer_a1)
+			//.arg(&self.buffer_i1)
 			.build()?;
 
-		let mut kernelSeedB1 = Kernel::builder()
+		let mut kernel_seed_b1 = Kernel::builder()
 			.name("FluffySeed2B")
 			.program(&self.program)
 			.queue(self.q.clone())
 			.global_work_size(1024 * 128)
 			.local_work_size(SpatialDims::One(128))
-			.arg(&self.bufferA1)
-			.arg(&self.bufferA1)
-			.arg(&self.bufferA2)
-			.arg(&self.bufferI1)
-			.arg(&self.bufferI2)
+			.arg(&self.buffer_a1)
+			.arg(&self.buffer_a1)
+			.arg(&self.buffer_a2)
+			.arg(&self.buffer_i1)
+			.arg(&self.buffer_i2)
 			.arg(32)
 			.build()?;
 
-		let mut kernelSeedB2 = Kernel::builder()
+		let mut kernel_seed_b2 = Kernel::builder()
 			.name("FluffySeed2B")
 			.program(&self.program)
 			.queue(self.q.clone())
 			.global_work_size(1024 * 128)
 			.local_work_size(SpatialDims::One(128))
-			.arg(&self.bufferB)
-			.arg(&self.bufferA1)
-			.arg(&self.bufferA2)
-			.arg(&self.bufferI1)
-			.arg(&self.bufferI2)
+			.arg(&self.buffer_b)
+			.arg(&self.buffer_a1)
+			.arg(&self.buffer_a2)
+			.arg(&self.buffer_i1)
+			.arg(&self.buffer_i2)
 			.arg(0)
 			.build()?;
 
-		let mut kernelRound1 = Kernel::builder()
+		let mut kernel_round1 = Kernel::builder()
 			.name("FluffyRound1")
 			.program(&self.program)
 			.queue(self.q.clone())
 			.global_work_size(4096 * 1024)
 			.local_work_size(SpatialDims::One(1024))
-			.arg(&self.bufferA1)
-			.arg(&self.bufferA2)
-			.arg(&self.bufferB)
-			.arg(&self.bufferI2)
-			.arg(&self.bufferI1)
+			.arg(&self.buffer_a1)
+			.arg(&self.buffer_a2)
+			.arg(&self.buffer_b)
+			.arg(&self.buffer_i2)
+			.arg(&self.buffer_i1)
 			.arg((DUCK_SIZE_A * 1024) as i32)
 			.arg((DUCK_SIZE_B * 1024) as i32)
 			.build()?;
 
-		let mut kernelRoundNA = Kernel::builder()
+		let mut kernel_round_na = Kernel::builder()
 			.name("FluffyRoundN")
 			.program(&self.program)
 			.queue(self.q.clone())
 			.global_work_size(4096 * 1024)
 			.local_work_size(SpatialDims::One(1024))
-			.arg(&self.bufferB)
-			.arg(&self.bufferA1)
-			.arg(&self.bufferI1)
-			.arg(&self.bufferI2)
+			.arg(&self.buffer_b)
+			.arg(&self.buffer_a1)
+			.arg(&self.buffer_i1)
+			.arg(&self.buffer_i2)
 			.build()?;
 
-		let mut kernelRoundNB = Kernel::builder()
+		let mut kernel_round_nb = Kernel::builder()
 			.name("FluffyRoundN")
 			.program(&self.program)
 			.queue(self.q.clone())
 			.global_work_size(4096 * 1024)
 			.local_work_size(SpatialDims::One(1024))
-			.arg(&self.bufferA1)
-			.arg(&self.bufferB)
-			.arg(&self.bufferI2)
-			.arg(&self.bufferI1)
+			.arg(&self.buffer_a1)
+			.arg(&self.buffer_b)
+			.arg(&self.buffer_i2)
+			.arg(&self.buffer_i1)
 			.build()?;
 
-		let mut kernelTail = Kernel::builder()
+		let mut kernel_tail = Kernel::builder()
 			.name("FluffyTail")
 			.program(&self.program)
 			.queue(self.q.clone())
 			.global_work_size(4096 * 1024)
 			.local_work_size(SpatialDims::One(1024))
-			.arg(&self.bufferB)
-			.arg(&self.bufferA1)
-			.arg(&self.bufferI1)
-			.arg(&self.bufferI2)
+			.arg(&self.buffer_b)
+			.arg(&self.buffer_a1)
+			.arg(&self.buffer_i1)
+			.arg(&self.buffer_i2)
 			.build()?;
 
-		let mut end = SystemTime::now();
-		let mut elapsed = end.duration_since(start).unwrap();
+		let end = SystemTime::now();
+		let elapsed = end.duration_since(start).unwrap();
 		println!("Time preparing kernels: {:?}", elapsed);
 
 		//macro_rules! kernel_enq (
@@ -220,48 +289,59 @@ impl Trimmer {
 		let mut names = vec![];
 
 		let mut edges_count: Vec<u32> = vec![0; 1];
-		unsafe {
-			start = SystemTime::now();
-			kernelSeedA.cmd().enew(&mut event_list).enq()?;
-			names.push("seedA");
-			kernelSeedB1.cmd().enew(&mut event_list).enq()?;
-			names.push("seedB1");
-			kernelSeedB2.cmd().enew(&mut event_list).enq()?;
-			names.push("seedB2");
-			clear_buf!(self.bufferI1);
-			kernelRound1.enq()?;
+		kernel_seed_a.cmd().enew(&mut event_list).enq()?;
+		names.push("seedA");
+		kernel_seed_b1.cmd().enew(&mut event_list).enq()?;
+		names.push("seedB1");
+		kernel_seed_b2.cmd().enew(&mut event_list).enq()?;
+		names.push("seedB2");
+		clear_buf!(self.buffer_i1);
+		kernel_round1.enq()?;
 
-			for i in 0..80 {
-				clear_buf!(self.bufferI2);
-				kernelRoundNA.cmd().enew(&mut event_list).enq()?;
-				names.push("seedNA");
-				clear_buf!(self.bufferI1);
-				kernelRoundNB.cmd().enew(&mut event_list).enq()?;
-				names.push("seedNB");
-			}
-			clear_buf!(self.bufferI2);
-			kernelTail.cmd().enew(&mut event_list).enq()?;
-			names.push("tail");
-
-			self.bufferI2
-				.cmd()
-				.enew(&mut event_list)
-				.read(&mut edges_count)
-				.enq()?;
-			names.push("read I2");
-			//self.bufferA1.map().enq()?;
+		for _ in 0..80 {
+			clear_buf!(self.buffer_i2);
+			kernel_round_na.cmd().enew(&mut event_list).enq()?;
+			names.push("seedNA");
+			clear_buf!(self.buffer_i1);
+			kernel_round_nb.cmd().enew(&mut event_list).enq()?;
+			names.push("seedNB");
 		}
+		clear_buf!(self.buffer_i2);
+		kernel_tail.cmd().enew(&mut event_list).enq()?;
+		names.push("tail");
 
+		self.buffer_i2
+			.cmd()
+			.enew(&mut event_list)
+			.read(&mut edges_count)
+			.enq()?;
+		names.push("read I2");
+		//self.buffer_a1.map().enq()?;
+
+		let mut edges_left: Vec<u32> = vec![0; (edges_count[0] * 2) as usize];
+
+		self.buffer_a1
+			.cmd()
+			.enew(&mut event_list)
+			.read(&mut edges_left)
+			.enq()?;
+		names.push("read A2");
 		self.q.finish()?;
 		println!("Event list {:?}", event_list);
 		for i in 0..names.len() {
 			print_event(names[i], &event_list[i]);
 		}
 		println!("edges {}", edges_count[0]);
-		clear_buf!(self.bufferI1);
-		clear_buf!(self.bufferI2);
+		println!(
+			"nodes {}: ({}, {})",
+			edges_left.len(),
+			edges_left[0],
+			edges_left[1]
+		);
+		clear_buf!(self.buffer_i1);
+		clear_buf!(self.buffer_i2);
 		self.q.finish()?;
-		Ok(vec![])
+		Ok(edges_left)
 	}
 }
 
@@ -334,7 +414,7 @@ typedef u64 nonce_t;
 
 
 #define DUCK_SIZE_A 129L
-#define DUCK_SIZE_B 82L
+#define DUCK_SIZE_B 83L
 
 #define DUCK_A_EDGES (DUCK_SIZE_A * 1024L)
 #define DUCK_A_EDGES_64 (DUCK_A_EDGES * 64L)
@@ -387,7 +467,7 @@ bool Read2bCounter(__local u32 * ecounters, const int bucket)
 }
 
 __attribute__((reqd_work_group_size(128, 1, 1)))
-__kernel  void FluffySeed2A(const u64 v0i, const u64 v1i, const u64 v2i, const u64 v3i, __global ulong4 * bufferA, __global ulong4 * bufferB, __global u32 * indexes)
+__kernel  void FluffySeed2A(const u64 v0i, const u64 v1i, const u64 v2i, const u64 v3i, __global ulong4 * bufferA, __global ulong4 * buffer_b, __global u32 * indexes)
 {
 	const int gid = get_global_id(0);
 	const short lid = get_local_id(0);
@@ -449,7 +529,7 @@ __kernel  void FluffySeed2A(const u64 v0i, const u64 v1i, const u64 v2i, const u
 			{
 				int cnt = min((int)atomic_add(indexes + bucket, 8), (int)(DUCK_A_EDGES_64 - 8));
 				int idx = ((bucket < 32 ? bucket : bucket - 32) * DUCK_A_EDGES_64 + cnt) / 4;
-				buffer = bucket < 32 ? bufferA : bufferB;
+				buffer = bucket < 32 ? bufferA : buffer_b;
 
 				buffer[idx] = (ulong4)(
 					atom_xchg(&tmp[bucket][8 - counterLocal], (u64)0),
@@ -479,7 +559,7 @@ __kernel  void FluffySeed2A(const u64 v0i, const u64 v1i, const u64 v2i, const u
 			tmp[lid][counterBase + counterCount + i] = 0;
 		int cnt = min((int)atomic_add(indexes + lid, 8), (int)(DUCK_A_EDGES_64 - 8));
 		int idx = ( (lid < 32 ? lid : lid - 32) * DUCK_A_EDGES_64 + cnt) / 4;
-		buffer = lid < 32 ? bufferA : bufferB;
+		buffer = lid < 32 ? bufferA : buffer_b;
 		buffer[idx] = (ulong4)(tmp[lid][counterBase], tmp[lid][counterBase + 1], tmp[lid][counterBase + 2], tmp[lid][counterBase + 3]);
 		buffer[idx + 1] = (ulong4)(tmp[lid][counterBase + 4], tmp[lid][counterBase + 5], tmp[lid][counterBase + 6], tmp[lid][counterBase + 7]);
 	}
@@ -717,7 +797,7 @@ __kernel void FluffyTail(const __global uint2 * source, __global uint2 * destina
 }
 
 __attribute__((reqd_work_group_size(256, 1, 1)))
-__kernel   void FluffyRecovery(const u64 v0i, const u64 v1i, const u64 v2i, const u64 v3i, const __global u64 * recovery, __global ulong4 * buffer, __global int * indexes)
+__kernel   void FluffyRecovery(const u64 v0i, const u64 v1i, const u64 v2i, const u64 v3i, const __constant u64 * recovery, __global int * indexes)
 {
 	const int gid = get_global_id(0);
 	const short lid = get_local_id(0);
@@ -768,6 +848,7 @@ __kernel   void FluffyRecovery(const u64 v0i, const u64 v1i, const u64 v2i, cons
 			for (int i = 0; i < 42; i++)
 			{
 				if ((recovery[i] == a) || (recovery[i] == b))
+				//if ((1234 == a) || (5679 == b))
 					nonces[i] = blockNonce + s;
 			}
 		}

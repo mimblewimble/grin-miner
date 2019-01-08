@@ -2,6 +2,7 @@
 name = "ocl_cuckaroo"
 version = "0.5.0"
 workspace = ".."
+edition = "2018"
 
 
 [dependencies]
