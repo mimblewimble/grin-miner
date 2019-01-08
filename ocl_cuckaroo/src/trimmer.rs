@@ -1,6 +1,7 @@
 use ocl;
-use ocl::enums::ProfilingInfo;
+use ocl::enums::{ArgVal, ProfilingInfo};
 use ocl::flags::CommandQueueProperties;
+use ocl::prm::{Int, Uint2, Ulong4};
 use ocl::{
 	Buffer, Context, Device, Event, EventList, Kernel, Platform, Program, Queue, SpatialDims,
 };
@@ -11,7 +12,6 @@ const DUCK_SIZE_B: usize = 83;
 const BUFFER_SIZE_A1: usize = DUCK_SIZE_A * 1024 * (4096 - 128) * 2;
 const BUFFER_SIZE_A2: usize = DUCK_SIZE_A * 1024 * 256 * 2;
 const BUFFER_SIZE_B: usize = DUCK_SIZE_B * 1024 * 4096 * 2;
-const BUFFER_SIZE_U32: usize = (DUCK_SIZE_A + DUCK_SIZE_B) * 1024 * 4096 * 2;
 const INDEX_SIZE: usize = 256 * 256 * 4;
 
 pub struct Trimmer {
@@ -121,7 +121,7 @@ impl Trimmer {
 		let mut event_list = EventList::new();
 		let mut names = vec![];
 
-		let mut kernel_recovery = Kernel::builder()
+		let kernel_recovery = Kernel::builder()
 			.name("FluffyRecovery")
 			.program(&self.program)
 			.queue(self.q.clone())
@@ -131,9 +131,11 @@ impl Trimmer {
 			.arg(k[1])
 			.arg(k[2])
 			.arg(k[3])
-			.arg(&self.buffer_r)
-			.arg(&self.buffer_nonces)
+			.arg(None::<&Buffer<u64>>)
+			.arg(None::<&Buffer<Int>>)
 			.build()?;
+		kernel_recovery.set_arg_unchecked(4, ArgVal::mem(&self.buffer_r))?;
+		kernel_recovery.set_arg_unchecked(5, ArgVal::mem(&self.buffer_nonces))?;
 
 		nodes.push(nodes[0]);
 
@@ -171,7 +173,7 @@ impl Trimmer {
 
 	pub unsafe fn run(&self, k: &[u64; 4]) -> ocl::Result<Vec<u32>> {
 		let start = SystemTime::now();
-		let mut kernel_seed_a = Kernel::builder()
+		let kernel_seed_a = Kernel::builder()
 			.name("FluffySeed2A")
 			.program(&self.program)
 			.queue(self.q.clone())
@@ -181,89 +183,120 @@ impl Trimmer {
 			.arg(k[1])
 			.arg(k[2])
 			.arg(k[3])
-			//.arg(&self.buffer_b)
-			//.arg(&self.buffer_a1)
-			//.arg(&self.buffer_i1)
+			.arg(None::<&Buffer<Ulong4>>)
+			.arg(None::<&Buffer<Ulong4>>)
+			.arg(None::<&Buffer<u32>>)
 			.build()?;
+		kernel_seed_a.set_arg_unchecked(4, ArgVal::mem(&self.buffer_b))?;
+		kernel_seed_a.set_arg_unchecked(5, ArgVal::mem(&self.buffer_a1))?;
+		kernel_seed_a.set_arg_unchecked(6, ArgVal::mem(&self.buffer_i1))?;
 
-		let mut kernel_seed_b1 = Kernel::builder()
+		let kernel_seed_b1 = Kernel::builder()
 			.name("FluffySeed2B")
 			.program(&self.program)
 			.queue(self.q.clone())
 			.global_work_size(1024 * 128)
 			.local_work_size(SpatialDims::One(128))
-			.arg(&self.buffer_a1)
-			.arg(&self.buffer_a1)
-			.arg(&self.buffer_a2)
-			.arg(&self.buffer_i1)
-			.arg(&self.buffer_i2)
+			.arg(None::<&Buffer<Uint2>>)
+			.arg(None::<&Buffer<Ulong4>>)
+			.arg(None::<&Buffer<Ulong4>>)
+			.arg(None::<&Buffer<Int>>)
+			.arg(None::<&Buffer<Int>>)
 			.arg(32)
 			.build()?;
+		kernel_seed_b1.set_arg_unchecked(0, ArgVal::mem(&self.buffer_a1))?;
+		kernel_seed_b1.set_arg_unchecked(1, ArgVal::mem(&self.buffer_a1))?;
+		kernel_seed_b1.set_arg_unchecked(2, ArgVal::mem(&self.buffer_a2))?;
+		kernel_seed_b1.set_arg_unchecked(3, ArgVal::mem(&self.buffer_i1))?;
+		kernel_seed_b1.set_arg_unchecked(4, ArgVal::mem(&self.buffer_i2))?;
 
-		let mut kernel_seed_b2 = Kernel::builder()
+		let kernel_seed_b2 = Kernel::builder()
 			.name("FluffySeed2B")
 			.program(&self.program)
 			.queue(self.q.clone())
 			.global_work_size(1024 * 128)
 			.local_work_size(SpatialDims::One(128))
-			.arg(&self.buffer_b)
-			.arg(&self.buffer_a1)
-			.arg(&self.buffer_a2)
-			.arg(&self.buffer_i1)
-			.arg(&self.buffer_i2)
+			.arg(None::<&Buffer<Uint2>>)
+			.arg(None::<&Buffer<Ulong4>>)
+			.arg(None::<&Buffer<Ulong4>>)
+			.arg(None::<&Buffer<Int>>)
+			.arg(None::<&Buffer<Int>>)
 			.arg(0)
 			.build()?;
 
-		let mut kernel_round1 = Kernel::builder()
+		kernel_seed_b2.set_arg_unchecked(0, ArgVal::mem(&self.buffer_b))?;
+		kernel_seed_b2.set_arg_unchecked(1, ArgVal::mem(&self.buffer_a1))?;
+		kernel_seed_b2.set_arg_unchecked(2, ArgVal::mem(&self.buffer_a2))?;
+		kernel_seed_b2.set_arg_unchecked(3, ArgVal::mem(&self.buffer_i1))?;
+		kernel_seed_b2.set_arg_unchecked(4, ArgVal::mem(&self.buffer_i2))?;
+
+		let kernel_round1 = Kernel::builder()
 			.name("FluffyRound1")
 			.program(&self.program)
 			.queue(self.q.clone())
 			.global_work_size(4096 * 1024)
 			.local_work_size(SpatialDims::One(1024))
-			.arg(&self.buffer_a1)
-			.arg(&self.buffer_a2)
-			.arg(&self.buffer_b)
-			.arg(&self.buffer_i2)
-			.arg(&self.buffer_i1)
+			.arg(None::<&Buffer<Uint2>>)
+			.arg(None::<&Buffer<Uint2>>)
+			.arg(None::<&Buffer<Uint2>>)
+			.arg(None::<&Buffer<Int>>)
+			.arg(None::<&Buffer<Int>>)
 			.arg((DUCK_SIZE_A * 1024) as i32)
 			.arg((DUCK_SIZE_B * 1024) as i32)
 			.build()?;
+		kernel_round1.set_arg_unchecked(0, ArgVal::mem(&self.buffer_a1))?;
+		kernel_round1.set_arg_unchecked(1, ArgVal::mem(&self.buffer_a2))?;
+		kernel_round1.set_arg_unchecked(2, ArgVal::mem(&self.buffer_b))?;
+		kernel_round1.set_arg_unchecked(3, ArgVal::mem(&self.buffer_i2))?;
+		kernel_round1.set_arg_unchecked(4, ArgVal::mem(&self.buffer_i1))?;
 
-		let mut kernel_round_na = Kernel::builder()
+		let kernel_round_na = Kernel::builder()
 			.name("FluffyRoundN")
 			.program(&self.program)
 			.queue(self.q.clone())
 			.global_work_size(4096 * 1024)
 			.local_work_size(SpatialDims::One(1024))
-			.arg(&self.buffer_b)
-			.arg(&self.buffer_a1)
-			.arg(&self.buffer_i1)
-			.arg(&self.buffer_i2)
+			.arg(None::<&Buffer<Uint2>>)
+			.arg(None::<&Buffer<Uint2>>)
+			.arg(None::<&Buffer<Int>>)
+			.arg(None::<&Buffer<Int>>)
 			.build()?;
+		kernel_round_na.set_arg_unchecked(0, ArgVal::mem(&self.buffer_b))?;
+		kernel_round_na.set_arg_unchecked(1, ArgVal::mem(&self.buffer_a1))?;
+		kernel_round_na.set_arg_unchecked(2, ArgVal::mem(&self.buffer_i1))?;
+		kernel_round_na.set_arg_unchecked(3, ArgVal::mem(&self.buffer_i2))?;
 
-		let mut kernel_round_nb = Kernel::builder()
+		let kernel_round_nb = Kernel::builder()
 			.name("FluffyRoundN")
 			.program(&self.program)
 			.queue(self.q.clone())
 			.global_work_size(4096 * 1024)
 			.local_work_size(SpatialDims::One(1024))
-			.arg(&self.buffer_a1)
-			.arg(&self.buffer_b)
-			.arg(&self.buffer_i2)
-			.arg(&self.buffer_i1)
+			.arg(None::<&Buffer<Uint2>>)
+			.arg(None::<&Buffer<Uint2>>)
+			.arg(None::<&Buffer<Int>>)
+			.arg(None::<&Buffer<Int>>)
 			.build()?;
+		kernel_round_nb.set_arg_unchecked(0, ArgVal::mem(&self.buffer_a1))?;
+		kernel_round_nb.set_arg_unchecked(1, ArgVal::mem(&self.buffer_b))?;
+		kernel_round_nb.set_arg_unchecked(2, ArgVal::mem(&self.buffer_i2))?;
+		kernel_round_nb.set_arg_unchecked(3, ArgVal::mem(&self.buffer_i1))?;
 
-		let mut kernel_tail = Kernel::builder()
+		let kernel_tail = Kernel::builder()
 			.name("FluffyTail")
 			.program(&self.program)
 			.queue(self.q.clone())
 			.global_work_size(4096 * 1024)
 			.local_work_size(SpatialDims::One(1024))
-			.arg(&self.buffer_b)
-			.arg(&self.buffer_a1)
-			.arg(&self.buffer_i1)
-			.arg(&self.buffer_i2)
+			.arg(None::<&Buffer<Uint2>>)
+			.arg(None::<&Buffer<Uint2>>)
+			.arg(None::<&Buffer<Int>>)
+			.arg(None::<&Buffer<Int>>)
 			.build()?;
+		kernel_tail.set_arg_unchecked(0, ArgVal::mem(&self.buffer_b))?;
+		kernel_tail.set_arg_unchecked(1, ArgVal::mem(&self.buffer_a1))?;
+		kernel_tail.set_arg_unchecked(2, ArgVal::mem(&self.buffer_i1))?;
+		kernel_tail.set_arg_unchecked(3, ArgVal::mem(&self.buffer_i2))?;
 
 		let end = SystemTime::now();
 		let elapsed = end.duration_since(start).unwrap();
