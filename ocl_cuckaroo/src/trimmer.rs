@@ -1,6 +1,7 @@
 use ocl;
 use ocl::enums::{ArgVal, ProfilingInfo};
 use ocl::flags::CommandQueueProperties;
+use ocl::prm::{Uint2, Ulong4};
 use ocl::{
 	Buffer, Context, Device, Event, EventList, Kernel, Platform, Program, Queue, SpatialDims,
 };
@@ -131,7 +132,7 @@ impl Trimmer {
 			.arg(k[2])
 			.arg(k[3])
 			.arg(None::<&Buffer<u64>>)
-			.arg(None::<&Buffer<u32>>)
+			.arg(None::<&Buffer<i32>>)
 			.build()?;
 		kernel_recovery.set_arg_unchecked(4, ArgVal::mem(&self.buffer_r))?;
 		kernel_recovery.set_arg_unchecked(5, ArgVal::mem(&self.buffer_nonces))?;
@@ -182,8 +183,8 @@ impl Trimmer {
 			.arg(k[1])
 			.arg(k[2])
 			.arg(k[3])
-			.arg(None::<&Buffer<u32>>)
-			.arg(None::<&Buffer<u32>>)
+			.arg(None::<&Buffer<Ulong4>>)
+			.arg(None::<&Buffer<Ulong4>>)
 			.arg(None::<&Buffer<u32>>)
 			.build()?;
 		kernel_seed_a.set_arg_unchecked(4, ArgVal::mem(&self.buffer_b))?;
@@ -196,11 +197,11 @@ impl Trimmer {
 			.queue(self.q.clone())
 			.global_work_size(1024 * 128)
 			.local_work_size(SpatialDims::One(128))
-			.arg(None::<&Buffer<u32>>)
-			.arg(None::<&Buffer<u32>>)
-			.arg(None::<&Buffer<u32>>)
-			.arg(None::<&Buffer<u32>>)
-			.arg(None::<&Buffer<u32>>)
+			.arg(None::<&Buffer<Uint2>>)
+			.arg(None::<&Buffer<Ulong4>>)
+			.arg(None::<&Buffer<Ulong4>>)
+			.arg(None::<&Buffer<i32>>)
+			.arg(None::<&Buffer<i32>>)
 			.arg(32)
 			.build()?;
 		kernel_seed_b1.set_arg_unchecked(0, ArgVal::mem(&self.buffer_a1))?;
@@ -215,11 +216,11 @@ impl Trimmer {
 			.queue(self.q.clone())
 			.global_work_size(1024 * 128)
 			.local_work_size(SpatialDims::One(128))
-			.arg(None::<&Buffer<u32>>)
-			.arg(None::<&Buffer<u32>>)
-			.arg(None::<&Buffer<u32>>)
-			.arg(None::<&Buffer<u32>>)
-			.arg(None::<&Buffer<u32>>)
+			.arg(None::<&Buffer<Uint2>>)
+			.arg(None::<&Buffer<Ulong4>>)
+			.arg(None::<&Buffer<Ulong4>>)
+			.arg(None::<&Buffer<i32>>)
+			.arg(None::<&Buffer<i32>>)
 			.arg(0)
 			.build()?;
 
@@ -234,12 +235,12 @@ impl Trimmer {
 			.program(&self.program)
 			.queue(self.q.clone())
 			.global_work_size(4096 * 1024)
-			.local_work_size(SpatialDims::One(1024))
-			.arg(None::<&Buffer<u32>>)
-			.arg(None::<&Buffer<u32>>)
-			.arg(None::<&Buffer<u32>>)
-			.arg(None::<&Buffer<u32>>)
-			.arg(None::<&Buffer<u32>>)
+			//.local_work_size(SpatialDims::One(256))
+			.arg(None::<&Buffer<Uint2>>)
+			.arg(None::<&Buffer<Uint2>>)
+			.arg(None::<&Buffer<Uint2>>)
+			.arg(None::<&Buffer<i32>>)
+			.arg(None::<&Buffer<i32>>)
 			.arg((DUCK_SIZE_A * 1024) as i32)
 			.arg((DUCK_SIZE_B * 1024) as i32)
 			.build()?;
@@ -254,11 +255,11 @@ impl Trimmer {
 			.program(&self.program)
 			.queue(self.q.clone())
 			.global_work_size(4096 * 1024)
-			.local_work_size(SpatialDims::One(1024))
-			.arg(None::<&Buffer<u32>>)
-			.arg(None::<&Buffer<u32>>)
-			.arg(None::<&Buffer<u32>>)
-			.arg(None::<&Buffer<u32>>)
+			//.local_work_size(SpatialDims::One(256))
+			.arg(None::<&Buffer<Uint2>>)
+			.arg(None::<&Buffer<Uint2>>)
+			.arg(None::<&Buffer<i32>>)
+			.arg(None::<&Buffer<i32>>)
 			.build()?;
 		kernel_round_na.set_arg_unchecked(0, ArgVal::mem(&self.buffer_b))?;
 		kernel_round_na.set_arg_unchecked(1, ArgVal::mem(&self.buffer_a1))?;
@@ -270,11 +271,11 @@ impl Trimmer {
 			.program(&self.program)
 			.queue(self.q.clone())
 			.global_work_size(4096 * 1024)
-			.local_work_size(SpatialDims::One(1024))
-			.arg(None::<&Buffer<u32>>)
-			.arg(None::<&Buffer<u32>>)
-			.arg(None::<&Buffer<u32>>)
-			.arg(None::<&Buffer<u32>>)
+			//.local_work_size(SpatialDims::One(256))
+			.arg(None::<&Buffer<Uint2>>)
+			.arg(None::<&Buffer<Uint2>>)
+			.arg(None::<&Buffer<i32>>)
+			.arg(None::<&Buffer<i32>>)
 			.build()?;
 		kernel_round_nb.set_arg_unchecked(0, ArgVal::mem(&self.buffer_a1))?;
 		kernel_round_nb.set_arg_unchecked(1, ArgVal::mem(&self.buffer_b))?;
@@ -286,11 +287,11 @@ impl Trimmer {
 			.program(&self.program)
 			.queue(self.q.clone())
 			.global_work_size(4096 * 1024)
-			.local_work_size(SpatialDims::One(1024))
-			.arg(None::<&Buffer<u32>>)
-			.arg(None::<&Buffer<u32>>)
-			.arg(None::<&Buffer<u32>>)
-			.arg(None::<&Buffer<u32>>)
+			//.local_work_size(SpatialDims::One(256))
+			.arg(None::<&Buffer<Uint2>>)
+			.arg(None::<&Buffer<Uint2>>)
+			.arg(None::<&Buffer<i32>>)
+			.arg(None::<&Buffer<i32>>)
 			.build()?;
 		kernel_tail.set_arg_unchecked(0, ArgVal::mem(&self.buffer_b))?;
 		kernel_tail.set_arg_unchecked(1, ArgVal::mem(&self.buffer_a1))?;
@@ -828,7 +829,7 @@ __kernel void FluffyTail(const __global uint2 * source, __global uint2 * destina
 	}
 }
 
-__attribute__((reqd_work_group_size(256, 1, 1)))
+__attribute__((reqd_work_group_size(256, 1 , 1)))
 __kernel   void FluffyRecovery(const u64 v0i, const u64 v1i, const u64 v2i, const u64 v3i, const __constant u64 * recovery, __global int * indexes)
 {
 	const int gid = get_global_id(0);
@@ -880,7 +881,7 @@ __kernel   void FluffyRecovery(const u64 v0i, const u64 v1i, const u64 v2i, cons
 			for (int i = 0; i < 42; i++)
 			{
 				if ((recovery[i] == a) || (recovery[i] == b))
-				//if ((1234 == a) || (5679 == b))
+	//		if ((1234 == a) || (5679 == b))
 					nonces[i] = blockNonce + s;
 			}
 		}
