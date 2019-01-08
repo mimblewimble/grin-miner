@@ -17,8 +17,8 @@
 
 /// Struct to return relevant information about the mining process
 /// back to interested callers (such as the TUI)
-use plugin;
 
+use plugin;
 
 #[derive(Clone)]
 pub struct SolutionStats {
@@ -49,7 +49,7 @@ impl Default for SolutionStats {
 #[derive(Clone)]
 pub struct MiningStats {
 	/// combined graphs per second
-	pub combined_gps: f64,
+	combined_gps: Vec<f64>,
 	/// what block height we're mining at
 	pub block_height: u64,
 	/// current target for share difficulty we're working on
@@ -63,11 +63,27 @@ pub struct MiningStats {
 impl Default for MiningStats {
 	fn default() -> MiningStats {
 		MiningStats {
-			combined_gps: 0.0,
+			combined_gps: vec![],
 			block_height: 0,
 			target_difficulty: 0,
 			solution_stats: SolutionStats::default(),
 			device_stats: vec![],
+		}
+	}
+}
+
+impl MiningStats {
+	pub fn add_combined_gps(&mut self, val: f64) {
+		self.combined_gps.insert(0, val);
+		self.combined_gps.truncate(50);
+	}
+
+	pub fn combined_gps(&self) -> f64 {
+		if self.combined_gps.is_empty() {
+			0.0
+		} else {
+			let sum: f64 = self.combined_gps.iter().sum();
+			sum / (self.combined_gps.len() as f64)
 		}
 	}
 }

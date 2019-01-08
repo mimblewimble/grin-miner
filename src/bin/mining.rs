@@ -169,7 +169,7 @@ impl Controller {
 
 		if sps_total.is_finite() {
 			let mut s_stats = self.stats.write().unwrap();
-			s_stats.mining_stats.combined_gps = sps_total;
+			s_stats.mining_stats.add_combined_gps(sps_total);
 			s_stats.mining_stats.target_difficulty = self.current_target_diff;
 			s_stats.mining_stats.block_height = self.current_height;
 			s_stats.mining_stats.device_stats = stats;
