@@ -453,8 +453,11 @@ impl Controller {
 				} else {
 					// This is a fatal error
 					let err = res.error.unwrap();
+					let mut stats = self.stats.write().unwrap();
+					stats.client_stats.last_message_received = format!("Last Message Received: Failed to log in: {:?}", err);
+					stats.client_stats.connection_status = "Connection Status: Server requires login".to_string();
+					stats.client_stats.connected = false;
 					error!(LOGGER, "Failed to log in: {:?}", err);
-					panic!("Failed to log in to stratum server: {:?}", err);
 				}
 			}
 			// unknown method response
@@ -496,6 +499,7 @@ impl Controller {
 						let mut stats = self.stats.write().unwrap();
 						stats.client_stats.connection_status = status;
 						stats.client_stats.connected = false;
+						self.stream = None;
 					} else {
 						let status = format!(
 							"Connection Status: Connected to Grin server at {}.",
@@ -506,6 +510,10 @@ impl Controller {
 						stats.client_stats.connection_status = status;
 					}
 					next_server_retry = time::get_time().sec + server_retry_interval;
+					if let None = self.stream {
+						thread::sleep(std::time::Duration::from_secs(1));
+						continue;
+					}
 				}
 			} else {
 				// get new job template
@@ -550,6 +558,7 @@ impl Controller {
 						Err(e) => {
 							error!(LOGGER, "Error reading message: {:?}", e);
 							self.stream = None;
+							continue;
 						}
 					}
 					next_server_read = time::get_time().sec + server_read_interval;

@@ -1,5 +1,4 @@
 use ocl;
-use ocl::builders::KernelBuilder;
 use ocl::enums::{ArgVal, ProfilingInfo};
 use ocl::flags::CommandQueueProperties;
 use ocl::prm::{Uint2, Ulong4};

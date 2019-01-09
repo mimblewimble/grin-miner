@@ -170,7 +170,7 @@ impl TUIStatusListener for TUIMiningView {
 
 		let (basic_mining_status, basic_network_info) = {
 			if client_stats.connected {
-				if mining_stats.combined_gps == 0.0 {
+				if mining_stats.combined_gps() == 0.0 {
 					(
 						"Mining Status: Starting miner and awaiting first graph time..."
 							.to_string(),
@@ -180,7 +180,7 @@ impl TUIStatusListener for TUIMiningView {
 					(
 						format!(
 							"Mining Status: Mining at height {} at {:.*} GPS",
-							mining_stats.block_height, 4, mining_stats.combined_gps
+							mining_stats.block_height, 4, mining_stats.combined_gps()
 						),
 						format!(
 							"Cuck(at)oo - Target Share Difficulty {}",

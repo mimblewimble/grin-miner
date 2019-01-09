@@ -1,6 +1,6 @@
 [package]
 name = "grin_miner_util"
-version = "0.5.0"
+version = "0.5.1"
 authors = ["Grin Developers <mimblewimble@lists.launchpad.net>"]
 description = "Utilities for the grin miner"
 repository = "https://github.com/mimblewimble/grin-miner"

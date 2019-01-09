@@ -13,6 +13,7 @@ set (CFLAGS "-Wno-format -fomit-frame-pointer ${OPT}")
 set (GCC_FLAGS "-m64 -std=gnu11 ${CFLAGS}")
 
 set (CUDA_HOST_COMPILER_OVERRIDE $ENV{CUDA_HOST_COMPILER})
+set (SKIP_CUCKATOO_GPU $ENV{SKIP_CUCKATOO_GPU})
 
 #blake2b prerequisite
 set (BLAKE_2B "cuckoo/src/crypto/blake2b-ref.c")
@@ -83,8 +84,10 @@ set (AT_LEAN_CUDA_SRC
 			cuckoo/src/cuckatoo/lean.cu
 			${BLAKE_2B} )
 
-build_cuda_target("${AT_LEAN_CUDA_SRC}" cuckatoo_lean_cuda_19 "-DEDGEBITS=19")
-build_cuda_target("${AT_LEAN_CUDA_SRC}" cuckatoo_lean_cuda_31 "-DEDGEBITS=31")
+if (NOT SKIP_CUCKATOO_GPU)
+  build_cuda_target("${AT_LEAN_CUDA_SRC}" cuckatoo_lean_cuda_19 "-DEDGEBITS=19")
+  build_cuda_target("${AT_LEAN_CUDA_SRC}" cuckatoo_lean_cuda_31 "-DEDGEBITS=31")
+endif()
 
 ### AT MEAN CUDA TARGETS  #########################################
 
@@ -93,9 +96,11 @@ set (AT_MEAN_CUDA_SRC
 			cuckoo/src/cuckatoo/mean.cu
 			${BLAKE_2B} )
 
-build_cuda_target("${AT_MEAN_CUDA_SRC}" cuckatoo_mean_cuda_19 "-DEPS_A=512 -DEPS_B=384 -DIDXSHIFT=6 -DEDGEBITS=19")
-build_cuda_target("${AT_MEAN_CUDA_SRC}" cuckatoo_mean_cuda_rtx_31 "-DNEPS_A=128 -DNEPS_B=80 -DPART_BITS=0 -DEDGEBITS=31")
-build_cuda_target("${AT_MEAN_CUDA_SRC}" cuckatoo_mean_cuda_gtx_31 "-DNEPS_A=130 -DNEPS_B=84 -DPART_BITS=1 -DEDGEBITS=31")
+if (NOT SKIP_CUCKATOO_GPU)
+  build_cuda_target("${AT_MEAN_CUDA_SRC}" cuckatoo_mean_cuda_19 "-DNEPS_A=512 -DNEPS_B=384 -DIDXSHIFT=6 -DEDGEBITS=19")
+  build_cuda_target("${AT_MEAN_CUDA_SRC}" cuckatoo_mean_cuda_rtx_31 "-DNEPS_A=128 -DNEPS_B=80 -DPART_BITS=0 -DEDGEBITS=31")
+  build_cuda_target("${AT_MEAN_CUDA_SRC}" cuckatoo_mean_cuda_gtx_31 "-DNEPS_A=130 -DNEPS_B=84 -DPART_BITS=1 -DEDGEBITS=31")
+endif()
 
 ##################################################################################
 ### CUCKAROO (Asic Resistant)  ###################################################
