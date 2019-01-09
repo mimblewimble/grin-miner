@@ -4,6 +4,9 @@ version = "0.5.0"
 workspace = ".."
 edition = "2018"
 
+[features]
+profile = []
+
 
 [dependencies]
 grin_miner_plugin = { path = "../plugin" }

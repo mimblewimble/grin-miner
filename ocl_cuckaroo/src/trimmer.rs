@@ -1,4 +1,5 @@
 use ocl;
+use ocl::builders::KernelBuilder;
 use ocl::enums::{ArgVal, ProfilingInfo};
 use ocl::flags::CommandQueueProperties;
 use ocl::prm::{Uint2, Ulong4};
@@ -26,12 +27,51 @@ pub struct Trimmer {
 	buffer_nonces: Buffer<u32>,
 	pub device_name: String,
 	pub device_id: usize,
+	is_nvidia: bool,
 }
+
+macro_rules! clear_buffer (
+	($buf:expr) => (
+		$buf.cmd().fill(0, None).enq()?;
+	));
+
+macro_rules! kernel_enq(
+	($kernel:expr, $event_list:expr, $names:expr, $msg:expr) => (
+		#[cfg(feature = "profile")]
+		{
+		$kernel.cmd().enew(&mut $event_list).enq()?;
+		$names.push($msg);
+		}
+		#[cfg(not(feature = "profile"))]
+		{
+		$kernel.cmd().enq()?;
+		}
+	));
+
+#[cfg(feature = "profile")]
+fn queue_props() -> Option<CommandQueueProperties> {
+	Some(CommandQueueProperties::PROFILING_ENABLE)
+}
+
+#[cfg(not(feature = "profile"))]
+fn queue_props() -> Option<CommandQueueProperties> {
+	None
+}
+
+macro_rules! kernel_builder(
+	($obj: expr, $kernel: expr, $global_works_size: expr) => (
+			 Kernel::builder()
+			.name($kernel)
+			.program(&$obj.program)
+			.queue($obj.q.clone())
+			.global_work_size($global_works_size)
+));
 
 impl Trimmer {
 	pub fn build(platform_name: Option<&str>, device_id: Option<usize>) -> ocl::Result<Trimmer> {
 		let platform = find_paltform(platform_name)
 			.ok_or::<ocl::Error>("Can't find OpenCL platform".into())?;
+		let p_name = platform.name()?;
 		let device = find_device(&platform, device_id)?;
 
 		let context = Context::builder()
@@ -39,11 +79,7 @@ impl Trimmer {
 			.devices(device)
 			.build()?;
 
-		let q = Queue::new(
-			&context,
-			device,
-			Some(CommandQueueProperties::PROFILING_ENABLE),
-		)?;
+		let q = Queue::new(&context, device, queue_props())?;
 
 		let program = Program::builder()
 			.devices(device)
@@ -93,15 +129,6 @@ impl Trimmer {
 			.fill_val(0)
 			.build()?;
 
-		//let result = unsafe {
-		//	Buffer::<u32>::builder()
-		//		.queue(q.clone())
-		//		.len(RES_BUFFER_SIZE)
-		//		.fill_val(0)
-		//		.use_host_slice(&res_buf[..])
-		//		.build()?
-		//};
-
 		Ok(Trimmer {
 			q,
 			program,
@@ -114,6 +141,7 @@ impl Trimmer {
 			buffer_nonces,
 			device_name: device.name()?,
 			device_id: device_id.unwrap_or(0),
+			is_nvidia: p_name.to_lowercase().contains("nvidia"),
 		})
 	}
 
@@ -121,12 +149,7 @@ impl Trimmer {
 		let mut event_list = EventList::new();
 		let mut names = vec![];
 
-		let kernel_recovery = Kernel::builder()
-			.name("FluffyRecovery")
-			.program(&self.program)
-			.queue(self.q.clone())
-			.global_work_size(2048 * 256)
-			.local_work_size(SpatialDims::One(256))
+		let mut kernel_recovery = kernel_builder!(self, "FluffyRecovery", 2048 * 256)
 			.arg(k[0])
 			.arg(k[1])
 			.arg(k[2])
@@ -134,35 +157,23 @@ impl Trimmer {
 			.arg(None::<&Buffer<u64>>)
 			.arg(None::<&Buffer<i32>>)
 			.build()?;
+
+		if self.is_nvidia {
+			kernel_recovery.set_default_local_work_size(SpatialDims::One(256));
+		}
+
 		kernel_recovery.set_arg_unchecked(4, ArgVal::mem(&self.buffer_r))?;
 		kernel_recovery.set_arg_unchecked(5, ArgVal::mem(&self.buffer_nonces))?;
 
 		nodes.push(nodes[0]);
 
-		println!("Sending nodes {}", nodes.len());
 		let edges = nodes.windows(2).flatten().map(|v| *v).collect::<Vec<u32>>();
-		println!("Sending edges {}", edges.len());
-		self.buffer_r
-			.cmd()
-			.enew(&mut event_list)
-			.write(edges.as_slice())
-			.enq()?;
-		names.push("write edges");
-		self.buffer_nonces
-			.cmd()
-			.enew(&mut event_list)
-			.fill(0, None)
-			.enq()?;
-		names.push("fill res");
-		kernel_recovery.cmd().enew(&mut event_list).enq()?;
-		names.push("recovery");
+		self.buffer_r.cmd().write(edges.as_slice()).enq()?;
+		self.buffer_nonces.cmd().fill(0, None).enq()?;
+		kernel_enq!(kernel_recovery, event_list, names, "recovery");
 		let mut nonces: Vec<u32> = vec![0; 42];
 
-		self.buffer_nonces
-			.cmd()
-			.enew(&mut event_list)
-			.read(&mut nonces)
-			.enq()?;
+		self.buffer_nonces.cmd().read(&mut nonces).enq()?;
 		self.q.finish()?;
 		nonces.sort();
 		for i in 0..names.len() {
@@ -172,13 +183,7 @@ impl Trimmer {
 	}
 
 	pub unsafe fn run(&self, k: &[u64; 4]) -> ocl::Result<Vec<u32>> {
-		let start = SystemTime::now();
-		let kernel_seed_a = Kernel::builder()
-			.name("FluffySeed2A")
-			.program(&self.program)
-			.queue(self.q.clone())
-			.global_work_size(2048 * 128)
-			.local_work_size(SpatialDims::One(128))
+		let mut kernel_seed_a = kernel_builder!(self, "FluffySeed2A", 2048 * 128)
 			.arg(k[0])
 			.arg(k[1])
 			.arg(k[2])
@@ -187,16 +192,14 @@ impl Trimmer {
 			.arg(None::<&Buffer<Ulong4>>)
 			.arg(None::<&Buffer<u32>>)
 			.build()?;
+		if self.is_nvidia {
+			kernel_seed_a.set_default_local_work_size(SpatialDims::One(128));
+		}
 		kernel_seed_a.set_arg_unchecked(4, ArgVal::mem(&self.buffer_b))?;
 		kernel_seed_a.set_arg_unchecked(5, ArgVal::mem(&self.buffer_a1))?;
 		kernel_seed_a.set_arg_unchecked(6, ArgVal::mem(&self.buffer_i1))?;
 
-		let kernel_seed_b1 = Kernel::builder()
-			.name("FluffySeed2B")
-			.program(&self.program)
-			.queue(self.q.clone())
-			.global_work_size(1024 * 128)
-			.local_work_size(SpatialDims::One(128))
+		let mut kernel_seed_b1 = kernel_builder!(self, "FluffySeed2B", 1024 * 128)
 			.arg(None::<&Buffer<Uint2>>)
 			.arg(None::<&Buffer<Ulong4>>)
 			.arg(None::<&Buffer<Ulong4>>)
@@ -204,18 +207,16 @@ impl Trimmer {
 			.arg(None::<&Buffer<i32>>)
 			.arg(32)
 			.build()?;
+		if self.is_nvidia {
+			kernel_seed_b1.set_default_local_work_size(SpatialDims::One(128));
+		}
 		kernel_seed_b1.set_arg_unchecked(0, ArgVal::mem(&self.buffer_a1))?;
 		kernel_seed_b1.set_arg_unchecked(1, ArgVal::mem(&self.buffer_a1))?;
 		kernel_seed_b1.set_arg_unchecked(2, ArgVal::mem(&self.buffer_a2))?;
 		kernel_seed_b1.set_arg_unchecked(3, ArgVal::mem(&self.buffer_i1))?;
 		kernel_seed_b1.set_arg_unchecked(4, ArgVal::mem(&self.buffer_i2))?;
 
-		let kernel_seed_b2 = Kernel::builder()
-			.name("FluffySeed2B")
-			.program(&self.program)
-			.queue(self.q.clone())
-			.global_work_size(1024 * 128)
-			.local_work_size(SpatialDims::One(128))
+		let mut kernel_seed_b2 = kernel_builder!(self, "FluffySeed2B", 1024 * 128)
 			.arg(None::<&Buffer<Uint2>>)
 			.arg(None::<&Buffer<Ulong4>>)
 			.arg(None::<&Buffer<Ulong4>>)
@@ -223,6 +224,9 @@ impl Trimmer {
 			.arg(None::<&Buffer<i32>>)
 			.arg(0)
 			.build()?;
+		if self.is_nvidia {
+			kernel_seed_b2.set_default_local_work_size(SpatialDims::One(128));
+		}
 
 		kernel_seed_b2.set_arg_unchecked(0, ArgVal::mem(&self.buffer_b))?;
 		kernel_seed_b2.set_arg_unchecked(1, ArgVal::mem(&self.buffer_a1))?;
@@ -230,12 +234,7 @@ impl Trimmer {
 		kernel_seed_b2.set_arg_unchecked(3, ArgVal::mem(&self.buffer_i1))?;
 		kernel_seed_b2.set_arg_unchecked(4, ArgVal::mem(&self.buffer_i2))?;
 
-		let kernel_round1 = Kernel::builder()
-			.name("FluffyRound1")
-			.program(&self.program)
-			.queue(self.q.clone())
-			.global_work_size(4096 * 1024)
-			//.local_work_size(SpatialDims::One(256))
+		let mut kernel_round1 = kernel_builder!(self, "FluffyRound1", 4096 * 1024)
 			.arg(None::<&Buffer<Uint2>>)
 			.arg(None::<&Buffer<Uint2>>)
 			.arg(None::<&Buffer<Uint2>>)
@@ -244,140 +243,94 @@ impl Trimmer {
 			.arg((DUCK_SIZE_A * 1024) as i32)
 			.arg((DUCK_SIZE_B * 1024) as i32)
 			.build()?;
+		if self.is_nvidia {
+			kernel_round1.set_default_local_work_size(SpatialDims::One(1024));
+		}
+
 		kernel_round1.set_arg_unchecked(0, ArgVal::mem(&self.buffer_a1))?;
 		kernel_round1.set_arg_unchecked(1, ArgVal::mem(&self.buffer_a2))?;
 		kernel_round1.set_arg_unchecked(2, ArgVal::mem(&self.buffer_b))?;
 		kernel_round1.set_arg_unchecked(3, ArgVal::mem(&self.buffer_i2))?;
 		kernel_round1.set_arg_unchecked(4, ArgVal::mem(&self.buffer_i1))?;
 
-		let kernel_round_na = Kernel::builder()
-			.name("FluffyRoundN")
-			.program(&self.program)
-			.queue(self.q.clone())
-			.global_work_size(4096 * 1024)
-			//.local_work_size(SpatialDims::One(256))
+		let mut kernel_round_na = kernel_builder!(self, "FluffyRoundN", 4096 * 1024)
 			.arg(None::<&Buffer<Uint2>>)
 			.arg(None::<&Buffer<Uint2>>)
 			.arg(None::<&Buffer<i32>>)
 			.arg(None::<&Buffer<i32>>)
 			.build()?;
+		if self.is_nvidia {
+			kernel_round_na.set_default_local_work_size(SpatialDims::One(1024));
+		}
 		kernel_round_na.set_arg_unchecked(0, ArgVal::mem(&self.buffer_b))?;
 		kernel_round_na.set_arg_unchecked(1, ArgVal::mem(&self.buffer_a1))?;
 		kernel_round_na.set_arg_unchecked(2, ArgVal::mem(&self.buffer_i1))?;
 		kernel_round_na.set_arg_unchecked(3, ArgVal::mem(&self.buffer_i2))?;
 
-		let kernel_round_nb = Kernel::builder()
-			.name("FluffyRoundN")
-			.program(&self.program)
-			.queue(self.q.clone())
-			.global_work_size(4096 * 1024)
-			//.local_work_size(SpatialDims::One(256))
+		let mut kernel_round_nb = kernel_builder!(self, "FluffyRoundN", 4096 * 1024)
 			.arg(None::<&Buffer<Uint2>>)
 			.arg(None::<&Buffer<Uint2>>)
 			.arg(None::<&Buffer<i32>>)
 			.arg(None::<&Buffer<i32>>)
 			.build()?;
+		if self.is_nvidia {
+			kernel_round_nb.set_default_local_work_size(SpatialDims::One(1024));
+		}
 		kernel_round_nb.set_arg_unchecked(0, ArgVal::mem(&self.buffer_a1))?;
 		kernel_round_nb.set_arg_unchecked(1, ArgVal::mem(&self.buffer_b))?;
 		kernel_round_nb.set_arg_unchecked(2, ArgVal::mem(&self.buffer_i2))?;
 		kernel_round_nb.set_arg_unchecked(3, ArgVal::mem(&self.buffer_i1))?;
 
-		let kernel_tail = Kernel::builder()
-			.name("FluffyTail")
-			.program(&self.program)
-			.queue(self.q.clone())
-			.global_work_size(4096 * 1024)
-			//.local_work_size(SpatialDims::One(256))
+		let mut kernel_tail = kernel_builder!(self, "FluffyTail", 4096 * 1024)
 			.arg(None::<&Buffer<Uint2>>)
 			.arg(None::<&Buffer<Uint2>>)
 			.arg(None::<&Buffer<i32>>)
 			.arg(None::<&Buffer<i32>>)
 			.build()?;
+		if self.is_nvidia {
+			kernel_tail.set_default_local_work_size(SpatialDims::One(1024));
+		}
 		kernel_tail.set_arg_unchecked(0, ArgVal::mem(&self.buffer_b))?;
 		kernel_tail.set_arg_unchecked(1, ArgVal::mem(&self.buffer_a1))?;
 		kernel_tail.set_arg_unchecked(2, ArgVal::mem(&self.buffer_i1))?;
 		kernel_tail.set_arg_unchecked(3, ArgVal::mem(&self.buffer_i2))?;
 
-		let end = SystemTime::now();
-		let elapsed = end.duration_since(start).unwrap();
-		println!("Time preparing kernels: {:?}", elapsed);
-
-		//macro_rules! kernel_enq (
-		//($num:expr) => (
-		//for i in 0..$num {
-		//    offset = i * GLOBAL_WORK_SIZE;
-		//    unsafe {
-		//        kernel
-		//            .set_default_global_work_offset(SpatialDims::One(offset))
-		//            .enq()?;
-		//    }
-		//}
-		//));
-
-		macro_rules! clear_buf (
-	($buf:expr) => (
-		$buf.cmd().fill(0, None).enq()?;
-	));
 		let mut event_list = EventList::new();
 		let mut names = vec![];
 
 		let mut edges_count: Vec<u32> = vec![0; 1];
-		kernel_seed_a.cmd().enew(&mut event_list).enq()?;
-		names.push("seedA");
-		kernel_seed_b1.cmd().enew(&mut event_list).enq()?;
-		names.push("seedB1");
-		kernel_seed_b2.cmd().enew(&mut event_list).enq()?;
-		names.push("seedB2");
-		clear_buf!(self.buffer_i1);
-		kernel_round1.enq()?;
+		kernel_enq!(kernel_seed_a, event_list, names, "seedA");
+		kernel_enq!(kernel_seed_b1, event_list, names, "seedB1");
+		kernel_enq!(kernel_seed_b2, event_list, names, "seedB2");
+		clear_buffer!(self.buffer_i1);
+		kernel_enq!(kernel_round1, event_list, names, "round1");
 
 		for _ in 0..80 {
-			clear_buf!(self.buffer_i2);
-			kernel_round_na.cmd().enew(&mut event_list).enq()?;
-			names.push("seedNA");
-			clear_buf!(self.buffer_i1);
-			kernel_round_nb.cmd().enew(&mut event_list).enq()?;
-			names.push("seedNB");
+			clear_buffer!(self.buffer_i2);
+			kernel_enq!(kernel_round_na, event_list, names, "roundNA");
+			clear_buffer!(self.buffer_i1);
+			kernel_enq!(kernel_round_nb, event_list, names, "roundNB");
 		}
-		clear_buf!(self.buffer_i2);
-		kernel_tail.cmd().enew(&mut event_list).enq()?;
-		names.push("tail");
+		clear_buffer!(self.buffer_i2);
+		kernel_enq!(kernel_tail, event_list, names, "tail");
 
-		self.buffer_i2
-			.cmd()
-			.enew(&mut event_list)
-			.read(&mut edges_count)
-			.enq()?;
-		names.push("read I2");
-		//self.buffer_a1.map().enq()?;
+		self.buffer_i2.cmd().read(&mut edges_count).enq()?;
 
 		let mut edges_left: Vec<u32> = vec![0; (edges_count[0] * 2) as usize];
 
-		self.buffer_a1
-			.cmd()
-			.enew(&mut event_list)
-			.read(&mut edges_left)
-			.enq()?;
-		names.push("read A2");
+		self.buffer_a1.cmd().read(&mut edges_left).enq()?;
 		self.q.finish()?;
-		println!("Event list {:?}", event_list);
 		for i in 0..names.len() {
 			print_event(names[i], &event_list[i]);
 		}
-		println!("edges {}", edges_count[0]);
-		println!(
-			"nodes {}: ({}, {})",
-			edges_left.len(),
-			edges_left[0],
-			edges_left[1]
-		);
-		clear_buf!(self.buffer_i1);
-		clear_buf!(self.buffer_i2);
+		clear_buffer!(self.buffer_i1);
+		clear_buffer!(self.buffer_i2);
 		self.q.finish()?;
 		Ok(edges_left)
 	}
 }
 
+#[cfg(feature = "profile")]
 fn print_event(name: &str, ev: &Event) {
 	let submit = ev
 		.profiling_info(ProfilingInfo::Submit)
@@ -400,7 +353,7 @@ fn print_event(name: &str, ev: &Event) {
 		.time()
 		.unwrap();
 	println!(
-		"{}\t total {}ms \t sub {}mc \t start {}ms \t exec {}ms",
+		"{}\t total {}ms \t queued->submit {}mc \t submit->start {}ms \t start->end {}ms",
 		name,
 		(end - queued) / 1_000_000,
 		(submit - queued) / 1_000,
@@ -408,6 +361,9 @@ fn print_event(name: &str, ev: &Event) {
 		(end - start) / 1_000_000
 	);
 }
+
+#[cfg(not(feature = "profile"))]
+fn print_event(_name: &str, _ev: &Event) {}
 
 fn find_paltform(selector: Option<&str>) -> Option<Platform> {
 	match selector {

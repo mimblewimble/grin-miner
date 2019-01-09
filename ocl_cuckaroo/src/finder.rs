@@ -130,7 +130,6 @@ impl Graph {
 			g.add_edge(n1, n2);
 		}
 
-		println!("Node visited: {}", search.node_visited);
 		Ok(search.solutions.clone())
 	}
 
