@@ -1,10 +1,12 @@
 use ocl;
+use ocl::builders::KernelBuilder;
 use ocl::enums::{ArgVal, ProfilingInfo};
 use ocl::flags::CommandQueueProperties;
 use ocl::prm::{Uint2, Ulong4};
 use ocl::{
 	Buffer, Context, Device, Event, EventList, Kernel, Platform, Program, Queue, SpatialDims,
 };
+use std::env;
 use std::time::SystemTime;
 
 const DUCK_SIZE_A: usize = 129; // AMD 126 + 3
@@ -68,6 +70,12 @@ macro_rules! kernel_builder(
 
 impl Trimmer {
 	pub fn build(platform_name: Option<&str>, device_id: Option<usize>) -> ocl::Result<Trimmer> {
+		env::set_var("GPU_MAX_HEAP_SIZE", "100");
+		env::set_var("GPU_USE_SYNC_OBJECTS", "1");
+		env::set_var("GPU_MAX_ALLOC_PERCENT", "100");
+		env::set_var("GPU_SINGLE_ALLOC_PERCENT", "100");
+		env::set_var("GPU_64BIT_ATOMICS", "1");
+		env::set_var("GPU_MAX_WORKGROUP_SIZE", "1024");
 		let platform = find_paltform(platform_name)
 			.ok_or::<ocl::Error>("Can't find OpenCL platform".into())?;
 		let p_name = platform.name()?;
