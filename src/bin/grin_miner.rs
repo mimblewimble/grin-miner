@@ -165,7 +165,10 @@ fn main() {
 	// Load plugin configuration and start solvers first,
 	// so we can exit pre-tui if something is obviously wrong
 	debug!(LOGGER, "Starting solvers");
-	let result = config::read_configs(mining_config.miner_plugin_config.clone());
+	let result = config::read_configs(
+		mining_config.miner_plugin_dir.clone(),
+		mining_config.miner_plugin_config.clone()
+        );
 	let mut miner = match result {
 		Ok(cfgs) => cuckoo::CuckooMiner::new(cfgs),
 		Err(e) => {

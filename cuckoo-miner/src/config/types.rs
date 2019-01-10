@@ -15,7 +15,7 @@
 //! Public Types used for cuckoo-miner module
 
 use plugin::SolverParams;
-use std::env;
+use std::path::PathBuf;
 use std::{fmt, io};
 use {CuckooMinerError, PluginLibrary};
 
@@ -24,8 +24,11 @@ pub static SO_SUFFIX: &str = ".cuckooplugin";
 /// CuckooMinerPlugin configuration
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PluginConfig {
-	/// The filename of the plugin to load
+	/// The display name of the plugin to load
 	pub name: String,
+
+	/// The path to the file
+	pub file: String,
 
 	/// device params
 	pub params: SolverParams,
@@ -33,22 +36,22 @@ pub struct PluginConfig {
 
 impl PluginConfig {
 	/// create new!
-	pub fn new(name: &str) -> Result<PluginConfig, CuckooMinerError> {
-		// Ensure it exists and get default parameters
-		let mut p_path = env::current_exe().unwrap();
-		p_path.pop();
-		// cargo test exes are a directory further down
-		if p_path.ends_with("deps") {
-			p_path.pop();
-		}
-		p_path.push("plugins");
-		p_path.push(format!("{}{}", name, SO_SUFFIX).as_str());
-		let l = PluginLibrary::new(p_path.to_str().unwrap())?;
-		let params = l.get_default_params();
-		l.unload();
-		Ok(PluginConfig {
-			name: name.to_owned(),
-			params: params,
+	pub fn new(mut plugin_dir: PathBuf, name: &str) -> Result<PluginConfig, CuckooMinerError> {
+		plugin_dir.push(format!("{}{}", name, SO_SUFFIX).as_str());
+		let plugin_file_str = plugin_dir.to_str().ok_or_else(|| {
+			CuckooMinerError::PluginNotFoundError(
+				"Invalid plugin path. Paths must be valid unicode".to_owned(),
+			)
+		})?;
+
+		PluginLibrary::new(plugin_file_str).map(|plugin_library| {
+			let params = plugin_library.get_default_params();
+			plugin_library.unload();
+			PluginConfig {
+				name: name.to_owned(),
+				file: plugin_file_str.to_owned(),
+				params,
+			}
 		})
 	}
 }

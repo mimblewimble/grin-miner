@@ -104,7 +104,7 @@ pub struct MinerConfig {
 	pub stratum_server_tls_enabled: Option<bool>,
 
 	/// plugin dir
-	pub miner_plugin_dir: Option<String>,
+	pub miner_plugin_dir: Option<PathBuf>,
 
 	/// Cuckoo miner plugin configuration, one for each plugin
 	pub miner_plugin_config: Vec<GrinMinerPluginConfig>,
