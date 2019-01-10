@@ -5,7 +5,6 @@ use std::time::SystemTime;
 
 fn main() -> Result<(), String> {
 	let trimmer = Trimmer::build(None, None).expect("can't build trimmer");
-
 	let k = [
 		0xf4956dc403730b01,
 		0xe6d45de39c2a5a3e,
@@ -29,11 +28,16 @@ fn main() -> Result<(), String> {
 		for sol in sols {
 			println!("Solution: {:x?}", sol.nodes);
 			let mut start = SystemTime::now();
-			let nonces = trimmer.recover(sol.nodes.clone(), &k);
-			let mut end = SystemTime::now();
-			let elapsed = end.duration_since(start).unwrap();
-			println!("Recovering: {:?}", elapsed);
-			println!("Nonces: {:?}", nonces);
+			let (nonces_c, valid) = trimmer.recover(sol.nodes.clone(), &k).unwrap();
+			if valid {
+				let nonces = nonces_c.into_iter().map(|v| v as u64).collect::<Vec<u64>>();
+				let mut end = SystemTime::now();
+				let elapsed = end.duration_since(start).unwrap();
+				println!("Recovering: {:?}", elapsed);
+				println!("Nonces: {:?}", nonces);
+			} else {
+				println!("Not valid");
+			}
 		}
 	}
 	Ok(())

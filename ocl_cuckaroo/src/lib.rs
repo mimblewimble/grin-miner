@@ -78,11 +78,11 @@ pub unsafe extern "C" fn run_solver(
 	let start = SystemTime::now();
 	let solver_ptr = mem::transmute::<*mut SolverCtx, *mut Solver>(ctx);
 	let solver = &*solver_ptr;
-	let mut header = Vec::with_capacity(header_length as usize);
+	let mut header = Vec::with_capacity(header_length as usize + 32);
 	let r_ptr = header.as_mut_ptr();
 	ptr::copy_nonoverlapping(header_ptr, r_ptr, header_length as usize);
 	header.set_len(header_length as usize);
-	let n = nonce as u32;
+	let n = nonce as u64;
 	let k = match set_header_nonce(&header, Some(n), solver.mutate_nonce) {
 		Err(_e) => {
 			return 2;
@@ -96,16 +96,16 @@ pub unsafe extern "C" fn run_solver(
 	(*solutions).edge_bits = 29;
 	(*solutions).num_sols = sols.len() as u32;
 	for sol in sols {
-		let nonces = solver
-			.trimmer
-			.recover(sol.nodes.clone(), &k)
-			.unwrap()
-			.into_iter()
-			.map(|v| v as u64)
-			.collect::<Vec<u64>>();
-		(*solutions).sols[i].nonce = nonce;
-		(*solutions).sols[i].proof.copy_from_slice(&nonces[..]);
-		i += 1;
+		let (nonces_cand, valid) = solver.trimmer.recover(sol.nodes.clone(), &k).unwrap();
+		if valid {
+			let nonces = nonces_cand
+				.into_iter()
+				.map(|v| v as u64)
+				.collect::<Vec<u64>>();
+			(*solutions).sols[i].nonce = nonce;
+			(*solutions).sols[i].proof.copy_from_slice(&nonces[..]);
+			i += 1;
+		}
 	}
 	let end = SystemTime::now();
 	let elapsed = end.duration_since(start).unwrap();
@@ -127,7 +127,7 @@ fn duration_to_u64(elapsed: Duration) -> u64 {
 
 pub fn set_header_nonce(
 	header: &[u8],
-	nonce: Option<u32>,
+	nonce: Option<u64>,
 	mutate_nonce: bool,
 ) -> Result<[u64; 4], Error> {
 	if let Some(n) = nonce {
@@ -135,7 +135,7 @@ pub fn set_header_nonce(
 		let mut header = header.to_owned();
 		if mutate_nonce {
 			header.truncate(len - 4);
-			header.write_u32::<LittleEndian>(n)?;
+			header.write_u32::<LittleEndian>(n as u32)?;
 		}
 		create_siphash_keys(&header)
 	} else {

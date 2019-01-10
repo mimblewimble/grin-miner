@@ -1,5 +1,4 @@
 use ocl;
-use ocl::builders::KernelBuilder;
 use ocl::enums::{ArgVal, ProfilingInfo};
 use ocl::flags::CommandQueueProperties;
 use ocl::prm::{Uint2, Ulong4};
@@ -7,7 +6,6 @@ use ocl::{
 	Buffer, Context, Device, Event, EventList, Kernel, Platform, Program, Queue, SpatialDims,
 };
 use std::env;
-use std::time::SystemTime;
 
 const DUCK_SIZE_A: usize = 129; // AMD 126 + 3
 const DUCK_SIZE_B: usize = 83;
@@ -152,7 +150,11 @@ impl Trimmer {
 		})
 	}
 
-	pub unsafe fn recover(&self, mut nodes: Vec<u32>, k: &[u64; 4]) -> ocl::Result<Vec<u32>> {
+	pub unsafe fn recover(
+		&self,
+		mut nodes: Vec<u32>,
+		k: &[u64; 4],
+	) -> ocl::Result<(Vec<u32>, bool)> {
 		let mut event_list = EventList::new();
 		let mut names = vec![];
 
@@ -182,11 +184,15 @@ impl Trimmer {
 
 		self.buffer_nonces.cmd().read(&mut nonces).enq()?;
 		self.q.finish()?;
-		nonces.sort();
 		for i in 0..names.len() {
 			print_event(names[i], &event_list[i]);
 		}
-		Ok(nonces)
+		nonces.sort();
+		let valid = !nonces.windows(2).any(|entry| match entry {
+			[p, n] => p == n,
+			_ => false,
+		});
+		Ok((nonces, valid))
 	}
 
 	pub unsafe fn run(&self, k: &[u64; 4]) -> ocl::Result<Vec<u32>> {
@@ -312,7 +318,7 @@ impl Trimmer {
 		clear_buffer!(self.buffer_i1);
 		kernel_enq!(kernel_round1, event_list, names, "round1");
 
-		for _ in 0..80 {
+		for _ in 0..120 {
 			clear_buffer!(self.buffer_i2);
 			kernel_enq!(kernel_round_na, event_list, names, "roundNA");
 			clear_buffer!(self.buffer_i1);
