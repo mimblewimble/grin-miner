@@ -6,4 +6,8 @@ cd ocl_cuckatoo
 cargo build --release
 cd ..
 cp target/release/libocl_cuckatoo.so $plugins_dir/ocl_cuckatoo.cuckooplugin
+cd ocl_cuckaroo
+cargo build --release
+cd ..
+cp target/release/libocl_cuckaroo.so $plugins_dir/ocl_cuckaroo.cuckooplugin
 

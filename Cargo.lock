@@ -379,6 +379,7 @@ dependencies = [
  "grin_miner_plugin 0.5.1",
  "grin_miner_util 0.5.1",
  "native-tls 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "ocl_cuckaroo 0.5.1",
  "ocl_cuckatoo 0.5.1",
  "serde 1.0.78 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_derive 1.0.78 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -745,6 +746,18 @@ version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "num 0.1.42 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "ocl_cuckaroo"
+version = "0.5.1"
+dependencies = [
+ "blake2-rfc 0.2.18 (registry+https://github.com/rust-lang/crates.io-index)",
+ "byteorder 1.2.6 (registry+https://github.com/rust-lang/crates.io-index)",
+ "grin_miner_plugin 0.5.1",
+ "hashbrown 0.1.7 (registry+https://github.com/rust-lang/crates.io-index)",
+ "libc 0.2.43 (registry+https://github.com/rust-lang/crates.io-index)",
+ "ocl 0.19.1 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]

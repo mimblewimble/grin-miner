@@ -14,7 +14,7 @@ members = ["config", "util", "plugin"]
 
 [features]
 default = ["tui"]
-opencl = ["ocl_cuckatoo"]
+opencl = ["ocl_cuckatoo", "ocl_cuckaroo"]
 tui = ["cursive"]
 
 [[bin]]
@@ -39,6 +39,7 @@ cuckoo_miner = { path = "./cuckoo-miner", version = "0.5.1" }
 #use this alternative inclusion below to build cuda plugins
 #cuckoo_miner = { path = "./cuckoo-miner", version = "0.5.1", features = ["build-cuda-plugins"]}
 ocl_cuckatoo = { path = "./ocl_cuckatoo", version = "0.5.1", optional = true}
+ocl_cuckaroo = { path = "./ocl_cuckaroo", version = "0.5.1", optional = true}
 
 [dependencies.cursive]
 version = "0.9.0"
