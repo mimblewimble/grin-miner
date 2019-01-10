@@ -20,6 +20,8 @@ extern crate cuckoo_miner as cuckoo;
 extern crate time;
 
 use std;
+use std::env;
+use std::path::PathBuf;
 use self::cuckoo::{CuckooMiner, PluginConfig};
 
 /// Values from T4 genesis that should be validated
@@ -39,6 +41,21 @@ pub const T4_GENESIS_PROOF:[u64; 42] = [
 0x1542d236, 0x155f2df0, 0x1577394e, 0x163c3513, 0x19349845, 0x19d46953, 0x19f65ed4,
 0x1a0411b9, 0x1a2fa039, 0x1a72a06c, 0x1b02ddd2, 0x1b594d59, 0x1b7bffd3, 0x1befe12e,
 0x1c82e4cd, 0x1d492478, 0x1de132a5, 0x1e578b3c, 0x1ed96855, 0x1f222896, 0x1fea0da6];
+
+// Helper function, derives the plugin directory for mining tests
+pub fn mining_plugin_dir_for_tests() -> PathBuf {
+	env::current_exe()
+		.map(|mut env_path| {
+			env_path.pop();
+			// cargo test exes are a directory further down
+			if env_path.ends_with("deps") {
+				env_path.pop();
+			}
+			env_path.push("plugins");
+			env_path
+		})
+		.unwrap()
+}
 
 // Helper function, tests a particular miner implementation against a known set
 pub fn mine_async_for_duration(configs: &Vec<PluginConfig>, duration_in_seconds: i64) {
@@ -113,7 +130,7 @@ pub fn mine_async_for_duration(configs: &Vec<PluginConfig>, duration_in_seconds:
 				miner.stop_solvers();
 				return;
 			}
-			//avoid busy wait 
+			//avoid busy wait
 			let sleep_dur = std::time::Duration::from_millis(100);
 			std::thread::sleep(sleep_dur);
 			if stats_updated && extra_time {
