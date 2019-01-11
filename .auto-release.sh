@@ -26,6 +26,7 @@ else
     # Do some custom requirements on Linux
     mkdir -p $deploy_dir; cp grin-miner.toml $deploy_dir; cp -R target/release/plugins $deploy_dir
     cp target/release/deps/libocl_cuckatoo.so "$deploy_dir/plugins/ocl_cuckatoo.cuckooplugin"
+    cp target/release/deps/libocl_cuckaroo.so "$deploy_dir/plugins/ocl_cuckaroo.cuckooplugin"
     cp target/release/grin-miner $deploy_dir
     cd deploy ; rm -f *.tgz; tar zcf "grin-miner-$tagname-$TRAVIS_JOB_ID-linux-amd64.tgz" *
     /bin/ls -ls *.tgz  | awk '{print $6,$7,$8,$9,$10}'
