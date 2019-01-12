@@ -101,7 +101,7 @@ nthreads = 1
 # instance of each plugin.  device 0 is used by default
 #
 
-# currently requires 7GB+ GPU memory
+# currently requires 5.5GB+ GPU memory
 #[[mining.miner_plugin_config]]
 #plugin_name = "cuckaroo_cuda_29"
 #[mining.miner_plugin_config.parameters]
