@@ -21,6 +21,7 @@ pub struct JobTemplate {
 	pub height: u64,
 	pub job_id: u64,
 	pub difficulty: u64,
+	pub secondary_scale: u32,
 	pub pre_pow: String,
 }
 
