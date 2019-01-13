@@ -266,7 +266,21 @@ impl Trimmer {
 		kernel_round1.set_arg_unchecked(3, ArgVal::mem(&self.buffer_i2))?;
 		kernel_round1.set_arg_unchecked(4, ArgVal::mem(&self.buffer_i1))?;
 
-		let mut kernel_round_na = kernel_builder!(self, "FluffyRoundN", 4096 * 1024)
+		let mut kernel_round0 = kernel_builder!(self, "FluffyRoundNO1", 4096 * 1024)
+			.arg(None::<&Buffer<Uint2>>)
+			.arg(None::<&Buffer<Uint2>>)
+			.arg(None::<&Buffer<i32>>)
+			.arg(None::<&Buffer<i32>>)
+			.build()?;
+		if self.is_nvidia {
+			kernel_round0.set_default_local_work_size(SpatialDims::One(1024));
+		}
+		kernel_round0.set_arg_unchecked(0, ArgVal::mem(&self.buffer_b))?;
+		kernel_round0.set_arg_unchecked(1, ArgVal::mem(&self.buffer_a1))?;
+		kernel_round0.set_arg_unchecked(2, ArgVal::mem(&self.buffer_i1))?;
+		kernel_round0.set_arg_unchecked(3, ArgVal::mem(&self.buffer_i2))?;
+
+		let mut kernel_round_na = kernel_builder!(self, "FluffyRoundNON", 4096 * 1024)
 			.arg(None::<&Buffer<Uint2>>)
 			.arg(None::<&Buffer<Uint2>>)
 			.arg(None::<&Buffer<i32>>)
@@ -280,7 +294,7 @@ impl Trimmer {
 		kernel_round_na.set_arg_unchecked(2, ArgVal::mem(&self.buffer_i1))?;
 		kernel_round_na.set_arg_unchecked(3, ArgVal::mem(&self.buffer_i2))?;
 
-		let mut kernel_round_nb = kernel_builder!(self, "FluffyRoundN", 4096 * 1024)
+		let mut kernel_round_nb = kernel_builder!(self, "FluffyRoundNON", 4096 * 1024)
 			.arg(None::<&Buffer<Uint2>>)
 			.arg(None::<&Buffer<Uint2>>)
 			.arg(None::<&Buffer<i32>>)
@@ -294,7 +308,7 @@ impl Trimmer {
 		kernel_round_nb.set_arg_unchecked(2, ArgVal::mem(&self.buffer_i2))?;
 		kernel_round_nb.set_arg_unchecked(3, ArgVal::mem(&self.buffer_i1))?;
 
-		let mut kernel_tail = kernel_builder!(self, "FluffyTail", 4096 * 1024)
+		let mut kernel_tail = kernel_builder!(self, "FluffyTailO", 4096 * 1024)
 			.arg(None::<&Buffer<Uint2>>)
 			.arg(None::<&Buffer<Uint2>>)
 			.arg(None::<&Buffer<i32>>)
@@ -312,12 +326,17 @@ impl Trimmer {
 		let mut names = vec![];
 
 		let mut edges_count: Vec<u32> = vec![0; 1];
+		clear_buffer!(self.buffer_i1);
+		clear_buffer!(self.buffer_i2);
 		kernel_enq!(kernel_seed_a, event_list, names, "seedA");
 		kernel_enq!(kernel_seed_b1, event_list, names, "seedB1");
 		kernel_enq!(kernel_seed_b2, event_list, names, "seedB2");
 		clear_buffer!(self.buffer_i1);
 		kernel_enq!(kernel_round1, event_list, names, "round1");
-
+		clear_buffer!(self.buffer_i2);
+		kernel_enq!(kernel_round0, event_list, names, "roundN0");
+		clear_buffer!(self.buffer_i1);
+		kernel_enq!(kernel_round_nb, event_list, names, "roundNB");
 		for _ in 0..120 {
 			clear_buffer!(self.buffer_i2);
 			kernel_enq!(kernel_round_na, event_list, names, "roundNA");
@@ -469,7 +488,7 @@ bool Read2bCounter(__local u32 * ecounters, const int bucket)
 }
 
 __attribute__((reqd_work_group_size(128, 1, 1)))
-__kernel  void FluffySeed2A(const u64 v0i, const u64 v1i, const u64 v2i, const u64 v3i, __global ulong4 * bufferA, __global ulong4 * buffer_b, __global u32 * indexes)
+__kernel  void FluffySeed2A(const u64 v0i, const u64 v1i, const u64 v2i, const u64 v3i, __global ulong4 * bufferA, __global ulong4 * bufferB, __global u32 * indexes)
 {
 	const int gid = get_global_id(0);
 	const short lid = get_local_id(0);
@@ -531,7 +550,7 @@ __kernel  void FluffySeed2A(const u64 v0i, const u64 v1i, const u64 v2i, const u
 			{
 				int cnt = min((int)atomic_add(indexes + bucket, 8), (int)(DUCK_A_EDGES_64 - 8));
 				int idx = ((bucket < 32 ? bucket : bucket - 32) * DUCK_A_EDGES_64 + cnt) / 4;
-				buffer = bucket < 32 ? bufferA : buffer_b;
+				buffer = bucket < 32 ? bufferA : bufferB;
 
 				buffer[idx] = (ulong4)(
 					atom_xchg(&tmp[bucket][8 - counterLocal], (u64)0),
@@ -561,7 +580,7 @@ __kernel  void FluffySeed2A(const u64 v0i, const u64 v1i, const u64 v2i, const u
 			tmp[lid][counterBase + counterCount + i] = 0;
 		int cnt = min((int)atomic_add(indexes + lid, 8), (int)(DUCK_A_EDGES_64 - 8));
 		int idx = ( (lid < 32 ? lid : lid - 32) * DUCK_A_EDGES_64 + cnt) / 4;
-		buffer = lid < 32 ? bufferA : buffer_b;
+		buffer = lid < 32 ? bufferA : bufferB;
 		buffer[idx] = (ulong4)(tmp[lid][counterBase], tmp[lid][counterBase + 1], tmp[lid][counterBase + 2], tmp[lid][counterBase + 3]);
 		buffer[idx + 1] = (ulong4)(tmp[lid][counterBase + 4], tmp[lid][counterBase + 5], tmp[lid][counterBase + 6], tmp[lid][counterBase + 7]);
 	}
@@ -778,6 +797,67 @@ __kernel   void FluffyRoundN(const __global uint2 * source, __global uint2 * des
 
 }
 
+__attribute__((reqd_work_group_size(64, 1, 1)))
+__kernel   void FluffyRoundN_64(const __global uint2 * source, __global uint2 * destination, const __global int * sourceIndexes, __global int * destinationIndexes)
+{
+	const int lid = get_local_id(0);
+	const int group = get_group_id(0);
+
+	const int bktInSize = DUCK_B_EDGES;
+	const int bktOutSize = DUCK_B_EDGES;
+
+	__local u32 ecounters[8192];
+
+	const int edgesInBucket = min(sourceIndexes[group], bktInSize);
+	const int loops = (edgesInBucket + 64) / 64;
+
+	for (int i = 0; i < 8*16; i++)
+		ecounters[lid + (64 * i)] = 0;
+
+	barrier(CLK_LOCAL_MEM_FENCE);
+
+	for (int i = 0; i < loops; i++)
+	{
+		const int lindex = (i * 64) + lid;
+
+		if (lindex < edgesInBucket)
+		{
+
+			const int index = (bktInSize * group) + lindex;
+
+			uint2 edge = source[index];
+
+			if (edge.x == 0 && edge.y == 0) continue;
+
+			Increase2bCounter(ecounters, (edge.x & EDGEMASK) >> 12);
+		}
+	}
+
+	barrier(CLK_LOCAL_MEM_FENCE);
+
+	for (int i = 0; i < loops; i++)
+	{
+		const int lindex = (i * 64) + lid;
+
+		if (lindex < edgesInBucket)
+		{
+			const int index = (bktInSize * group) + lindex;
+
+			uint2 edge = source[index];
+
+			if (edge.x == 0 && edge.y == 0) continue;
+
+			if (Read2bCounter(ecounters, (edge.x & EDGEMASK) >> 12))
+			{
+				const int bucket = edge.y & BKTMASK4K;
+				const int bktIdx = min(atomic_add(destinationIndexes + bucket, 1), bktOutSize - 1);
+				destination[(bucket * bktOutSize) + bktIdx] = (uint2)(edge.y, edge.x);
+			}
+		}
+	}
+
+}
+
 __attribute__((reqd_work_group_size(1024, 1, 1)))
 __kernel void FluffyTail(const __global uint2 * source, __global uint2 * destination, const __global int * sourceIndexes, __global int * destinationIndexes)
 {
@@ -798,7 +878,7 @@ __kernel void FluffyTail(const __global uint2 * source, __global uint2 * destina
 	}
 }
 
-__attribute__((reqd_work_group_size(256, 1 , 1)))
+__attribute__((reqd_work_group_size(256, 1, 1)))
 __kernel   void FluffyRecovery(const u64 v0i, const u64 v1i, const u64 v2i, const u64 v3i, const __constant u64 * recovery, __global int * indexes)
 {
 	const int gid = get_global_id(0);
@@ -850,7 +930,6 @@ __kernel   void FluffyRecovery(const u64 v0i, const u64 v1i, const u64 v2i, cons
 			for (int i = 0; i < 42; i++)
 			{
 				if ((recovery[i] == a) || (recovery[i] == b))
-	//		if ((1234 == a) || (5679 == b))
 					nonces[i] = blockNonce + s;
 			}
 		}
@@ -864,4 +943,152 @@ __kernel   void FluffyRecovery(const u64 v0i, const u64 v1i, const u64 v2i, cons
 			indexes[lid] = nonces[lid];
 	}
 }
+
+
+
+// ---------------
+#define BKT_OFFSET 255
+#define BKT_STEP 32
+__attribute__((reqd_work_group_size(1024, 1, 1)))
+__kernel   void FluffyRoundNO1(const __global uint2 * source, __global uint2 * destination, const __global int * sourceIndexes, __global int * destinationIndexes)
+{
+	const int lid = get_local_id(0);
+	const int group = get_group_id(0);
+
+	const int bktInSize = DUCK_B_EDGES;
+	const int bktOutSize = DUCK_B_EDGES;
+
+	__local u32 ecounters[8192];
+
+	const int edgesInBucket = min(sourceIndexes[group], bktInSize);
+	const int loops = (edgesInBucket + CTHREADS) / CTHREADS;
+
+	for (int i = 0; i < 8; i++)
+		ecounters[lid + (1024 * i)] = 0;
+
+	barrier(CLK_LOCAL_MEM_FENCE);
+
+	for (int i = 0; i < loops; i++)
+	{
+		const int lindex = (i * CTHREADS) + lid;
+
+		if (lindex < edgesInBucket)
+		{
+
+			const int index =(bktInSize * group) + lindex;
+
+			uint2 edge = source[index];
+
+			if (edge.x == 0 && edge.y == 0) continue;
+
+			Increase2bCounter(ecounters, (edge.x & EDGEMASK) >> 12);
+		}
+	}
+
+	barrier(CLK_LOCAL_MEM_FENCE);
+
+	for (int i = 0; i < loops; i++)
+	{
+		const int lindex = (i * CTHREADS) + lid;
+
+		if (lindex < edgesInBucket)
+		{
+			const int index = (bktInSize * group) + lindex;
+
+			uint2 edge = source[index];
+
+			if (edge.x == 0 && edge.y == 0) continue;
+
+			if (Read2bCounter(ecounters, (edge.x & EDGEMASK) >> 12))
+			{
+				const int bucket = edge.y & BKTMASK4K;
+				const int bktIdx = min(atomic_add(destinationIndexes + bucket, 1), bktOutSize - 1 - ((bucket & BKT_OFFSET) * BKT_STEP));
+				destination[((bucket & BKT_OFFSET) * BKT_STEP) + (bucket * bktOutSize) + bktIdx] = (uint2)(edge.y, edge.x);
+			}
+		}
+	}
+
+}
+
+__attribute__((reqd_work_group_size(1024, 1, 1)))
+__kernel   void FluffyRoundNON(const __global uint2 * source, __global uint2 * destination, const __global int * sourceIndexes, __global int * destinationIndexes)
+{
+	const int lid = get_local_id(0);
+	const int group = get_group_id(0);
+
+	const int bktInSize = DUCK_B_EDGES;
+	const int bktOutSize = DUCK_B_EDGES;
+
+	__local u32 ecounters[8192];
+
+	const int edgesInBucket = min(sourceIndexes[group], bktInSize);
+	const int loops = (edgesInBucket + CTHREADS) / CTHREADS;
+
+	for (int i = 0; i < 8; i++)
+		ecounters[lid + (1024 * i)] = 0;
+
+	barrier(CLK_LOCAL_MEM_FENCE);
+
+	for (int i = 0; i < loops; i++)
+	{
+		const int lindex = (i * CTHREADS) + lid;
+
+		if (lindex < edgesInBucket)
+		{
+
+			const int index = ((group & BKT_OFFSET) * BKT_STEP) + (bktInSize * group) + lindex;
+
+			uint2 edge = source[index];
+
+			if (edge.x == 0 && edge.y == 0) continue;
+
+			Increase2bCounter(ecounters, (edge.x & EDGEMASK) >> 12);
+		}
+	}
+
+	barrier(CLK_LOCAL_MEM_FENCE);
+
+	for (int i = 0; i < loops; i++)
+	{
+		const int lindex = (i * CTHREADS) + lid;
+
+		if (lindex < edgesInBucket)
+		{
+			const int index = ((group & BKT_OFFSET) * BKT_STEP) + (bktInSize * group) + lindex;
+
+			uint2 edge = source[index];
+
+			if (edge.x == 0 && edge.y == 0) continue;
+
+			if (Read2bCounter(ecounters, (edge.x & EDGEMASK) >> 12))
+			{
+				const int bucket = edge.y & BKTMASK4K;
+				const int bktIdx = min(atomic_add(destinationIndexes + bucket, 1), bktOutSize - 1 - ((bucket & BKT_OFFSET) * BKT_STEP));
+				destination[((bucket & BKT_OFFSET) * BKT_STEP) + (bucket * bktOutSize) + bktIdx] = (uint2)(edge.y, edge.x);
+			}
+		}
+	}
+
+}
+
+__attribute__((reqd_work_group_size(1024, 1, 1)))
+__kernel void FluffyTailO(const __global uint2 * source, __global uint2 * destination, const __global int * sourceIndexes, __global int * destinationIndexes)
+{
+	const int lid = get_local_id(0);
+	const int group = get_group_id(0);
+
+	int myEdges = sourceIndexes[group];
+	__local int destIdx;
+
+	if (lid == 0)
+		destIdx = atomic_add(destinationIndexes, myEdges);
+
+	barrier(CLK_LOCAL_MEM_FENCE);
+
+	if (lid < myEdges)
+	{
+		destination[destIdx + lid] = source[((group & BKT_OFFSET) * BKT_STEP) + group * DUCK_B_EDGES + lid];
+	}
+}
+
 "#;
