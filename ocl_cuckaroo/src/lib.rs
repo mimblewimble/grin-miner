@@ -94,9 +94,8 @@ pub unsafe extern "C" fn run_solver(
 	let sols = Graph::search(&res).unwrap();
 	let mut i = 0;
 	(*solutions).edge_bits = 29;
-	(*solutions).num_sols = sols.len() as u32;
 	for sol in sols {
-		let (nonces_cand, valid) = solver.trimmer.recover(sol.nodes.clone(), &k).unwrap();
+		let (nonces_cand, valid) = solver.trimmer.recover(sol.nodes, &k).unwrap();
 		if valid {
 			let nonces = nonces_cand
 				.into_iter()
@@ -107,6 +106,7 @@ pub unsafe extern "C" fn run_solver(
 			i += 1;
 		}
 	}
+	(*solutions).num_sols = i as u32;
 	let end = SystemTime::now();
 	let elapsed = end.duration_since(start).unwrap();
 	(*stats).edge_bits = 29;
