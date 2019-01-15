@@ -188,9 +188,9 @@ impl Trimmer {
 			print_event(names[i], &event_list[i]);
 		}
 		nonces.sort();
-		let valid = !nonces.windows(2).any(|entry| match entry {
-			[p, n] => p == n,
-			_ => false,
+		let valid = nonces.windows(2).all(|entry| match entry {
+			[p, n] => p < n,
+			_ => true,
 		});
 		Ok((nonces, valid))
 	}
