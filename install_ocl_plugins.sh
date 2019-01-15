@@ -7,10 +7,18 @@ fi
 cd ocl_cuckatoo
 cargo build --release
 cd ..
-cp target/release/libocl_cuckatoo.so $plugins_dir/ocl_cuckatoo.cuckooplugin
+if [ "$(uname)" == "Darwin" ]; then
+	cp target/release/libocl_cuckatoo.dylib $plugins_dir/ocl_cuckatoo.cuckooplugin
+else
+	cp target/release/libocl_cuckatoo.so $plugins_dir/ocl_cuckatoo.cuckooplugin
+fi
 
 # Install ocl_cuckaroo
 cd ocl_cuckaroo
 cargo build --release
 cd ..
-cp target/release/libocl_cuckaroo.so $plugins_dir/ocl_cuckaroo.cuckooplugin
+if [ "$(uname)" == "Darwin" ]; then
+	cp target/release/libocl_cuckaroo.dylib $plugins_dir/ocl_cuckaroo.cuckooplugin
+else
+	cp target/release/libocl_cuckaroo.so $plugins_dir/ocl_cuckaroo.cuckooplugin
+fi
