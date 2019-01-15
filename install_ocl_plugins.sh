@@ -1,6 +1,6 @@
 plugins_dir=$(egrep '^miner_plugin_dir' grin-miner.toml | awk '{ print $NF }' | xargs echo)
 if [ -z "$plugins_dir" ]; then
-	plugins_dir="target/debug/plugins"
+	plugins_dir="target/release/plugins"
 fi
 
 # Install ocl_cuckatoo
