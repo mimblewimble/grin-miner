@@ -141,6 +141,7 @@ impl CuckooMiner {
 			let target_difficulty = { shared_data.read().unwrap().difficulty.clone() };
 			let header = util::get_next_header_data(&header_pre, &header_post);
 			let nonce = header.0;
+			let sec_scaling = header.2;
 			solver.lib.run_solver(
 				ctx,
 				header.1,
@@ -163,7 +164,7 @@ impl CuckooMiner {
 								edge_bits: solver.solutions.edge_bits as u8,
 								nonces: s.proof.to_vec(),
 							};
-							proof.to_difficulty(height, 0).to_num() > target_difficulty
+							proof.to_difficulty(height, sec_scaling).to_num() > target_difficulty
 						})
 						.map(|s| {
 							s.clone()
