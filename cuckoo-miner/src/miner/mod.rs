@@ -24,3 +24,4 @@
 pub mod miner;
 pub mod types;
 pub mod util;
+pub mod consensus;
