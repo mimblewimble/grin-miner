@@ -23,7 +23,6 @@ use byteorder::{BigEndian, ByteOrder};
 const DEFAULT_MIN_EDGE_BITS: u8 = 31;
 const SECOND_POW_EDGE_BITS: u8 = 29;
 const PROOF_SIZE: usize = 42;
-const MIN_DIFFICULTY: u64 = 3;
 const BLOCK_TIME_SEC: u64 = 60;
 
 const HOUR_HEIGHT: u64 = 3600 / BLOCK_TIME_SEC;
@@ -55,26 +54,6 @@ pub struct Difficulty {
 }
 
 impl Difficulty {
-	/// Difficulty of zero, which is invalid (no target can be
-	/// calculated from it) but very useful as a start for additions.
-	pub fn zero() -> Difficulty {
-		Difficulty { num: 0 }
-	}
-
-	/// Difficulty of MIN_DIFFICULTY
-	pub fn min() -> Difficulty {
-		Difficulty {
-			num: MIN_DIFFICULTY,
-		}
-	}
-
-	/// Difficulty unit, which is the graph weight of minimal graph
-	pub fn unit() -> Difficulty {
-		Difficulty {
-			num: graph_weight(0, SECOND_POW_EDGE_BITS),
-		}
-	}
-
 	/// Convert a `u32` into a `Difficulty`
 	pub fn from_num(num: u64) -> Difficulty {
 		// can't have difficulty lower than 1
@@ -151,19 +130,6 @@ impl Proof {
 		}
 	}
 
-	/// Builds a proof with all bytes zeroed out
-	pub fn zero(proof_size: usize) -> Proof {
-		Proof {
-			edge_bits: DEFAULT_MIN_EDGE_BITS,
-			nonces: vec![0; proof_size],
-		}
-	}
-
-	/// Returns the proof size
-	pub fn proof_size(&self) -> usize {
-		self.nonces.len()
-	}
-
 	/// Difficulty achieved by this proof with given scaling factor
 	fn scaled_difficulty(&self, scale: u64) -> u64 {
 		let diff = ((scale as u128) << 64) / (max(1, self.hash().to_u64()) as u128);
@@ -198,11 +164,6 @@ impl Proof {
 			Difficulty::from_proof_adjusted(height, &self)
 		}
 	}
-
-	/// Hash to u64
-	fn hash_to_u64(hash: &[u8;32]) -> u64 {
-		BigEndian::read_u64(hash)
-	}
 }
 
 struct BitVec {
@@ -223,10 +184,6 @@ impl BitVec {
 
 	fn set_bit_at(&mut self, pos: usize) {
 		self.bits[pos / 8] |= 1 << (pos % 8) as u8;
-	}
-
-	fn bit_at(&self, pos: usize) -> bool {
-		self.bits[pos / 8] & (1 << (pos % 8) as u8) != 0
 	}
 }
 

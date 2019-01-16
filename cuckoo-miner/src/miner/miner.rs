@@ -24,8 +24,9 @@ use util::LOGGER;
 use config::types::PluginConfig;
 use miner::types::{JobSharedData, JobSharedDataType, SolverInstance};
 
-use miner::{consensus, util};
-use plugin::{SolverCtxWrapper, SolverSolutions, SolverStats};
+use miner::util;
+use miner::consensus::Proof;
+use plugin::{SolverCtxWrapper, SolverSolutions, Solution, SolverStats};
 use {CuckooMinerError, PluginLibrary};
 
 /// Miner control Messages
@@ -155,9 +156,26 @@ impl CuckooMiner {
 				s.stats[instance] = solver.stats.clone();
 				s.stats[instance].iterations = iter_count;
 				if solver.solutions.num_sols > 0 {
-					for mut ss in solver.solutions.sols.iter_mut() {
+					// Filter solutions that don't meet difficulty check
+					let mut filtered_sols: Vec<Solution> = solver.solutions.sols.iter()
+						.filter(|s| {
+							let proof = Proof {
+								edge_bits: solver.solutions.edge_bits as u8,
+								nonces: s.proof.to_vec(),
+							};
+							proof.to_difficulty(height, 0).to_num() > target_difficulty
+						})
+						.map(|s| {
+							s.clone()
+						})
+						.collect();
+					for mut ss in filtered_sols.iter_mut() {
 						ss.nonce = nonce;
 						ss.id = job_id as u64;
+					}
+					solver.solutions.num_sols = filtered_sols.len() as u32;
+					for i in 0..solver.solutions.num_sols as usize {
+						solver.solutions.sols[i] = filtered_sols[i];
 					}
 					s.solutions.push(solver.solutions.clone());
 				}
