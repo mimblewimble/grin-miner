@@ -24,7 +24,7 @@ use util::LOGGER;
 use config::types::PluginConfig;
 use miner::types::{JobSharedData, JobSharedDataType, SolverInstance};
 
-use miner::util;
+use miner::{consensus, util};
 use plugin::{SolverCtxWrapper, SolverSolutions, SolverStats};
 use {CuckooMinerError, PluginLibrary};
 
@@ -137,6 +137,7 @@ impl CuckooMiner {
 			let header_post = { shared_data.read().unwrap().post_nonce.clone() };
 			let height = { shared_data.read().unwrap().height.clone() };
 			let job_id = { shared_data.read().unwrap().job_id.clone() };
+			let target_difficulty = { shared_data.read().unwrap().difficulty.clone() };
 			let header = util::get_next_header_data(&header_pre, &header_post);
 			let nonce = header.0;
 			solver.lib.run_solver(
