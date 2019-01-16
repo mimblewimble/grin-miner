@@ -145,6 +145,13 @@ pub struct Controller {
 	stats: Arc<RwLock<stats::Stats>>,
 }
 
+fn invlalid_error_response() -> types::RpcError {
+	types::RpcError {
+		code: 0,
+		message: "Invalid error response received".to_owned(),
+	}
+}
+
 impl Controller {
 	pub fn new(
 		server_url: &str,
@@ -363,7 +370,7 @@ impl Controller {
 						st.accepted, st.rejected, st.stale
 					);
 				} else {
-					let err = res.error.unwrap();
+					let err = res.error.unwrap_or_else(|| invlalid_error_response());
 					let mut stats = self.stats.write().unwrap();
 					stats.client_stats.last_message_received =
 						format!("Last Message Received: Failed to get status: {:?}", err);
@@ -389,7 +396,7 @@ impl Controller {
 					);
 					let _ = self.send_miner_job(job);
 				} else {
-					let err = res.error.unwrap();
+					let err = res.error.unwrap_or_else(|| invlalid_error_response());
 					let mut stats = self.stats.write().unwrap();
 					stats.client_stats.last_message_received = format!(
 						"Last Message Received: Failed to get job template: {:?}",
@@ -415,7 +422,7 @@ impl Controller {
 						stats.mining_stats.solution_stats.num_blocks_found += 1;
 					}
 				} else {
-					let err = res.error.unwrap();
+					let err = res.error.unwrap_or_else(|| invlalid_error_response());
 					let mut stats = self.stats.write().unwrap();
 					stats.client_stats.last_message_received = format!(
 						"Last Message Received: Failed to submit a solution: {:?}",
@@ -436,7 +443,7 @@ impl Controller {
 					// Nothing to do for keepalive "ok"
 					// dont update last_message_received with good keepalive response
 				} else {
-					let err = res.error.unwrap();
+					let err = res.error.unwrap_or_else(|| invlalid_error_response());
 					let mut stats = self.stats.write().unwrap();
 					stats.client_stats.last_message_received = format!(
 						"Last Message Received: Failed to request keepalive: {:?}",
@@ -452,10 +459,12 @@ impl Controller {
 					// dont update last_message_received with good login response
 				} else {
 					// This is a fatal error
-					let err = res.error.unwrap();
+					let err = res.error.unwrap_or_else(|| invlalid_error_response());
 					let mut stats = self.stats.write().unwrap();
-					stats.client_stats.last_message_received = format!("Last Message Received: Failed to log in: {:?}", err);
-					stats.client_stats.connection_status = "Connection Status: Server requires login".to_string();
+					stats.client_stats.last_message_received =
+						format!("Last Message Received: Failed to log in: {:?}", err);
+					stats.client_stats.connection_status =
+						"Connection Status: Server requires login".to_string();
 					stats.client_stats.connected = false;
 					error!(LOGGER, "Failed to log in: {:?}", err);
 				}
