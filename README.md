@@ -39,13 +39,6 @@ cuckoo_miner = { path = "./cuckoo-miner", features = ["build-cuda-plugins"]}
 
 The Cuda toolkit 9+ must be installed on your system (check with `nvcc --version`)
 
-It is also possible to build slightly more optimized versions of the CPU plugins if your processor
-supports avx2 instructions:
-
-```
-cuckoo_miner = { path = "./cuckoo-miner", features = ["build-mean-avx2"]}
-```
-
 ### Building the OpenCL plugins
 OpenCL plugins are not enabled by default. Run `install_ocl_plugins.sh` script to build and install them.
 
