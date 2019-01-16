@@ -75,7 +75,7 @@ impl Controller {
 						self.current_height = height;
 						self.current_job_id = job_id;
 						self.current_target_diff = diff;
-						miner.notify(self.current_job_id as u32, self.current_height, &pre_pow, "", 0)
+						miner.notify(self.current_job_id as u32, self.current_height, &pre_pow, "", diff)
 					}
 					types::MinerMessage::StopJob => {
 						debug!(LOGGER, "Stopping jobs");

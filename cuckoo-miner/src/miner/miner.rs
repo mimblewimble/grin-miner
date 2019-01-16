@@ -158,7 +158,11 @@ impl CuckooMiner {
 				s.stats[instance].iterations = iter_count;
 				if solver.solutions.num_sols > 0 {
 					// Filter solutions that don't meet difficulty check
-					let mut filtered_sols: Vec<Solution> = solver.solutions.sols.iter()
+					let mut filtered_sols:Vec<Solution> = vec![];
+					for i in 0..solver.solutions.num_sols {
+						filtered_sols.push(solver.solutions.sols[i as usize]);
+					}
+					let mut filtered_sols: Vec<Solution> = filtered_sols.iter()
 						.filter(|s| {
 							let proof = Proof {
 								edge_bits: solver.solutions.edge_bits as u8,
