@@ -68,6 +68,12 @@ impl Difficulty {
 		Difficulty::from_num(proof.scaled_difficulty(graph_weight(height, proof.edge_bits)))
 	}
 
+	/// unscaled proof
+	fn from_proof_unscaled(proof: &Proof) -> Difficulty {
+		// Scaling between 2 proof of work algos
+		Difficulty::from_num(proof.scaled_difficulty(1u64))
+	}
+
 	/// Same as `from_proof_adjusted` but instead of an adjustment based on
 	/// cycle size, scales based on a provided factor. Used by dual PoW system
 	/// to scale one PoW against the other.
@@ -163,6 +169,11 @@ impl Proof {
 		} else {
 			Difficulty::from_proof_adjusted(height, &self)
 		}
+	}
+
+	/// unscaled difficulty
+	pub fn to_difficulty_unscaled(&self) -> Difficulty {
+		Difficulty::from_proof_unscaled(&self)
 	}
 }
 
