@@ -1,6 +1,6 @@
 [package]
 name = "cuckoo_miner"
-version = "1.0.0"
+version = "1.0.1"
 authors = ["yeastplume"]
 license = "MIT/Apache-2.0/BSD-3-Clause"
 description = "Rust bindings to John Tromp's Cuckoo Cycle Implementations"
@@ -18,8 +18,8 @@ test-avx2 = []
 build-cuda-plugins = []
 
 [dependencies]
-grin_miner_util = { path = "../util", version = "1.0.0" }
-grin_miner_plugin = { path = "../plugin", version = "1.0.0" }
+grin_miner_util = { path = "../util", version = "1.0.1" }
+grin_miner_plugin = { path = "../plugin", version = "1.0.1" }
 time = "^0.1"
 rust-crypto = "0.2.36"
 log = "^0.3"
