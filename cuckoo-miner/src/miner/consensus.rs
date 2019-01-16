@@ -70,7 +70,6 @@ impl Difficulty {
 
 	/// unscaled proof
 	fn from_proof_unscaled(proof: &Proof) -> Difficulty {
-		// Scaling between 2 proof of work algos
 		Difficulty::from_num(proof.scaled_difficulty(1u64))
 	}
 
