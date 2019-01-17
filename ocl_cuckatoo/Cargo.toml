@@ -1,10 +1,10 @@
 [package]
 name = "ocl_cuckatoo"
-version = "1.0.1"
+version = "1.0.2"
 workspace = ".."
 
 [dependencies]
-grin_miner_plugin = { path = "../plugin", version = "1.0.1" }
+grin_miner_plugin = { path = "../plugin", version = "1.0.2" }
 ocl = "0.19"
 hashbrown = "0.1"
 libc = "0.2.24"

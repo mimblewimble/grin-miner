@@ -168,7 +168,7 @@ impl CuckooMiner {
 								edge_bits: solver.solutions.edge_bits as u8,
 								nonces: s.proof.to_vec(),
 							};
-							proof.to_difficulty_unscaled().to_num() > target_difficulty
+							proof.to_difficulty_unscaled().to_num() >= target_difficulty
 						})
 						.map(|s| {
 							s.clone()

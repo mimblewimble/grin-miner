@@ -1,6 +1,6 @@
 [package]
 name = "grin_miner"
-version = "1.0.1"
+version = "1.0.2"
 authors = ["Grin Developers <mimblewimble@lists.launchpad.net>"]
 description = "Mining software for Grin, supports CPU and CUDA GPUs."
 build = "src/build/build.rs"
@@ -32,14 +32,14 @@ slog = { version = "~2.1", features = ["max_level_trace", "release_max_level_tra
 term = "0.4"
 time = "0.1"
 
-grin_miner_util = { path = "./util", version = "1.0.1" }
-grin_miner_plugin = { path = "./plugin", version = "1.0.1" }
-grin_miner_config = { path = "./config", version = "1.0.1" }
-cuckoo_miner = { path = "./cuckoo-miner", version = "1.0.1" }
+grin_miner_util = { path = "./util", version = "1.0.2" }
+grin_miner_plugin = { path = "./plugin", version = "1.0.2" }
+grin_miner_config = { path = "./config", version = "1.0.2" }
+cuckoo_miner = { path = "./cuckoo-miner", version = "1.0.2" }
 #use this alternative inclusion below to build cuda plugins
-#cuckoo_miner = { path = "./cuckoo-miner", version = "1.0.1", features = ["build-cuda-plugins"]}
-ocl_cuckatoo = { path = "./ocl_cuckatoo", version = "1.0.1", optional = true}
-ocl_cuckaroo = { path = "./ocl_cuckaroo", version = "1.0.1", optional = true}
+#cuckoo_miner = { path = "./cuckoo-miner", version = "1.0.2", features = ["build-cuda-plugins"]}
+ocl_cuckatoo = { path = "./ocl_cuckatoo", version = "1.0.2", optional = true}
+ocl_cuckaroo = { path = "./ocl_cuckaroo", version = "1.0.2", optional = true}
 
 [dependencies.cursive]
 version = "0.9.0"
