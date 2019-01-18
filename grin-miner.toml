@@ -39,6 +39,23 @@ log_file_append = true
 # whether to run the tui
 run_tui = true
 
+
+
+###################
+# FOR MINING POOL #
+###################
+
+
+# stratum_server_addr = "us-east-stratum.grinmint.com:4416"
+# stratum_server_login = "ek7j@protonmail.com/tensor"
+# stratum_server_password = "E6RywTZ3yV2N6Q"
+# stratum_server_tls_enabled = true
+
+
+###################
+# FOR SOLO MINING #
+###################
+
 # listening grin stratum server url
 stratum_server_addr = "127.0.0.1:3416"
 
@@ -50,6 +67,13 @@ stratum_server_addr = "127.0.0.1:3416"
 
 # whether tls is enabled for the stratum server
 stratum_server_tls_enabled = false
+
+
+
+
+
+
+
 
 #The directory in which mining plugins are installed
 #if not specified, grin miner will look in the directory /deps relative
@@ -76,10 +100,10 @@ stratum_server_tls_enabled = false
 
 # The fastest cpu algorithm, but consumes the most memory
 
-[[mining.miner_plugin_config]]
-plugin_name = "cuckaroo_cpu_compat_29"
-[mining.miner_plugin_config.parameters]
-nthreads = 1
+# [[mining.miner_plugin_config]]
+# plugin_name = "cuckaroo_cpu_compat_29"
+# [mining.miner_plugin_config.parameters]
+# nthreads = 1
 
 # As above, but for processors supporting avx2
 
@@ -102,19 +126,19 @@ nthreads = 1
 #
 
 # currently requires 5.5GB+ GPU memory
-#[[mining.miner_plugin_config]]
-#plugin_name = "cuckaroo_cuda_29"
-#[mining.miner_plugin_config.parameters]
-#device = 0
-#cpuload = 1
-#ntrims = 176
-#genablocks = 4096
-#genatpb = 128
-#genbtpb = 128
-#trimtpb = 512
-#tailtpb = 1024
-#recoverblocks = 1024
-#recovertpb = 1024
+[[mining.miner_plugin_config]]
+plugin_name = "cuckaroo_cuda_29"
+[mining.miner_plugin_config.parameters]
+device = 0
+cpuload = 1
+ntrims = 176
+genablocks = 4096
+genatpb = 128
+genbtpb = 128
+trimtpb = 512
+tailtpb = 1024
+recoverblocks = 1024
+recovertpb = 1024
 
 # e.g. To enable multiple devices (copy params from above as needed)
 
