@@ -18,6 +18,7 @@ use blake2::blake2b::Blake2b;
 use std::cmp::{max, min};
 use std::fmt;
 use byteorder::{BigEndian, ByteOrder};
+use util;
 
 // constants from grin
 const DEFAULT_MIN_EDGE_BITS: u8 = 31;
