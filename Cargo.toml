@@ -35,8 +35,7 @@ time = "0.1"
 grin_miner_util = { path = "./util", version = "1.0.2" }
 grin_miner_plugin = { path = "./plugin", version = "1.0.2" }
 grin_miner_config = { path = "./config", version = "1.0.2" }
-cuckoo_miner = { path = "./cuckoo-miner", version = "1.0.2", features = ["build-cuda-plugins"] }
-
+cuckoo_miner = { path = "./cuckoo-miner", version = "1.0.2" }
 #use this alternative inclusion below to build cuda plugins
 #cuckoo_miner = { path = "./cuckoo-miner", version = "1.0.2", features = ["build-cuda-plugins"]}
 ocl_cuckatoo = { path = "./ocl_cuckatoo", version = "1.0.2", optional = true}
