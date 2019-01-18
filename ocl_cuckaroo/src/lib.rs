@@ -160,7 +160,7 @@ mod tests {
 	use super::*;
 	#[test]
 	fn test_solve() {
-		let trimmer = Trimmer::build(None, None, 29).expect("can't build trimmer");
+		let trimmer = Trimmer::build(None, None).expect("can't build trimmer");
 		let k = [
 			0x27580576fe290177,
 			0xf9ea9b2031f4e76e,
@@ -168,13 +168,12 @@ mod tests {
 			0xb88839b0fa180d0e,
 		];
 
-		let res = trimmer.run(&k).unwrap();
-		println!("Trimmed to {}", res.len());
+		unsafe {
+			let res = trimmer.run(&k).unwrap();
+			println!("Trimmed to {}", res.len());
 
-		let sols = Graph::search(&res).unwrap();
-		assert_eq!(1, sols.len());
-		for sol in sols {
-			println!("Solution: {:x?}", sol.nonces);
+			let sols = Graph::search(&res).unwrap();
+			assert_eq!(1, sols.len());
 		}
 	}
 }

@@ -17,10 +17,13 @@
 use byteorder::{BigEndian, ByteOrder};
 use rand::{self, Rng};
 
-pub fn header_data(pre_nonce: &str, post_nonce: &str, nonce: u64) -> Vec<u8> {
+pub fn header_data(pre_nonce: &str, post_nonce: &str, nonce: u64) -> (Vec<u8>, u32) {
 	// Turn input strings into vectors
 	let mut pre_vec = from_hex_string(pre_nonce);
 	let mut post_vec = from_hex_string(post_nonce);
+
+	let sec_scaling_bytes = &pre_vec.clone()[pre_vec.len()-4..pre_vec.len()];
+	let sec_scaling = BigEndian::read_u32(&sec_scaling_bytes);
 
 	let mut nonce_bytes = [0; 8];
 	BigEndian::write_u64(&mut nonce_bytes, nonce);
@@ -30,12 +33,13 @@ pub fn header_data(pre_nonce: &str, post_nonce: &str, nonce: u64) -> Vec<u8> {
 	pre_vec.append(&mut nonce_vec);
 	pre_vec.append(&mut post_vec);
 
-	pre_vec
+	(pre_vec, sec_scaling)
 }
 
-pub fn get_next_header_data(pre_nonce: &str, post_nonce: &str) -> (u64, Vec<u8>) {
+pub fn get_next_header_data(pre_nonce: &str, post_nonce: &str) -> (u64, Vec<u8>, u32) {
 	let nonce: u64 = rand::OsRng::new().unwrap().gen();
-	(nonce, header_data(pre_nonce, post_nonce, nonce))
+	let (hd, sec_scaling) = header_data(pre_nonce, post_nonce, nonce);
+	(nonce, hd, sec_scaling)
 }
 
 /// Helper to convert a hex string
