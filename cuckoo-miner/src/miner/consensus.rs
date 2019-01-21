@@ -13,11 +13,10 @@
 // limitations under the License.
 
 /// Difficulty calculation as from Grin
-
 use blake2::blake2b::Blake2b;
+use byteorder::{BigEndian, ByteOrder};
 use std::cmp::{max, min};
 use std::fmt;
-use byteorder::{BigEndian, ByteOrder};
 
 // constants from grin
 const DEFAULT_MIN_EDGE_BITS: u8 = 31;
@@ -161,7 +160,7 @@ impl Proof {
 
 	/// Maximum difficulty this proof of work can achieve
 	pub fn to_difficulty(&self, height: u64, sec_scaling: u32) -> Difficulty {
-		// 2 proof of works, Cuckoo29 (for now) and Cuckoo30+, which are scaled
+		// 2 proof of works, Cuckaroo29 and Cuckatoo31+, which are scaled
 		// differently (scaling not controlled for now)
 		if self.edge_bits == SECOND_POW_EDGE_BITS {
 			Difficulty::from_proof_scaled(&self, sec_scaling)
@@ -229,14 +228,13 @@ impl fmt::Display for Hash {
 	}
 }
 
-
 #[cfg(test)]
 mod tests {
 	use super::*;
 
 	#[test]
 	fn proof_hash() {
-		let mut in_nonces: Vec<u64> = [0u64; 42].to_vec(); 
+		let mut in_nonces: Vec<u64> = [0u64; 42].to_vec();
 		let proof = Proof::new(in_nonces.clone(), DEFAULT_MIN_EDGE_BITS);
 		let hash_str = format!("{}", proof.hash());
 		println!("Hash is: {}", hash_str);
@@ -282,4 +280,3 @@ mod tests {
 		assert_eq!(difficulty, Difficulty::from_num(296303));
 	}
 }
-
