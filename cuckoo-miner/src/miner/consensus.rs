@@ -17,6 +17,7 @@
 use blake2::blake2b::Blake2b;
 use std::cmp::{max, min};
 use std::fmt;
+use util;
 use byteorder::{BigEndian, ByteOrder};
 
 // constants from grin
