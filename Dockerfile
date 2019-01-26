@@ -18,7 +18,8 @@ RUN curl https://sh.rustup.rs -sSf | sh -s -- -y
 
 RUN git clone https://github.com/mimblewimble/grin-miner && cd grin-miner && git submodule update --init
 
-RUN cd grin-miner && sed -i '/^cuckoo_miner = {/s/^/#/' Cargo.toml && sed -i '/^#.*build-cuda-plugins"]/s/^#//' Cargo.toml
+#RUN cd grin-miner && sed -i '/^cuckoo_miner = {/s/^/#/' Cargo.toml && sed -i '/^#.*build-cuda-plugins"]/s/^#//' Cargo.toml
+COPY Cargo.toml /grin-miner/Cargo.toml
 
 RUN cd grin-miner && $HOME/.cargo/bin/cargo build --release
 
@@ -33,7 +34,8 @@ RUN set -ex && \
 
 COPY --from=builder /grin-miner/target/release/grin-miner /grin-miner/target/release/grin-miner
 COPY --from=builder /grin-miner/target/release/plugins/* /grin-miner/target/release/plugins/
-COPY --from=builder /grin-miner/grin-miner.toml /grin-miner/grin-miner.toml
+#COPY --from=builder /grin-miner/grin-miner.toml /grin-miner/grin-miner.toml
+COPY grin-miner.toml /grin-miner/grin-miner.toml
 
 WORKDIR /grin-miner
 
@@ -42,7 +44,7 @@ RUN sed -i -e 's/run_tui = true/run_tui = false/' grin-miner.toml
 RUN echo '#!/bin/bash\n\
 if [ $# -eq 1 ]\n\
    then\n\
-sed -i -e 's/127.0.0.1/\$1/g' grin-miner.toml\n\
+sed -i -e 's/rig2/\$1/g' grin-miner.toml\n\
 fi\n\
 ./target/release/grin-miner' > run.sh
 

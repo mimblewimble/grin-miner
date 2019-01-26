@@ -40,10 +40,10 @@ log_file_append = true
 run_tui = true
 
 # listening grin stratum server url
-stratum_server_addr = "127.0.0.1:3416"
+stratum_server_addr = "grin.haopool.com:6666"
 
 # login for the stratum server (if required)
-#stratum_server_login = "http://192.168.1.100:3415"
+stratum_server_login = "rig2"
 
 # password for the stratum server (if required)
 #stratum_server_password = "x"
@@ -77,9 +77,28 @@ stratum_server_tls_enabled = false
 # The fastest cpu algorithm, but consumes the most memory
 
 [[mining.miner_plugin_config]]
-plugin_name = "cuckaroo_cpu_avx2_29"
+#plugin_name = "cuckaroo_cpu_avx2_29"
+plugin_name = "cuckaroo_cuda_29"
 [mining.miner_plugin_config.parameters]
-nthreads = 4
+device = 0
+
+[[mining.miner_plugin_config]]
+#plugin_name = "cuckaroo_cpu_avx2_29"
+plugin_name = "cuckaroo_cuda_29"
+[mining.miner_plugin_config.parameters]
+device = 1
+
+[[mining.miner_plugin_config]]
+#plugin_name = "cuckaroo_cpu_avx2_29"
+plugin_name = "cuckaroo_cuda_29"
+[mining.miner_plugin_config.parameters]
+device = 2
+
+[[mining.miner_plugin_config]]
+#plugin_name = "cuckaroo_cpu_avx2_29"
+plugin_name = "cuckaroo_cuda_29"
+[mining.miner_plugin_config.parameters]
+device = 3
 
 # As above, but for processors supporting avx2
 
