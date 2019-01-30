@@ -89,7 +89,7 @@ impl Trimmer {
 		env::set_var("GPU_SINGLE_ALLOC_PERCENT", "100");
 		env::set_var("GPU_64BIT_ATOMICS", "1");
 		env::set_var("GPU_MAX_WORKGROUP_SIZE", "1024");
-		let platform = find_paltform(platform_name)
+		let platform = find_platform(platform_name)
 			.ok_or::<ocl::Error>("Can't find OpenCL platform".into())?;
 		let p_name = platform.name()?;
 		let device = find_device(&platform, device_id)?;
@@ -429,7 +429,7 @@ fn print_event(name: &str, ev: &Event) {
 #[cfg(not(feature = "profile"))]
 fn print_event(_name: &str, _ev: &Event) {}
 
-fn find_paltform(selector: Option<&str>) -> Option<Platform> {
+fn find_platform(selector: Option<&str>) -> Option<Platform> {
 	match selector {
 		None => Some(Platform::default()),
 		Some(sel) => Platform::list().into_iter().find(|p| {

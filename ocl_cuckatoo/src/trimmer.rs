@@ -29,7 +29,7 @@ impl Trimmer {
 		device_id: Option<usize>,
 		edge_bits: u8,
 	) -> ocl::Result<Trimmer> {
-		let platform = find_paltform(platform_name)
+		let platform = find_platform(platform_name)
 			.ok_or::<ocl::Error>("Can't find OpenCL platform".into())?;
 		let device = find_device(&platform, device_id)?;
 
@@ -147,7 +147,7 @@ impl Trimmer {
 	}
 }
 
-fn find_paltform(selector: Option<&str>) -> Option<Platform> {
+fn find_platform(selector: Option<&str>) -> Option<Platform> {
 	match selector {
 		None => Some(Platform::default()),
 		Some(sel) => Platform::list().into_iter().find(|p| {
