@@ -36,8 +36,13 @@ pub fn header_data(pre_nonce: &str, post_nonce: &str, nonce: u64) -> (Vec<u8>, u
 	(pre_vec, sec_scaling)
 }
 
-pub fn get_next_header_data(pre_nonce: &str, post_nonce: &str) -> (u64, Vec<u8>, u32) {
-	let nonce: u64 = rand::OsRng::new().unwrap().gen();
+pub fn get_next_header_data(pre_nonce: &str, post_nonce: &str, xn_hex: &str) -> (u64, Vec<u8>, u32) {
+	let xn_len = xn_hex.chars().count() >> 1;
+	let mut xn: u64 = from_hex_string_to_u64(xn_hex);
+	xn <<= (8 - xn_len) * 8;
+	let mut nonce: u64 = rand::OsRng::new().unwrap().gen();
+	nonce >>= xn_len*8;
+	nonce |= xn; 
 	let (hd, sec_scaling) = header_data(pre_nonce, post_nonce, nonce);
 	(nonce, hd, sec_scaling)
 }
@@ -53,4 +58,17 @@ pub fn from_hex_string(in_str: &str) -> Vec<u8> {
 		}
 	}
 	bytes
+}
+
+/// Helper to convert a hex string
+pub fn from_hex_string_to_u64(in_str: &str) -> u64 {
+	let mut value: u64 = 0;
+	for i in 0..(in_str.len() / 2) {
+		let res = u8::from_str_radix(&in_str[2 * i..2 * i + 2], 16);
+		match res {
+			Ok(v) => { value = (value << 8) | (v as u64)},
+			Err(e) => println!("Problem with hex: {}", e),
+		}
+	}
+	value
 }

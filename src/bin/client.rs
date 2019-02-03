@@ -316,7 +316,7 @@ impl Controller {
 
 	fn send_miner_job(&mut self, job: types::JobTemplate) -> Result<(), Error> {
 		let miner_message =
-			types::MinerMessage::ReceivedJob(job.height, job.job_id, job.difficulty, job.pre_pow);
+			types::MinerMessage::ReceivedJob(job.height, job.job_id, job.difficulty, job.pre_pow, job.xn, job.cleanjob);
 		let mut stats = self.stats.write().unwrap();
 		stats.client_stats.last_message_received = format!(
 			"Last Message Received: Start Job for Height: {}, Difficulty: {}",
@@ -547,7 +547,9 @@ impl Controller {
 									// Deserialize to see what type of object it is
 									let v: serde_json::Value = serde_json::from_str(&m).unwrap();
 									// Is this a response or request?
-									if v["id"] == String::from("Stratum") {
+									// According to https://github.com/mimblewimble/grin/blob/master/doc/stratum.md
+									// job is the only request and id can be anything
+									if v["method"] == String::from("job") {
 										// this is a request
 										let request: types::RpcRequest =
 											serde_json::from_str(&m).unwrap();

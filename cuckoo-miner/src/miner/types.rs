@@ -55,7 +55,7 @@ impl SolverInstance {
 /// Data intended to be shared across threads
 pub struct JobSharedData {
 	/// ID of the current running job (not currently used)
-	pub job_id: u32,
+	pub job_id: u64,
 
 	/// block height of current running job
 	pub height: u64,
@@ -76,6 +76,12 @@ pub struct JobSharedData {
 
 	/// Current stats
 	pub stats: Vec<SolverStats>,
+
+	/// Nonce prefix bytes
+	pub xn: String,
+
+	/// Clean job
+	pub cleanjob: bool,
 }
 
 impl Default for JobSharedData {
@@ -88,6 +94,8 @@ impl Default for JobSharedData {
 			difficulty: 0,
 			solutions: Vec::new(),
 			stats: vec![],
+			xn: String::from(""),
+			cleanjob: false,
 		}
 	}
 }
@@ -102,6 +110,8 @@ impl JobSharedData {
 			difficulty: 1,
 			solutions: Vec::new(),
 			stats: vec![SolverStats::default(); num_solvers],
+			xn: String::from(""),
+			cleanjob: false,
 		}
 	}
 }

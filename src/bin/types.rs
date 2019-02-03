@@ -22,6 +22,8 @@ pub struct JobTemplate {
 	pub job_id: u64,
 	pub difficulty: u64,
 	pub pre_pow: String,
+	pub xn: String,
+	pub cleanjob: bool,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -77,7 +79,7 @@ pub struct WorkerStatus {
 #[derive(Serialize, Deserialize, Debug)]
 pub enum MinerMessage{
 	// Height, difficulty, pre_pow
-	ReceivedJob(u64, u64, u64, String),
+	ReceivedJob(u64, u64, u64, String, String, bool),
 	StopJob,
 	Shutdown,
 }
