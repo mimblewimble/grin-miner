@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/mimblewimble/grin-miner.svg?branch=master)](https://travis-ci.org/mimblewimble/grin-miner)
+
 # Grin Miner
 
 A standalone mining implementation intended for mining Grin against a running Grin node.
