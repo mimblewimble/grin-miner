@@ -82,7 +82,7 @@ pub fn mine_async_for_duration(configs: &Vec<PluginConfig>, duration_in_seconds:
 			i+=1;
 		}
 
-		miner.notify(1, 1, T4_GENESIS_PREPOW,  "", 0).unwrap();
+		miner.notify(1, 1, T4_GENESIS_PREPOW,  "", 0, "", false).unwrap();
 
 		loop {
 			if let Some(solutions) = miner.get_solutions() {

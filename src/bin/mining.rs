@@ -32,6 +32,8 @@ pub struct Controller {
 	current_height: u64,
 	current_job_id: u64,
 	current_target_diff: u64,
+	current_xn: String,
+	current_cleanjob: bool,
 	stats: Arc<RwLock<stats::Stats>>,
 }
 
@@ -53,6 +55,8 @@ impl Controller {
 			current_height: 0,
 			current_job_id: 0,
 			current_target_diff: 0,
+			current_xn: String::from(""),
+			current_cleanjob: false,
 			stats: stats,
 		})
 	}
@@ -71,11 +75,13 @@ impl Controller {
 			while let Some(message) = self.rx.try_iter().next() {
 				debug!(LOGGER, "Miner received message: {:?}", message);
 				let result = match message {
-					types::MinerMessage::ReceivedJob(height, job_id, diff, pre_pow) => {
+					types::MinerMessage::ReceivedJob(height, job_id, diff, pre_pow, xn, cleanjob) => {
 						self.current_height = height;
 						self.current_job_id = job_id;
 						self.current_target_diff = diff;
-						miner.notify(self.current_job_id as u32, self.current_height, &pre_pow, "", diff)
+						self.current_xn = xn;
+						self.current_cleanjob = cleanjob;
+						miner.notify(self.current_job_id, self.current_height, &pre_pow, "", diff, &self.current_xn, cleanjob)
 					}
 					types::MinerMessage::StopJob => {
 						debug!(LOGGER, "Stopping jobs");

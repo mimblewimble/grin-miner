@@ -139,7 +139,8 @@ impl CuckooMiner {
 			let height = { shared_data.read().unwrap().height.clone() };
 			let job_id = { shared_data.read().unwrap().job_id.clone() };
 			let target_difficulty = { shared_data.read().unwrap().difficulty.clone() };
-			let header = util::get_next_header_data(&header_pre, &header_post);
+			let xn = { shared_data.read().unwrap().xn.clone() };
+			let header = util::get_next_header_data(&header_pre, &header_post, &xn);
 			let nonce = header.0;
 			//let sec_scaling = header.2;
 			solver.lib.run_solver(
@@ -176,7 +177,7 @@ impl CuckooMiner {
 						.collect();
 					for mut ss in filtered_sols.iter_mut() {
 						ss.nonce = nonce;
-						ss.id = job_id as u64;
+						ss.id = job_id;
 					}
 					solver.solutions.num_sols = filtered_sols.len() as u32;
 					for i in 0..solver.solutions.num_sols as usize {
@@ -242,18 +243,20 @@ impl CuckooMiner {
 
 	pub fn notify(
 		&mut self,
-		job_id: u32,      // Job id
+		job_id: u64,      // Job id
 		height: u64,      // Job height
 		pre_nonce: &str,  // Pre-nonce portion of header
 		post_nonce: &str, // Post-nonce portion of header
 		difficulty: u64,  /* The target difficulty, only sols greater than this difficulty will
 		                   * be returned. */
+		xn: &str,
+		cleanjob: bool,
 	) -> Result<(), CuckooMinerError> {
 		let mut sd = self.shared_data.write().unwrap();
 		let mut paused = false;
-		if height != sd.height {
+		if height != sd.height || cleanjob {
 			// stop/pause any existing jobs if job is for a new
-			// height
+			// height or clean job received
 			self.pause_solvers();
 			paused = true;
 		}
@@ -262,6 +265,8 @@ impl CuckooMiner {
 		sd.pre_nonce = pre_nonce.to_owned();
 		sd.post_nonce = post_nonce.to_owned();
 		sd.difficulty = difficulty;
+		sd.xn = xn.to_owned();
+		sd.cleanjob = cleanjob;
 		if paused {
 			self.resume_solvers();
 		}
