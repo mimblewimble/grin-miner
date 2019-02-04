@@ -316,7 +316,7 @@ impl Controller {
 
 	fn send_miner_job(&mut self, job: types::JobTemplate) -> Result<(), Error> {
 		let miner_message =
-			types::MinerMessage::ReceivedJob(job.height, job.job_id, job.difficulty, job.pre_pow, job.xn, job.cleanjob);
+			types::MinerMessage::ReceivedJob(job.height, job.job_id, job.difficulty, job.pre_pow, job.xn.unwrap_or("".to_string()), job.cleanjob.unwrap_or(false));
 		let mut stats = self.stats.write().unwrap();
 		stats.client_stats.last_message_received = format!(
 			"Last Message Received: Start Job for Height: {}, Difficulty: {}",

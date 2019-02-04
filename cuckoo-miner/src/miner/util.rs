@@ -37,12 +37,15 @@ pub fn header_data(pre_nonce: &str, post_nonce: &str, nonce: u64) -> (Vec<u8>, u
 }
 
 pub fn get_next_header_data(pre_nonce: &str, post_nonce: &str, xn_hex: &str) -> (u64, Vec<u8>, u32) {
-	let xn_len = xn_hex.chars().count() >> 1;
-	let mut xn: u64 = from_hex_string_to_u64(xn_hex);
-	xn <<= (8 - xn_len) * 8;
 	let mut nonce: u64 = rand::OsRng::new().unwrap().gen();
-	nonce >>= xn_len*8;
-	nonce |= xn; 
+	let mut xn_len: usize = xn_hex.chars().count();
+	if xn_len > 1 {
+		xn_len >>= 1;
+		let mut xn: u64 = from_hex_string_to_u64(xn_hex);
+		xn <<= (8 - xn_len) * 8;
+		nonce >>= xn_len*8;
+		nonce |= xn; 
+	} 
 	let (hd, sec_scaling) = header_data(pre_nonce, post_nonce, nonce);
 	(nonce, hd, sec_scaling)
 }

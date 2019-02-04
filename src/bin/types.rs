@@ -22,8 +22,9 @@ pub struct JobTemplate {
 	pub job_id: u64,
 	pub difficulty: u64,
 	pub pre_pow: String,
-	pub xn: String,
-	pub cleanjob: bool,
+	pub xn: Option<String>,
+	pub cleanjob: Option<bool>,
+
 }
 
 #[derive(Serialize, Deserialize, Debug)]
