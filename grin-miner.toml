@@ -77,7 +77,7 @@ stratum_server_tls_enabled = false
 # The fastest cpu algorithm, but consumes the most memory
 
 [[mining.miner_plugin_config]]
-plugin_name = "cuckaroo_cpu_avx2_29"
+plugin_name = "cuckaroo_cpu_compat_29"
 [mining.miner_plugin_config.parameters]
 nthreads = 4
 
