@@ -71,7 +71,7 @@ lazy_static! {
 				.create(true)
 				.write(true)
 				.append(config.log_file_append)
-				.truncate(false)
+				.truncate(!config.log_file_append)
 				.open(&config.log_file_path)
 				.unwrap();
 
