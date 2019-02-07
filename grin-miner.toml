@@ -158,7 +158,7 @@ nthreads = 4
 #plugin_name = "cuckatoo_mean_cuda_gtx_31"
 #[mining.miner_plugin_config.parameters]
 #device = 0
-#expand = 2
+#expand = 3
 #cpuload = 1
 #ntrims = 176
 #genablocks = 4096
@@ -178,7 +178,7 @@ nthreads = 4
 #plugin_name = "cuckatoo_mean_cuda_rtx_31"
 #[mining.miner_plugin_config.parameters]
 #device = 0
-#expand = 2
+#expand = 3
 #cpuload = 1
 #ntrims = 176
 #genablocks = 4096
