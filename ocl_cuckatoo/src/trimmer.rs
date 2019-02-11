@@ -217,9 +217,9 @@ __kernel  void LeanRound(const u64 v0i, const u64 v1i, const u64 v2i, const u64 
 	const int blocks = NEDGES / 32;
 	const int gid = get_global_id(0);
 	const int lid = get_local_id(0);
+	__local u32 el[256][8];
 
 	{
-		__local u32 el[256][8];
 		int lCount = 0;
 		// what 256 nit block of edges are we processing
 		u64 index = gid;
