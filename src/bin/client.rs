@@ -547,7 +547,7 @@ impl Controller {
 									// Deserialize to see what type of object it is
 									let v: serde_json::Value = serde_json::from_str(&m).unwrap();
 									// Is this a response or request?
-									if v["id"] == String::from("Stratum") {
+									if v["method"] == String::from("job") {
 										// this is a request
 										let request: types::RpcRequest =
 											serde_json::from_str(&m).unwrap();
