@@ -4,24 +4,25 @@ steps:
       rustup-init.exe -y
       echo "##vso[task.setvariable variable=PATH;]%PATH%;%USERPROFILE%\.cargo\bin"
     displayName: Windows Install Rust
-    script: |
-      wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1604/x86_64/cuda-repo-ubuntu1604_10.1.168-1_amd64.deb
-      sudo dpkg -i cuda-repo-ubuntu1604_10.1.168-1_amd64.deb
-      sudo apt-key adv --fetch-keys http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1604/x86_64/7fa2af80.pub
-      sudo apt-get update
-      sudo apt-get install cuda
-    displayName: Install CUDA
     condition: eq( variables['Agent.OS'], 'Windows_NT' )
   - script: |
       curl https://sh.rustup.rs -sSf | sh -s -- -y
       echo "##vso[task.setvariable variable=PATH;]$PATH:$HOME/.cargo/bin"
       brew install nvidia-cuda
     displayName: macOS Install Rust
+  - script: |
+      brew install nvidia-cuda
+    displayName: Install CUDA macOS
     condition: eq( variables['Agent.OS'], 'Darwin' )
   - script: |
       curl https://sh.rustup.rs -sSf | sh -s -- -y
-      sudo apt-get update -yqq
-      sudo apt-get install -yqq --no-install-recommends libncursesw5-dev
       echo "##vso[task.setvariable variable=PATH;]$PATH:$HOME/.cargo/bin"
     displayName: Linux Install Rust and Dependencies
+  - script: |
+      wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1604/x86_64/cuda-repo-ubuntu1604_10.1.168-1_amd64.deb
+      sudo dpkg -i cuda-repo-ubuntu1604_10.1.168-1_amd64.deb
+      sudo apt-key adv --fetch-keys http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1604/x86_64/7fa2af80.pub
+      sudo apt-get update
+      sudo apt-get install cuda
+    displayName: Install CUDA Linux
     condition: eq( variables['Agent.OS'], 'Linux' )
