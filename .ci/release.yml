@@ -36,7 +36,7 @@ steps:
     displayName: Github release
     condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/tags/'), eq(variables['CI_JOB'], 'release' ))
     inputs:
-      gitHubConnection: 'grin-miner'
+      gitHubConnection: 'quentinlesceller'
       repositoryName: 'quentinlesceller/grin-miner'
       action: 'edit'
       target: '$(build.sourceVersion)'
