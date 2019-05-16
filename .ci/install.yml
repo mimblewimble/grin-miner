@@ -3,14 +3,14 @@ steps:
       curl -sSf -o rustup-init.exe https://win.rustup.rs
       rustup-init.exe -y
       echo "##vso[task.setvariable variable=PATH;]%PATH%;%USERPROFILE%\.cargo\bin"
-    displayName: Windows Install Rust
+    displayName: Windows Install Rust and Dependencies
     condition: eq( variables['Agent.OS'], 'Windows_NT' )
   - script: |
       curl https://sh.rustup.rs -sSf | sh -s -- -y
       echo "##vso[task.setvariable variable=PATH;]$PATH:$HOME/.cargo/bin"
       brew tap caskroom/drivers
-      brew install nvidia-cuda
-    displayName: macOS Install Rust
+      brew cask install nvidia-cuda
+    displayName: macOS Install Rust and Dependencies
     condition: eq( variables['Agent.OS'], 'Darwin' )
   - script: |
       curl https://sh.rustup.rs -sSf | sh -s -- -y
@@ -18,7 +18,7 @@ steps:
       wget https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1604/x86_64/cuda-repo-ubuntu1604_10.1.168-1_amd64.deb
       sudo dpkg -i cuda-repo-ubuntu1604_10.1.168-1_amd64.deb
       sudo apt-key adv --fetch-keys http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1604/x86_64/7fa2af80.pub
-      sudo apt-get update
+      sudo apt-get update -yqq
       sudo apt-get install cuda
     displayName: Linux Install Rust and Dependencies
     condition: eq( variables['Agent.OS'], 'Linux' )
