@@ -27,11 +27,11 @@ fn main() -> Result<(), String> {
 		println!("Finder: {:?}", elapsed);
 		for sol in sols {
 			println!("Solution: {:x?}", sol.nodes);
-			let mut start = SystemTime::now();
+			start = SystemTime::now();
 			let (nonces_c, valid) = trimmer.recover(sol.nodes.clone(), &k).unwrap();
 			if valid {
 				let nonces = nonces_c.into_iter().map(|v| v as u64).collect::<Vec<u64>>();
-				let mut end = SystemTime::now();
+				let end = SystemTime::now();
 				let elapsed = end.duration_since(start).unwrap();
 				println!("Recovering: {:?}", elapsed);
 				println!("Nonces: {:?}", nonces);

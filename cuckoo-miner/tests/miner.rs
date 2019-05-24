@@ -16,16 +16,17 @@
 /// existence and correct functionality of each plugin function
 mod common;
 
-extern crate rand;
 extern crate cuckoo_miner as cuckoo;
+extern crate rand;
 
-use cuckoo::{PluginConfig};
-use common::{mining_plugin_dir_for_tests, mine_async_for_duration};
+use common::{mine_async_for_duration, mining_plugin_dir_for_tests};
+use cuckoo::PluginConfig;
 
 // AT LEAN ///////////////
 #[test]
 fn mine_cuckatoo_lean_compat_cpu_19() {
-	let mut config = PluginConfig::new(mining_plugin_dir_for_tests(), "cuckatoo_lean_cpu_compat_19").unwrap();
+	let mut config =
+		PluginConfig::new(mining_plugin_dir_for_tests(), "cuckatoo_lean_cpu_compat_19").unwrap();
 	config.params.nthreads = 4;
 	mine_async_for_duration(&vec![config], 20);
 }
@@ -33,16 +34,18 @@ fn mine_cuckatoo_lean_compat_cpu_19() {
 #[ignore]
 #[test]
 fn mine_cuckatoo_lean_compat_cpu_31() {
-	let mut config = PluginConfig::new(mining_plugin_dir_for_tests(), "cuckatoo_lean_cpu_compat_31").unwrap();
+	let mut config =
+		PluginConfig::new(mining_plugin_dir_for_tests(), "cuckatoo_lean_cpu_compat_31").unwrap();
 	config.params.nthreads = 4;
 	mine_async_for_duration(&vec![config], 20);
 }
 
 #[ignore]
-#[cfg(feature="test-avx2")]
+#[cfg(feature = "test-avx2")]
 #[test]
 fn mine_cuckatoo_lean_avx2_cpu_31() {
-	let mut config = PluginConfig::new(mining_plugin_dir_for_tests(), "cuckatoo_lean_cpu_avx2_31").unwrap();
+	let mut config =
+		PluginConfig::new(mining_plugin_dir_for_tests(), "cuckatoo_lean_cpu_avx2_31").unwrap();
 	config.params.nthreads = 4;
 	mine_async_for_duration(&vec![config], 20);
 }
@@ -51,14 +54,16 @@ fn mine_cuckatoo_lean_avx2_cpu_31() {
 
 #[test]
 fn mine_cuckatoo_mean_cpu_compat_19() {
-	let mut config = PluginConfig::new(mining_plugin_dir_for_tests(), "cuckatoo_mean_cpu_compat_19").unwrap();
+	let mut config =
+		PluginConfig::new(mining_plugin_dir_for_tests(), "cuckatoo_mean_cpu_compat_19").unwrap();
 	config.params.nthreads = 4;
 	mine_async_for_duration(&vec![config], 20);
 }
 
-#[cfg(feature="test-avx2")]
+#[cfg(feature = "test-avx2")]
 fn mine_cuckatoo_mean_avx2_cpu_19() {
-	let mut config = PluginConfig::new(mining_plugin_dir_for_tests(), "cuckatoo_mean_cpu_avx2_19").unwrap();
+	let mut config =
+		PluginConfig::new(mining_plugin_dir_for_tests(), "cuckatoo_mean_cpu_avx2_19").unwrap();
 	config.params.nthreads = 4;
 	mine_async_for_duration(&vec![config], 20);
 }
@@ -66,49 +71,51 @@ fn mine_cuckatoo_mean_avx2_cpu_19() {
 #[ignore]
 #[test]
 fn mine_cuckatoo_mean_compat_cpu_31() {
-	let mut config = PluginConfig::new(mining_plugin_dir_for_tests(), "cuckatoo_mean_cpu_compat_31").unwrap();
+	let mut config =
+		PluginConfig::new(mining_plugin_dir_for_tests(), "cuckatoo_mean_cpu_compat_31").unwrap();
 	config.params.nthreads = 4;
 	mine_async_for_duration(&vec![config], 20);
 }
 
 #[ignore]
-#[cfg(feature="test-avx2")]
+#[cfg(feature = "test-avx2")]
 #[test]
 fn mine_cuckatoo_mean_avx2_cpu_31() {
-	let mut config = PluginConfig::new(mining_plugin_dir_for_tests(), "cuckatoo_mean_cpu_avx2_31").unwrap();
+	let mut config =
+		PluginConfig::new(mining_plugin_dir_for_tests(), "cuckatoo_mean_cpu_avx2_31").unwrap();
 	config.params.nthreads = 4;
 	mine_async_for_duration(&vec![config], 20);
 }
 
 // AT MEAN CUDA ///////////////
-#[cfg(feature="build-cuda-plugins")]
+#[cfg(feature = "build-cuda-plugins")]
 #[test]
 fn mine_cuckatoo_mean_cuda_19() {
-	let mut config = PluginConfig::new(mining_plugin_dir_for_tests(), "cuckatoo_mean_cuda_19").unwrap();
+	let config = PluginConfig::new(mining_plugin_dir_for_tests(), "cuckatoo_mean_cuda_19").unwrap();
 	mine_async_for_duration(&vec![config], 20);
 }
 
 #[ignore]
-#[cfg(feature="build-cuda-plugins")]
+#[cfg(feature = "build-cuda-plugins")]
 #[test]
 fn mine_cuckatoo_mean_cuda_31() {
-	let mut config = PluginConfig::new(mining_plugin_dir_for_tests(), "cuckatoo_mean_cuda_31").unwrap();
+	let config = PluginConfig::new(mining_plugin_dir_for_tests(), "cuckatoo_mean_cuda_31").unwrap();
 	mine_async_for_duration(&vec![config], 20);
 }
 
 // AT LEAN CUDA ///////////////
-#[cfg(feature="build-cuda-plugins")]
+#[cfg(feature = "build-cuda-plugins")]
 #[test]
 fn mine_cuckatoo_lean_cuda_19() {
-	let mut config = PluginConfig::new(mining_plugin_dir_for_tests(), "cuckatoo_lean_cuda_19").unwrap();
+	let config = PluginConfig::new(mining_plugin_dir_for_tests(), "cuckatoo_lean_cuda_19").unwrap();
 	mine_async_for_duration(&vec![config], 20);
 }
 
 #[ignore]
-#[cfg(feature="build-cuda-plugins")]
+#[cfg(feature = "build-cuda-plugins")]
 #[test]
 fn mine_cuckatoo_lean_cuda_31() {
-	let mut config = PluginConfig::new(mining_plugin_dir_for_tests(), "cuckatoo_lean_cuda_31").unwrap();
+	let config = PluginConfig::new(mining_plugin_dir_for_tests(), "cuckatoo_lean_cuda_31").unwrap();
 	mine_async_for_duration(&vec![config], 20);
 }
 
@@ -116,38 +123,42 @@ fn mine_cuckatoo_lean_cuda_31() {
 #[ignore]
 #[test]
 fn mine_cuckaroo_mean_cpu_compat_19() {
-	let mut config = PluginConfig::new(mining_plugin_dir_for_tests(), "cuckaroo_cpu_compat_19").unwrap();
+	let mut config =
+		PluginConfig::new(mining_plugin_dir_for_tests(), "cuckaroo_cpu_compat_19").unwrap();
 	config.params.nthreads = 4;
 	mine_async_for_duration(&vec![config], 20);
 }
 
 #[ignore]
-#[cfg(feature="test-avx2")]
+#[cfg(feature = "test-avx2")]
 #[test]
 fn mine_cuckaroo_mean_cpu_avx2_29() {
-	let mut config = PluginConfig::new(mining_plugin_dir_for_tests(), "cuckaroo_cpu_avx_19").unwrap();
+	let mut config =
+		PluginConfig::new(mining_plugin_dir_for_tests(), "cuckaroo_cpu_avx_19").unwrap();
 	config.params.nthreads = 4;
 	mine_async_for_duration(&vec![config], 20);
 }
 
 #[test]
 fn mine_cuckaroo_mean_cpu_compat_29() {
-	let mut config = PluginConfig::new(mining_plugin_dir_for_tests(), "cuckaroo_cpu_compat_29").unwrap();
+	let mut config =
+		PluginConfig::new(mining_plugin_dir_for_tests(), "cuckaroo_cpu_compat_29").unwrap();
 	config.params.nthreads = 4;
 	mine_async_for_duration(&vec![config], 20);
 }
 
-#[cfg(feature="test-avx2")]
+#[cfg(feature = "test-avx2")]
 #[test]
 fn mine_cuckaroo_mean_cpu_avx2_29() {
-	let mut config = PluginConfig::new(mining_plugin_dir_for_tests(), "cuckaroo_cpu_avx_29").unwrap();
+	let mut config =
+		PluginConfig::new(mining_plugin_dir_for_tests(), "cuckaroo_cpu_avx_29").unwrap();
 	config.params.nthreads = 4;
 	mine_async_for_duration(&vec![config], 20);
 }
 
-#[cfg(feature="build-cuda-plugins")]
+#[cfg(feature = "build-cuda-plugins")]
 #[test]
 fn mine_cuckaroo_cuda_29() {
-	let mut config = PluginConfig::new(mining_plugin_dir_for_tests(), "cuckatoo_cuda_29").unwrap();
+	let config = PluginConfig::new(mining_plugin_dir_for_tests(), "cuckatoo_cuda_29").unwrap();
 	mine_async_for_duration(&vec![config], 20);
 }
