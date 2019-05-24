@@ -23,7 +23,6 @@ use cmake::Config;
 use std::{env, fs};
 use std::path::PathBuf;
 use fs_extra::dir::*;
-use sanity::Finder;
 
 
 #[cfg(feature = "build-cuda-plugins")]
