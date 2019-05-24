@@ -1,5 +1,5 @@
 use ocl;
-use ocl::enums::{ArgVal, DeviceInfo, DeviceInfoResult, ProfilingInfo};
+use ocl::enums::{ArgVal, DeviceInfo, DeviceInfoResult};
 use ocl::flags::{CommandQueueProperties, MemFlags};
 use ocl::prm::{Uint2, Ulong4};
 use ocl::{
@@ -187,8 +187,8 @@ impl Trimmer {
 		mut nodes: Vec<u32>,
 		k: &[u64; 4],
 	) -> ocl::Result<(Vec<u32>, bool)> {
-		let mut event_list = EventList::new();
-		let mut names = vec![];
+		let event_list = EventList::new();
+		let names = vec![];
 
 		let mut kernel_recovery = kernel_builder!(self, "FluffyRecovery", 2048 * 256)
 			.arg(k[0])
@@ -354,8 +354,8 @@ impl Trimmer {
 		kernel_tail.set_arg_unchecked(2, ArgVal::mem(&self.buffer_i1))?;
 		kernel_tail.set_arg_unchecked(3, ArgVal::mem(&self.buffer_i2))?;
 
-		let mut event_list = EventList::new();
-		let mut names = vec![];
+		let event_list = EventList::new();
+		let names = vec![];
 
 		let mut edges_count: Vec<u32> = vec![0; 1];
 		clear_buffer!(self.buffer_i1);
