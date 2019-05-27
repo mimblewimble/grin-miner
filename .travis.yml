@@ -52,7 +52,7 @@ matrix:
 # install CUDA 10 on ubuntu 16.04 via DEB from directions here 
 # https://developer.nvidia.com/cuda-downloads?target_os=Linux&target_arch=x86_64&target_distro=Ubuntu&target_version=1604&target_type=debnetwork
 install:
-  - ./.travis/install.sh
+  - ./.ci/install.sh
   
 script:
   - IFS=',' read -r -a DIRS <<< "$TEST_SUITE"; DIR=${DIRS[0]};
