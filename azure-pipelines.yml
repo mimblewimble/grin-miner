@@ -41,7 +41,7 @@ jobs:
         PLATFORM: linux-amd64
   steps:
     - template: '.ci/install.yml'
-    - script: cargo test --all
+    - script: cd cuckoo-miner && cargo test --all
       displayName: Test
     - template: '.ci/release.yml'
 - job: macos
@@ -56,21 +56,6 @@ jobs:
         PLATFORM: macos
   steps:
     - template: '.ci/install.yml'
-    - script: cargo test --all
+    - script: cd cuckoo-miner && cargo test --all
       displayName: Test
     - template: '.ci/release.yml'
-- job: windows
-  pool:
-    vmImage: vs2017-win2016
-  strategy:
-    matrix:
-      test:
-        CI_JOB: test
-      release:
-        CI_JOB: release
-        PLATFORM: win-x64
-  steps:
-    - template: '.ci/install.yml'
-    - script: cargo test --all
-      displayName: Test
-    - template: '.ci/windows-release.yml'
