@@ -1,5 +1,5 @@
 steps:
-  - script: 'cargo build --release'
+  - script: 'cargo build --release --features opencl'
     displayName: Build Release
     condition:  and(succeeded(), contains(variables['Build.SourceBranch'], 'refs/tags/'), eq(variables['CI_JOB'], 'release' ))
   - script: |
