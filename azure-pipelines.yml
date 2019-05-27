@@ -42,20 +42,16 @@ jobs:
   steps:
     - template: '.ci/install.yml'
     - script: cd cuckoo-miner && cargo test --release
-      displayName: Test
+      displayName: Cargo Test
     - template: '.ci/release.yml'
 - job: macos
   pool:
     vmImage: macos-10.13
   strategy:
     matrix:
-      test:
-        CI_JOB: test
       release:
         CI_JOB: release
         PLATFORM: macos
   steps:
     - template: '.ci/install.yml'
-    - script: cd cuckoo-miner && cargo test --release
-      displayName: Test
     - template: '.ci/release.yml'
