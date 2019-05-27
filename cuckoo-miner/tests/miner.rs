@@ -159,6 +159,6 @@ fn mine_cuckaroo_mean_cpu_avx2_29() {
 #[cfg(feature = "build-cuda-plugins")]
 #[test]
 fn mine_cuckaroo_cuda_29() {
-	let config = PluginConfig::new(mining_plugin_dir_for_tests(), "cuckatoo_cuda_29").unwrap();
+	let config = PluginConfig::new(mining_plugin_dir_for_tests(), "cuckaroo_cuda_29").unwrap();
 	mine_async_for_duration(&vec![config], 20);
 }
