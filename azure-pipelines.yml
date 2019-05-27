@@ -41,7 +41,7 @@ jobs:
         PLATFORM: linux-amd64
   steps:
     - template: '.ci/install.yml'
-    - script: cd cuckoo-miner && cargo test --all
+    - script: cd cuckoo-miner && cargo test --release
       displayName: Test
     - template: '.ci/release.yml'
 - job: macos
@@ -56,6 +56,6 @@ jobs:
         PLATFORM: macos
   steps:
     - template: '.ci/install.yml'
-    - script: cd cuckoo-miner && cargo test --all
+    - script: cd cuckoo-miner && cargo test --release
       displayName: Test
     - template: '.ci/release.yml'
