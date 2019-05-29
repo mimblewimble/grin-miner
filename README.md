@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/mimblewimble/grin-miner.svg?branch=master)](https://travis-ci.org/mimblewimble/grin-miner)
+[![Build Status](https://dev.azure.com/mimblewimble/grin-miner/_apis/build/status/mimblewimble.grin-miner?branchName=master)](https://dev.azure.com/mimblewimble/grin-miner/_build/latest?definitionId=5&branchName=master)
 
 # Grin Miner
 
