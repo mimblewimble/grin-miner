@@ -47,7 +47,7 @@ const TEST_PLUGIN_LIBS_CORE: [&str; 6] = [
 	"cuckaroo_cpu_compat_29",
 ];
 
-const TEST_PLUGIN_LIBS_OPTIONAL: [&str; 1] = [
+const TEST_PLUGIN_LIBS_OPTIONAL: [&str; 2] = [
 	"cuckaroo_mean_cuda_29",
 	"cuckarood_mean_cuda_29",
 ];
