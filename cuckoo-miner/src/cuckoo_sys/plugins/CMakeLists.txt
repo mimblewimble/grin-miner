@@ -14,6 +14,9 @@ set (GCC_FLAGS "-m64 -std=gnu11 ${CFLAGS}")
 
 set (CUDA_HOST_COMPILER_OVERRIDE $ENV{CUDA_HOST_COMPILER})
 set (SKIP_CUCKATOO_GPU $ENV{SKIP_CUCKATOO_GPU})
+set (SKIP_CUCKAROO_GPU $ENV{SKIP_CUCKAROO_GPU})
+set (SKIP_CUCKAROOD_CPU "1")
+set (SKIP_CUCKAROOD_GPU $ENV{SKIP_CUCKAROOD_GPU})
 
 #blake2b prerequisite
 set (BLAKE_2B "cuckoo/src/crypto/blake2b-ref.c")
@@ -129,5 +132,41 @@ build_cpu_target("${AR_CPU_SRC}" cuckaroo_cpu_avx2_29 "-mavx2 -DNSIPHASH=8 -DEDG
 
 set (AR_CUDA_SRC cuckoo/src/cuckaroo/mean.cu ${BLAKE_2B} )
 
-build_cuda_target("${AR_CUDA_SRC}" cuckaroo_cuda_19 "-DEPS_A=4 -DEPS_B=3 -DIDXSHIFT=2 -DEDGEBITS=19")
-build_cuda_target("${AR_CUDA_SRC}" cuckaroo_cuda_29 "-DEDGEBITS=29")
+if (NOT SKIP_CUCKAROO_GPU)
+  build_cuda_target("${AR_CUDA_SRC}" cuckaroo_cuda_19 "-DEPS_A=4 -DEPS_B=3 -DIDXSHIFT=2 -DEDGEBITS=19")
+  build_cuda_target("${AR_CUDA_SRC}" cuckaroo_cuda_29 "-DEDGEBITS=29")
+endif()
+
+##################################################################################
+### CUCKAROOD (Asic Resistant)  ##################################################
+##################################################################################
+
+### AR CPU BUILDING  #########################################
+
+set (AR2_CPU_SRC
+			cuckoo/src/cuckarood/cuckaroo.hpp
+			cuckoo/src/cuckarood/bitmap.hpp
+			cuckoo/src/cuckarood/graph.hpp
+			cuckoo/src/threads/barrier.hpp
+			cuckoo/src/crypto/siphash.hpp
+			cuckoo/src/cuckarood/mean.hpp
+			cuckoo/src/cuckarood/mean.cpp
+			${BLAKE_2B})
+
+### AR CPU TARGETS #########################################
+
+if (NOT SKIP_CUCKAROOD_CPU)
+  build_cpu_target("${AR2_CPU_SRC}" cuckarood_cpu_compat_19 "-DXBITS=2 -DNSIPHASH=1 -DEDGEBITS=19 -DSAVEEDGES")
+  build_cpu_target("${AR2_CPU_SRC}" cuckarood_cpu_avx2_19 "-mavx2 -DXBITS=2 -DNSIPHASH=8 -DEDGEBITS=19 -DSAVEEDGES")
+  build_cpu_target("${AR2_CPU_SRC}" cuckarood_cpu_compat_29 "-mno-avx2 -DNSIPHASH=4 -DEDGEBITS=29 -DSAVEEDGES")
+  build_cpu_target("${AR2_CPU_SRC}" cuckarood_cpu_avx2_29 "-mavx2 -DNSIPHASH=8 -DEDGEBITS=29 -DSAVEEDGES")
+endif()
+
+### AR CUDA TARGETS #########################################
+
+set (AR2_CUDA_SRC cuckoo/src/cuckarood/mean.cu ${BLAKE_2B} )
+
+if (NOT SKIP_CUCKAROOD_GPU)
+  build_cuda_target("${AR2_CUDA_SRC}" cuckarood_cuda_19 "-DEPS_A=4 -DEPS_B=3 -DIDXSHIFT=2 -DEDGEBITS=19")
+  build_cuda_target("${AR2_CUDA_SRC}" cuckarood_cuda_29 "-DEDGEBITS=29")
+endif()

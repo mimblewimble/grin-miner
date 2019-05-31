@@ -1,4 +1,4 @@
-// Copyright 2017 The Grin Developers
+// Copyright 2017-2019 The Grin Developers
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -47,7 +47,10 @@ const TEST_PLUGIN_LIBS_CORE: [&str; 6] = [
 	"cuckaroo_cpu_compat_29",
 ];
 
-const TEST_PLUGIN_LIBS_OPTIONAL: [&str; 1] = ["cuckaroo_mean_cuda_29"];
+const TEST_PLUGIN_LIBS_OPTIONAL: [&str; 1] = [
+	"cuckaroo_mean_cuda_29",
+	"cuckarood_mean_cuda_29",
+];
 
 //Helper to convert from hex string
 fn from_hex_string(in_str: &str) -> Vec<u8> {

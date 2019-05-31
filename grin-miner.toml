@@ -58,7 +58,7 @@ stratum_server_tls_enabled = false
 #miner_plugin_dir = "target/debug/plugins"
 
 ###############################################################
-### CUCKAROO (i.e. GPU-Friendly) MINER PLUGIN CONFIGURATION ###
+### CUCKAROO(D) (i.e. GPU-Friendly) MINER PLUGIN CONFIGURATION ###
 ###############################################################
 
 # Multiple plugins can be specified, (e.g. a cpu
@@ -88,7 +88,7 @@ nthreads = 4
 #[mining.miner_plugin_config.parameters]
 #nthreads = 4
 
-# CUCKAROO CUDA SOLVER
+# CUCKAROO(D) CUDA SOLVER
 #
 # CUDA plugins are not built by default. To build:
 #1) Ensure the latest cuda toolkit is installed
@@ -104,6 +104,7 @@ nthreads = 4
 # currently requires 5.5GB+ GPU memory
 #[[mining.miner_plugin_config]]
 #plugin_name = "cuckaroo_cuda_29"
+# or, to mine at height >= 262080: plugin_name = "cuckarood_cuda_29"
 #[mining.miner_plugin_config.parameters]
 #device = 0
 #cpuload = 1
