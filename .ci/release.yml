@@ -48,7 +48,7 @@ steps:
     condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/tags/'), eq(variables['CI_JOB'], 'release' ))
     inputs:
       gitHubConnection: 'ignopeverell'
-      repositoryName: 'quentinlesceller/grin-miner'
+      repositoryName: 'mimblewimble/grin-miner'
       action: 'edit'
       target: '$(build.sourceVersion)'
       tagSource: 'manual'
