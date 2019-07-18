@@ -17,6 +17,13 @@ steps:
       sourceFolder: '$(Build.SourcesDirectory)/target/release'
       contents: 'grin-miner'
       targetFolder: '$(Build.BinariesDirectory)/grin-miner'
+  - task: CopyFiles@2
+    displayName: Copy plugins
+    condition:  and(succeeded(), contains(variables['Build.SourceBranch'], 'refs/tags/'), eq(variables['CI_JOB'], 'release' ))
+    inputs:
+      sourceFolder: '$(Build.SourcesDirectory)/target/release'
+      contents: 'plugins'
+      targetFolder: '$(Build.BinariesDirectory)/grin-miner'
   - task: ArchiveFiles@2
     displayName: Gather assets
     condition:  and(succeeded(), contains(variables['Build.SourceBranch'], 'refs/tags/'), eq(variables['CI_JOB'], 'release' ))
@@ -34,7 +41,7 @@ steps:
     condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/tags/'), eq(variables['CI_JOB'], 'release' ))
     inputs:
       gitHubConnection: 'ignopeverell'
-      repositoryName: 'mimblewimble/grin-miner'
+      repositoryName: 'quentinlesceller/grin-miner'
       action: 'edit'
       target: '$(build.sourceVersion)'
       tagSource: 'manual'
