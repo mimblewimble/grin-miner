@@ -24,6 +24,13 @@ steps:
       sourceFolder: '$(Build.SourcesDirectory)/target/release/plugins'
       contents: '*'
       targetFolder: '$(Build.BinariesDirectory)/grin-miner/plugins'
+  - task: CopyFiles@2
+    displayName: Copy config
+    condition:  and(succeeded(), contains(variables['Build.SourceBranch'], 'refs/tags/'), eq(variables['CI_JOB'], 'release' ))
+    inputs:
+      sourceFolder: '$(Build.SourcesDirectory)'
+      contents: 'grin-miner.toml'
+      targetFolder: '$(Build.BinariesDirectory)/grin-miner'
   - task: ArchiveFiles@2
     displayName: Gather assets
     condition:  and(succeeded(), contains(variables['Build.SourceBranch'], 'refs/tags/'), eq(variables['CI_JOB'], 'release' ))
