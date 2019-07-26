@@ -58,7 +58,7 @@ stratum_server_tls_enabled = false
 #miner_plugin_dir = "target/debug/plugins"
 
 ###############################################################
-### CUCKAROO(D) (i.e. GPU-Friendly) MINER PLUGIN CONFIGURATION ###
+### CUCKAROOD (i.e. GPU-Friendly) MINER PLUGIN CONFIGURATION ###
 ###############################################################
 
 # Multiple plugins can be specified, (e.g. a cpu
@@ -72,23 +72,23 @@ stratum_server_tls_enabled = false
 # but in CUDA plugins the device number can be set
 # corresponding to the device ID. (use nvidia-smi to find this)
 
-### CUCKAROO CPU SOLVERS (Asic Resist, or GPU-Friendly)
+### CUCKAROOD CPU SOLVERS (Asic Resist, or GPU-Friendly)
 
 # The fastest cpu algorithm, but consumes the most memory
 
 [[mining.miner_plugin_config]]
-plugin_name = "cuckaroo_cpu_compat_29"
+plugin_name = "cuckarood_cpu_compat_29"
 [mining.miner_plugin_config.parameters]
 nthreads = 4
 
 # As above, but for processors supporting avx2
 
 #[[mining.miner_plugin_config]]
-#plugin_name = "cuckaroo_cpu_avx2_29"
+#plugin_name = "cuckarood_cpu_avx2_29"
 #[mining.miner_plugin_config.parameters]
 #nthreads = 4
 
-# CUCKAROO(D) CUDA SOLVER
+# CUCKAROOD CUDA SOLVER
 #
 # CUDA plugins are not built by default. To build:
 #1) Ensure the latest cuda toolkit is installed
@@ -103,8 +103,7 @@ nthreads = 4
 
 # currently requires 5.5GB+ GPU memory
 #[[mining.miner_plugin_config]]
-#plugin_name = "cuckaroo_cuda_29"
-# or, to mine at height >= 262080: plugin_name = "cuckarood_cuda_29"
+#plugin_name = "cuckarood_cuda_29"
 #[mining.miner_plugin_config.parameters]
 #device = 0
 #cpuload = 1
