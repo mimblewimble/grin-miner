@@ -147,11 +147,28 @@ fn mine_cuckaroo_mean_cpu_compat_29() {
 	mine_async_for_duration(&vec![config], 20);
 }
 
+#[test]
+fn mine_cuckarood_mean_cpu_compat_29() {
+	let mut config =
+		PluginConfig::new(mining_plugin_dir_for_tests(), "cuckarood_cpu_compat_29").unwrap();
+	config.params.nthreads = 4;
+	mine_async_for_duration(&vec![config], 20);
+}
+
 #[cfg(feature = "test-avx2")]
 #[test]
 fn mine_cuckaroo_mean_cpu_avx2_29() {
 	let mut config =
 		PluginConfig::new(mining_plugin_dir_for_tests(), "cuckaroo_cpu_avx_29").unwrap();
+	config.params.nthreads = 4;
+	mine_async_for_duration(&vec![config], 20);
+}
+
+#[cfg(feature = "test-avx2")]
+#[test]
+fn mine_cuckarood_mean_cpu_avx2_29() {
+	let mut config =
+		PluginConfig::new(mining_plugin_dir_for_tests(), "cuckarood_cpu_avx_29").unwrap();
 	config.params.nthreads = 4;
 	mine_async_for_duration(&vec![config], 20);
 }

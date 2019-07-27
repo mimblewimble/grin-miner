@@ -15,7 +15,6 @@ set (GCC_FLAGS "-m64 -std=gnu11 ${CFLAGS}")
 set (CUDA_HOST_COMPILER_OVERRIDE $ENV{CUDA_HOST_COMPILER})
 set (SKIP_CUCKATOO_GPU $ENV{SKIP_CUCKATOO_GPU})
 set (SKIP_CUCKAROO_GPU $ENV{SKIP_CUCKAROO_GPU})
-set (SKIP_CUCKAROOD_CPU "1")
 set (SKIP_CUCKAROOD_GPU $ENV{SKIP_CUCKAROOD_GPU})
 
 #blake2b prerequisite
@@ -144,23 +143,22 @@ endif()
 ### AR CPU BUILDING  #########################################
 
 set (AR2_CPU_SRC
-			cuckoo/src/cuckarood/cuckaroo.hpp
+			cuckoo/src/cuckarood/cuckarood.hpp
 			cuckoo/src/cuckarood/bitmap.hpp
 			cuckoo/src/cuckarood/graph.hpp
 			cuckoo/src/threads/barrier.hpp
 			cuckoo/src/crypto/siphash.hpp
+			cuckoo/src/crypto/siphashxN.h
 			cuckoo/src/cuckarood/mean.hpp
 			cuckoo/src/cuckarood/mean.cpp
 			${BLAKE_2B})
 
 ### AR CPU TARGETS #########################################
 
-if (NOT SKIP_CUCKAROOD_CPU)
-  build_cpu_target("${AR2_CPU_SRC}" cuckarood_cpu_compat_19 "-DXBITS=2 -DNSIPHASH=1 -DEDGEBITS=19 -DSAVEEDGES")
-  build_cpu_target("${AR2_CPU_SRC}" cuckarood_cpu_avx2_19 "-mavx2 -DXBITS=2 -DNSIPHASH=8 -DEDGEBITS=19 -DSAVEEDGES")
-  build_cpu_target("${AR2_CPU_SRC}" cuckarood_cpu_compat_29 "-mno-avx2 -DNSIPHASH=4 -DEDGEBITS=29 -DSAVEEDGES")
-  build_cpu_target("${AR2_CPU_SRC}" cuckarood_cpu_avx2_29 "-mavx2 -DNSIPHASH=8 -DEDGEBITS=29 -DSAVEEDGES")
-endif()
+build_cpu_target("${AR2_CPU_SRC}" cuckarood_cpu_compat_19 "-DXBITS=2 -DNSIPHASH=1 -DEDGEBITS=19 -DSAVEEDGES")
+build_cpu_target("${AR2_CPU_SRC}" cuckarood_cpu_avx2_19 "-mavx2 -DXBITS=2 -DNSIPHASH=8 -DEDGEBITS=19 -DSAVEEDGES")
+build_cpu_target("${AR2_CPU_SRC}" cuckarood_cpu_compat_29 "-mno-avx2 -DNSIPHASH=4 -DEDGEBITS=29 -DSAVEEDGES")
+build_cpu_target("${AR2_CPU_SRC}" cuckarood_cpu_avx2_29 "-mavx2 -DNSIPHASH=8 -DEDGEBITS=29 -DSAVEEDGES")
 
 ### AR CUDA TARGETS #########################################
 
