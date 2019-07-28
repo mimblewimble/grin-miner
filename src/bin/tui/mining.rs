@@ -183,7 +183,11 @@ impl TUIStatusListener for TUIMiningView {
 							mining_stats.block_height, 4, mining_stats.combined_gps()
 						),
 						format!(
+<<<<<<< HEAD
 							"Cuckatoo/Cuckarood - Target Share Difficulty {}",
+=======
+							"Cucka*oo* - Target Share Difficulty {}",
+>>>>>>> cuckarood
 							mining_stats.target_difficulty.to_string()
 						),
 					)
