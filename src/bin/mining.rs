@@ -135,11 +135,12 @@ impl Controller {
 			if !s.has_errored {
 				debug!(
 					LOGGER,
-							"Mining: Plugin {} - Device {} ({}) at Cuck(at)oo{} - Status: {} : Last Graph time: {}s; \
+							"Mining: Plugin {} - Device {} ({}) at Cucka{}{} - Status: {} : Last Graph time: {}s; \
 					 Graphs per second: {:.*} - Total Attempts: {}",
 							i,
 					s.device_id,
 					s.get_device_name(),
+					if s.edge_bits < 30 { "rood" } else { "too" },
 					s.edge_bits,
 					status,
 					last_solution_time_secs,
@@ -164,7 +165,7 @@ impl Controller {
 		}
 		info!(
 			LOGGER,
-			"Mining: Cuck(at)oo at {} gps (graphs per second)", sps_total
+			"Mining: Cucka*oo* at {} gps (graphs per second)", sps_total
 		);
 
 		if sps_total.is_finite() {
