@@ -101,20 +101,16 @@ nthreads = 4
 # instance of each plugin.  device 0 is used by default
 #
 
-# currently requires 5.5GB+ GPU memory
+# currently requires 5GB GPU memory
 #[[mining.miner_plugin_config]]
 #plugin_name = "cuckarood_cuda_29"
 #[mining.miner_plugin_config.parameters]
 #device = 0
 #cpuload = 1
-#ntrims = 176
-#genablocks = 4096
-#genatpb = 128
-#genbtpb = 128
-#trimtpb = 512
-#tailtpb = 1024
-#recoverblocks = 1024
-#recovertpb = 1024
+#ntrims = 458
+#genablocks = 1024
+#recoverblocks = 2048
+#recovertpb = 256
 
 # e.g. To enable multiple devices (copy params from above as needed)
 
