@@ -162,7 +162,7 @@ build_cpu_target("${AR2_CPU_SRC}" cuckarood_cpu_avx2_29 "-mavx2 -DNSIPHASH=8 -DE
 
 ### AR CUDA TARGETS #########################################
 
-set (AR2_CUDA_SRC cuckoo/src/cuckarood/photon.cu cuckoo/src/cuckarood/kernel.cu ${BLAKE_2B} )
+set (AR2_CUDA_SRC cuckoo/src/cuckarood/kernel.cuh cuckoo/src/cuckarood/photon.cu ${BLAKE_2B} )
 
 if (NOT SKIP_CUCKAROOD_GPU)
   build_cuda_target("${AR2_CUDA_SRC}" cuckarood_cuda_19 "-DXBITS=1 -DEPS_A=4 -DEPS_B=3 -DIDXSHIFT=8 -DEDGEBITS=19")
