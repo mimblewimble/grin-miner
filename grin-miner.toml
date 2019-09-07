@@ -107,7 +107,7 @@ nthreads = 4
 #[mining.miner_plugin_config.parameters]
 #device = 0
 #cpuload = 1
-#ntrims = 458
+#ntrims = 31
 #genablocks = 1024
 #recoverblocks = 2048
 #recovertpb = 256
