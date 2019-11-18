@@ -24,9 +24,9 @@ use util::LOGGER;
 use config::types::PluginConfig;
 use miner::types::{JobSharedData, JobSharedDataType, SolverInstance};
 
-use miner::util;
 use miner::consensus::Proof;
-use plugin::{SolverCtxWrapper, SolverSolutions, Solution, SolverStats};
+use miner::util;
+use plugin::{Solution, SolverCtxWrapper, SolverSolutions, SolverStats};
 use {CuckooMinerError, PluginLibrary};
 
 /// Miner control Messages
@@ -118,7 +118,10 @@ impl CuckooMiner {
 		let mut paused = true;
 		loop {
 			if let Some(message) = solver_loop_rx.try_iter().next() {
-				debug!(LOGGER, "solver_thread - solver_loop_rx got msg: {:?}", message);
+				debug!(
+					LOGGER,
+					"solver_thread - solver_loop_rx got msg: {:?}", message
+				);
 				match message {
 					ControlMessage::Stop => break,
 					ControlMessage::Pause => paused = true,
@@ -158,11 +161,12 @@ impl CuckooMiner {
 				s.stats[instance].iterations = iter_count;
 				if solver.solutions.num_sols > 0 {
 					// Filter solutions that don't meet difficulty check
-					let mut filtered_sols:Vec<Solution> = vec![];
+					let mut filtered_sols: Vec<Solution> = vec![];
 					for i in 0..solver.solutions.num_sols {
 						filtered_sols.push(solver.solutions.sols[i as usize]);
 					}
-					let mut filtered_sols: Vec<Solution> = filtered_sols.iter()
+					let mut filtered_sols: Vec<Solution> = filtered_sols
+						.iter()
 						.filter(|s| {
 							let proof = Proof {
 								edge_bits: solver.solutions.edge_bits as u8,
@@ -170,9 +174,7 @@ impl CuckooMiner {
 							};
 							proof.to_difficulty_unscaled().to_num() >= target_difficulty
 						})
-						.map(|s| {
-							s.clone()
-						})
+						.map(|s| s.clone())
 						.collect();
 					for mut ss in filtered_sols.iter_mut() {
 						ss.nonce = nonce;

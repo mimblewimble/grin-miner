@@ -20,15 +20,14 @@ extern crate fs_extra;
 mod sanity;
 
 use cmake::Config;
-use std::{env, fs};
-use std::path::PathBuf;
 use fs_extra::dir::*;
-
+use std::path::PathBuf;
+use std::{env, fs};
 
 #[cfg(feature = "build-cuda-plugins")]
-const BUILD_CUDA_PLUGINS:&str="TRUE";
+const BUILD_CUDA_PLUGINS: &str = "TRUE";
 #[cfg(not(feature = "build-cuda-plugins"))]
-const BUILD_CUDA_PLUGINS:&str="FALSE";
+const BUILD_CUDA_PLUGINS: &str = "FALSE";
 
 /// Tests whether source cuckoo directory exists
 
@@ -72,10 +71,10 @@ fn main() {
 	}
 
 	let dst = Config::new("src/cuckoo_sys/plugins")
-	                      .define("BUILD_CUDA_PLUGINS",BUILD_CUDA_PLUGINS) //whatever flags go here
-	                      //.cflag("-foo") //and here
-	                      .build_target("")
-	                      .build();
+		.define("BUILD_CUDA_PLUGINS", BUILD_CUDA_PLUGINS) //whatever flags go here
+		//.cflag("-foo") //and here
+		.build_target("")
+		.build();
 
 	println!("Plugin path: {:?}", plugin_path);
 	println!("OUT PATH: {:?}", out_path);
@@ -86,5 +85,4 @@ fn main() {
 	}
 
 	println!("cargo:rustc-link-search=native={}", dst.display());
-
 }

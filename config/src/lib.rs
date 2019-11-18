@@ -28,11 +28,11 @@ extern crate toml;
 #[macro_use]
 extern crate slog;
 
-extern crate grin_miner_util as util;
 extern crate cuckoo_miner as cuckoo;
+extern crate grin_miner_util as util;
 
 mod config;
 mod types;
 
-pub use types::{ConfigError, ConfigMembers, GlobalConfig, GrinMinerPluginConfig, MinerConfig};
 pub use config::read_configs;
+pub use types::{ConfigError, ConfigMembers, GlobalConfig, GrinMinerPluginConfig, MinerConfig};

@@ -21,7 +21,7 @@
 #![deny(unused_mut)]
 #![warn(missing_docs)]
 
+pub mod consensus;
 pub mod miner;
 pub mod types;
 pub mod util;
-pub mod consensus;

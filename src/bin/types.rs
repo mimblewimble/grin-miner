@@ -65,17 +65,17 @@ pub struct SubmitParams {
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct WorkerStatus {
-        pub id: String,
-        pub height: u64,
-        pub difficulty: u64,
-        pub accepted: u64,
-        pub rejected: u64,
-        pub stale: u64,
+	pub id: String,
+	pub height: u64,
+	pub difficulty: u64,
+	pub accepted: u64,
+	pub rejected: u64,
+	pub stale: u64,
 }
 
 /// Types used for internal communication from stratum client to miner
 #[derive(Serialize, Deserialize, Debug)]
-pub enum MinerMessage{
+pub enum MinerMessage {
 	// Height, difficulty, pre_pow
 	ReceivedJob(u64, u64, u64, String),
 	StopJob,
@@ -83,7 +83,7 @@ pub enum MinerMessage{
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub enum ClientMessage{
+pub enum ClientMessage {
 	// height, job_id, edge_bits, nonce, pow
 	FoundSolution(u64, u64, u32, u64, Vec<u64>),
 	Shutdown,

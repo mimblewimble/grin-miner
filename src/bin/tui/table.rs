@@ -41,28 +41,35 @@
 //! Adapted from https://github.com/behnam/rust-cursive-table-view
 //! A basic table view implementation for [cursive](https://crates.io/crates/cursive).
 
-#![deny(missing_docs, missing_copy_implementations, trivial_casts, trivial_numeric_casts,
-        unsafe_code, unused_import_braces, unused_qualifications)]
+#![deny(
+	missing_docs,
+	missing_copy_implementations,
+	trivial_casts,
+	trivial_numeric_casts,
+	unsafe_code,
+	unused_import_braces,
+	unused_qualifications
+)]
 
 // Crate Dependencies ---------------------------------------------------------
 extern crate cursive;
 
 // STD Dependencies -----------------------------------------------------------
-use std::rc::Rc;
-use std::hash::Hash;
 use std::cmp::{self, Ordering};
 use std::collections::HashMap;
+use std::hash::Hash;
+use std::rc::Rc;
 
 // External Dependencies ------------------------------------------------------
-use cursive::With;
-use cursive::vec::Vec2;
 use cursive::align::HAlign;
-use cursive::theme::ColorStyle;
-use cursive::{Cursive, Printer};
 use cursive::direction::Direction;
-use cursive::view::{ScrollBase, View};
 use cursive::event::{Callback, Event, EventResult, Key};
+use cursive::theme::ColorStyle;
 use cursive::theme::PaletteColor::*;
+use cursive::vec::Vec2;
+use cursive::view::{ScrollBase, View};
+use cursive::With;
+use cursive::{Cursive, Printer};
 
 /// A trait for displaying and sorting items inside a
 /// [`TableView`](struct.TableView.html).
@@ -150,11 +157,11 @@ pub struct TableView<T: TableViewItem<H>, H: Eq + Hash + Copy + Clone + 'static>
 	items: Vec<T>,
 	rows_to_items: Vec<usize>,
 
-	on_sort: Option<Rc<Fn(&mut Cursive, H, Ordering)>>,
+	on_sort: Option<Rc<dyn Fn(&mut Cursive, H, Ordering)>>,
 	// TODO Pass drawing offsets into the handlers so a popup menu
 	// can be created easily?
-	on_submit: Option<Rc<Fn(&mut Cursive, usize, usize)>>,
-	on_select: Option<Rc<Fn(&mut Cursive, usize, usize)>>,
+	on_submit: Option<Rc<dyn Fn(&mut Cursive, usize, usize)>>,
+	on_select: Option<Rc<dyn Fn(&mut Cursive, usize, usize)>>,
 }
 
 impl<T: TableViewItem<H>, H: Eq + Hash + Copy + Clone + 'static> TableView<T, H> {
@@ -594,7 +601,7 @@ impl<T: TableViewItem<H>, H: Eq + Hash + Copy + Clone + 'static> TableView<T, H>
 		let mut column_offset = 0;
 		let column_count = self.columns.len();
 		for (index, column) in self.columns.iter().enumerate() {
-			let printer = &printer.offset((column_offset, 0)).focused(true); 
+			let printer = &printer.offset((column_offset, 0)).focused(true);
 
 			callback(printer, column);
 
@@ -675,7 +682,8 @@ impl<T: TableViewItem<H>, H: Eq + Hash + Copy + Clone + 'static> TableView<T, H>
 	fn column_select(&mut self) {
 		let next = self.active_column();
 		let column = self.columns[next].column;
-		let current = self.columns
+		let current = self
+			.columns
 			.iter()
 			.position(|c| c.order != Ordering::Equal)
 			.unwrap_or(0);
@@ -693,7 +701,8 @@ impl<T: TableViewItem<H>, H: Eq + Hash + Copy + Clone + 'static> TableView<T, H>
 }
 
 impl<T: TableViewItem<H> + 'static, H: Eq + Hash + Copy + Clone + 'static> View
-	for TableView<T, H> {
+	for TableView<T, H>
+{
 	fn draw(&self, printer: &Printer) {
 		self.draw_columns(printer, "╷ ", |printer, column| {
 			let color = if column.order != Ordering::Equal || column.selected {
@@ -746,10 +755,10 @@ impl<T: TableViewItem<H> + 'static, H: Eq + Hash + Copy + Clone + 'static> View
 		let column_count = self.columns.len();
 
 		// Split up all columns into sized / unsized groups
-		let (mut sized, mut usized): (Vec<&mut TableColumn<H>>, Vec<&mut TableColumn<H>>) =
-			self.columns
-				.iter_mut()
-				.partition(|c| c.requested_width.is_some());
+		let (mut sized, mut usized): (Vec<&mut TableColumn<H>>, Vec<&mut TableColumn<H>>) = self
+			.columns
+			.iter_mut()
+			.partition(|c| c.requested_width.is_some());
 
 		// Subtract one for the seperators between our columns (that's column_count - 1)
 		let mut available_width = size.x.saturating_sub(column_count.saturating_sub(1) * 3);
