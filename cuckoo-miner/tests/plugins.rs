@@ -38,18 +38,21 @@ const CUCKATOO_29_SOL: [u64; 42] = [
 	0x1c05d5b0, 0x1c0b9caa,
 ];
 
-const TEST_PLUGIN_LIBS_CORE: [&str; 6] = [
+const TEST_PLUGIN_LIBS_CORE: [&str; 8] = [
 	"cuckatoo_mean_cpu_compat_19",
 	"cuckatoo_mean_cpu_compat_31",
 	"cuckatoo_lean_cpu_compat_19",
 	"cuckatoo_lean_cpu_compat_31",
 	"cuckaroo_cpu_compat_19",
 	"cuckaroo_cpu_compat_29",
+	"cuckarood_cpu_compat_19",
+	"cuckarood_cpu_compat_29",
 ];
 
-const TEST_PLUGIN_LIBS_OPTIONAL: [&str; 2] = [
+const TEST_PLUGIN_LIBS_OPTIONAL: [&str; 3] = [
 	"cuckaroo_mean_cuda_29",
 	"cuckarood_mean_cuda_29",
+	"cuckaroom_mean_cuda_29",
 ];
 
 //Helper to convert from hex string
@@ -173,6 +176,23 @@ fn sanity_cuckaroo_mean_compat_cpu_29() {
 #[test]
 fn sanity_cuckaroo_mean_avx2_cpu_29() {
 	let pl = load_plugin_lib("cuckaroo_cpu_avx2_29").unwrap();
+	let mut params = pl.get_default_params();
+	params.nthreads = 4;
+	run_solver(&pl, params);
+}
+
+#[test]
+fn sanity_cuckarood_mean_compat_cpu_29() {
+	let pl = load_plugin_lib("cuckarood_cpu_compat_29").unwrap();
+	let mut params = pl.get_default_params();
+	params.nthreads = 4;
+	run_solver(&pl, params);
+}
+
+#[cfg(feature = "test-avx2")]
+#[test]
+fn sanity_cuckarood_mean_avx2_cpu_29() {
+	let pl = load_plugin_lib("cuckarood_cpu_avx2_29").unwrap();
 	let mut params = pl.get_default_params();
 	params.nthreads = 4;
 	run_solver(&pl, params);

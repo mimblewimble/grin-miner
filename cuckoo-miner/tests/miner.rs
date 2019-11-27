@@ -1,4 +1,4 @@
-// Copyright 2017-2019 The Grin Developers
+// Copyright 2017-2020 The Grin Developers
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -184,5 +184,12 @@ fn mine_cuckaroo_cuda_29() {
 #[test]
 fn mine_cuckarood_cuda_29() {
 	let config = PluginConfig::new(mining_plugin_dir_for_tests(), "cuckarood_cuda_29").unwrap();
+	mine_async_for_duration(&vec![config], 20);
+}
+
+#[cfg(feature = "build-cuda-plugins")]
+#[test]
+fn mine_cuckaroom_cuda_29() {
+	let config = PluginConfig::new(mining_plugin_dir_for_tests(), "cuckaroom_cuda_29").unwrap();
 	mine_async_for_duration(&vec![config], 20);
 }
