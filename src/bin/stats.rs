@@ -17,7 +17,6 @@
 
 /// Struct to return relevant information about the mining process
 /// back to interested callers (such as the TUI)
-
 use plugin;
 
 #[derive(Clone)]

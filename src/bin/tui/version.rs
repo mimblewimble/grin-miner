@@ -16,24 +16,24 @@
 
 use std::sync::{Arc, RwLock};
 
-use cursive::Cursive;
-use cursive::view::View;
-use cursive::views::{BoxView, LinearLayout, TextView};
 use cursive::direction::Orientation;
 use cursive::traits::*;
+use cursive::view::View;
+use cursive::views::{BoxView, LinearLayout, TextView};
+use cursive::Cursive;
 
 use tui::constants::*;
 use tui::types::*;
 
-use stats::Stats;
 use info_strings;
+use stats::Stats;
 
 /// Version view
 pub struct TUIVersionView;
 
 impl TUIStatusListener for TUIVersionView {
 	/// Create basic status view
-	fn create() -> Box<View> {
+	fn create() -> Box<dyn View> {
 		let (basic_info, detailed_info, _) = info_strings();
 		let basic_status_view = BoxView::with_full_screen(
 			LinearLayout::new(Orientation::Vertical)

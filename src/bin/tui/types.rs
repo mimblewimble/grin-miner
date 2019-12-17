@@ -16,8 +16,8 @@
 
 use std::sync::{Arc, RwLock};
 
-use cursive::Cursive;
 use cursive::view::View;
+use cursive::Cursive;
 use stats::Stats;
 
 /// Main message struct to communicate between the UI and
@@ -32,7 +32,7 @@ pub enum UIMessage {
 
 pub trait TUIStatusListener {
 	/// create the view, to return to the main UI controller
-	fn create() -> Box<View>;
+	fn create() -> Box<dyn View>;
 	/// Update according to status update contents
 	fn update(c: &mut Cursive, stats: Arc<RwLock<Stats>>);
 }

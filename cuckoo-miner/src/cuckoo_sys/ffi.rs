@@ -67,16 +67,14 @@ impl PluginLibrary {
 				lib_full_path: String::from(path),
 
 				cuckoo_create_solver_ctx: {
-					let cuckoo_create_solver_ctx: libloading::Symbol<
-						CuckooCreateSolverCtx,
-					> = loaded_library.get(b"create_solver_ctx\0").unwrap();
+					let cuckoo_create_solver_ctx: libloading::Symbol<CuckooCreateSolverCtx> =
+						loaded_library.get(b"create_solver_ctx\0").unwrap();
 					Arc::new(Mutex::new(*cuckoo_create_solver_ctx.into_raw()))
 				},
 
 				cuckoo_destroy_solver_ctx: {
-					let cuckoo_destroy_solver_ctx: libloading::Symbol<
-						CuckooDestroySolverCtx,
-					> = loaded_library.get(b"destroy_solver_ctx\0").unwrap();
+					let cuckoo_destroy_solver_ctx: libloading::Symbol<CuckooDestroySolverCtx> =
+						loaded_library.get(b"destroy_solver_ctx\0").unwrap();
 					Arc::new(Mutex::new(*cuckoo_destroy_solver_ctx.into_raw()))
 				},
 
@@ -87,16 +85,14 @@ impl PluginLibrary {
 				},
 
 				cuckoo_stop_solver: {
-					let cuckoo_stop_solver: libloading::Symbol<
-						CuckooStopSolver,
-					> = loaded_library.get(b"stop_solver\0").unwrap();
+					let cuckoo_stop_solver: libloading::Symbol<CuckooStopSolver> =
+						loaded_library.get(b"stop_solver\0").unwrap();
 					Arc::new(Mutex::new(*cuckoo_stop_solver.into_raw()))
 				},
 
 				cuckoo_fill_default_params: {
-					let cuckoo_fill_default_params: libloading::Symbol<
-						CuckooFillDefaultParams,
-					> = loaded_library.get(b"fill_default_params\0").unwrap();
+					let cuckoo_fill_default_params: libloading::Symbol<CuckooFillDefaultParams> =
+						loaded_library.get(b"fill_default_params\0").unwrap();
 					Arc::new(Mutex::new(*cuckoo_fill_default_params.into_raw()))
 				},
 
