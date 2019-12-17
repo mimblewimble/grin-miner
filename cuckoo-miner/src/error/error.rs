@@ -63,8 +63,9 @@ impl From<io::Error> for CuckooMinerError {
 
 impl From<string::FromUtf8Error> for CuckooMinerError {
 	fn from(error: string::FromUtf8Error) -> Self {
-		CuckooMinerError::PluginIOError(String::from(
-			format!("Error loading plugin description: {}", error),
-		))
+		CuckooMinerError::PluginIOError(String::from(format!(
+			"Error loading plugin description: {}",
+			error
+		)))
 	}
 }

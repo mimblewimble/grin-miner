@@ -15,23 +15,23 @@
 //! Basic TUI to better output the overall system status and status
 //! of various subsystems
 
-use std::{self, thread};
 use std::sync::{mpsc, Arc, RwLock};
+use std::{self, thread};
 use time;
 
-use cursive::Cursive;
-use cursive::theme::{BaseColor, BorderStyle, Color, Theme};
-use cursive::theme::PaletteColor::*;
-use cursive::theme::Color::*;
+use cursive::direction::Orientation;
 use cursive::theme::BaseColor::*;
+use cursive::theme::Color::*;
+use cursive::theme::PaletteColor::*;
+use cursive::theme::{BaseColor, BorderStyle, Color, Theme};
+use cursive::traits::*;
 use cursive::utils::markup::StyledString;
 use cursive::views::{LinearLayout, Panel, StackView, TextView, ViewBox};
-use cursive::direction::Orientation;
-use cursive::traits::*;
+use cursive::Cursive;
 
-use tui::{menu, mining, version};
-use tui::types::*;
 use tui::constants::*;
+use tui::types::*;
+use tui::{menu, mining, version};
 
 use stats;
 
@@ -174,7 +174,10 @@ impl Controller {
 				}
 			}
 			if time::get_time().sec > next_stat_update {
-				self.ui.ui_tx.send(UIMessage::UpdateStatus(stats.clone())).unwrap();
+				self.ui
+					.ui_tx
+					.send(UIMessage::UpdateStatus(stats.clone()))
+					.unwrap();
 				next_stat_update = time::get_time().sec + stat_update_interval;
 			}
 			thread::sleep(std::time::Duration::from_millis(100));

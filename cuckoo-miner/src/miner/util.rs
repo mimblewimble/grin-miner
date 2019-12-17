@@ -22,7 +22,7 @@ pub fn header_data(pre_nonce: &str, post_nonce: &str, nonce: u64) -> (Vec<u8>, u
 	let mut pre_vec = from_hex_string(pre_nonce);
 	let mut post_vec = from_hex_string(post_nonce);
 
-	let sec_scaling_bytes = &pre_vec.clone()[pre_vec.len()-4..pre_vec.len()];
+	let sec_scaling_bytes = &pre_vec.clone()[pre_vec.len() - 4..pre_vec.len()];
 	let sec_scaling = BigEndian::read_u32(&sec_scaling_bytes);
 
 	let mut nonce_bytes = [0; 8];

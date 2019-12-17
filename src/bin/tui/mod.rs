@@ -20,10 +20,10 @@
 #![deny(unused_mut)]
 #![warn(missing_docs)]
 
-pub mod ui;
-pub mod table;
 pub mod constants;
 pub mod menu;
 pub mod mining;
-pub mod version;
+pub mod table;
 pub mod types;
+pub mod ui;
+pub mod version;

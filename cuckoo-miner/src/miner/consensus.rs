@@ -13,11 +13,10 @@
 // limitations under the License.
 
 /// Difficulty calculation as from Grin
-
 use blake2::blake2b::Blake2b;
+use byteorder::{BigEndian, ByteOrder};
 use std::cmp::{max, min};
 use std::fmt;
-use byteorder::{BigEndian, ByteOrder};
 
 // constants from grin
 const DEFAULT_MIN_EDGE_BITS: u8 = 31;
@@ -229,14 +228,13 @@ impl fmt::Display for Hash {
 	}
 }
 
-
 #[cfg(test)]
 mod tests {
 	use super::*;
 
 	#[test]
 	fn proof_hash() {
-		let mut in_nonces: Vec<u64> = [0u64; 42].to_vec(); 
+		let mut in_nonces: Vec<u64> = [0u64; 42].to_vec();
 		let proof = Proof::new(in_nonces.clone(), DEFAULT_MIN_EDGE_BITS);
 		let hash_str = format!("{}", proof.hash());
 		println!("Hash is: {}", hash_str);
@@ -282,4 +280,3 @@ mod tests {
 		assert_eq!(difficulty, Difficulty::from_num(296303));
 	}
 }
-
