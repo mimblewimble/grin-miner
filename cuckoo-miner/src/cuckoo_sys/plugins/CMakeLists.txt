@@ -16,6 +16,8 @@ set (CUDA_HOST_COMPILER_OVERRIDE $ENV{CUDA_HOST_COMPILER})
 set (SKIP_CUCKATOO_GPU $ENV{SKIP_CUCKATOO_GPU})
 set (SKIP_CUCKAROO_GPU $ENV{SKIP_CUCKAROO_GPU})
 set (SKIP_CUCKAROOD_GPU $ENV{SKIP_CUCKAROOD_GPU})
+set (SKIP_CUCKAROOM_CPU "1")
+set (SKIP_CUCKAROOM_GPU $ENV{SKIP_CUCKAROOD_GPU})
 
 #blake2b prerequisite
 set (BLAKE_2B "cuckoo/src/crypto/blake2b-ref.c")
@@ -167,4 +169,39 @@ set (AR2_CUDA_SRC cuckoo/src/cuckarood/kernel.cuh cuckoo/src/cuckarood/photon.cu
 if (NOT SKIP_CUCKAROOD_GPU)
   build_cuda_target("${AR2_CUDA_SRC}" cuckarood_cuda_19 "-DXBITS=1 -DEPS_A=4 -DEPS_B=3 -DIDXSHIFT=8 -DEDGEBITS=19")
   build_cuda_target("${AR2_CUDA_SRC}" cuckarood_cuda_29 "-DEDGEBITS=29")
+endif()
+
+##################################################################################
+### CUCKAROOM (Asic Resistant)  ##################################################
+##################################################################################
+
+### AR CPU BUILDING  #########################################
+
+set (AR2_CPU_SRC
+			cuckoo/src/cuckaroom/cuckaroom.hpp
+			cuckoo/src/cuckaroom/bitmap.hpp
+			cuckoo/src/cuckaroom/graph.hpp
+			cuckoo/src/threads/barrier.hpp
+			cuckoo/src/crypto/siphash.hpp
+			cuckoo/src/crypto/siphashxN.h
+			cuckoo/src/cuckaroom/mean.hpp
+			cuckoo/src/cuckaroom/mean.cpp
+			${BLAKE_2B})
+
+### AR CPU TARGETS #########################################
+
+if (NOT SKIP_CUCKAROOM_CPU)
+  build_cpu_target("${AR2_CPU_SRC}" cuckaroom_cpu_compat_19 "-mno-avx2 -DXBITS=2 -DNSIPHASH=4 -DEDGEBITS=19 -DSAVEEDGES")
+  build_cpu_target("${AR2_CPU_SRC}" cuckaroom_cpu_avx2_19 "-mavx2 -DXBITS=2 -DNSIPHASH=8 -DEDGEBITS=19 -DSAVEEDGES")
+  build_cpu_target("${AR2_CPU_SRC}" cuckaroom_cpu_compat_29 "-mno-avx2 -DNSIPHASH=4 -DEDGEBITS=29 -DSAVEEDGES")
+  build_cpu_target("${AR2_CPU_SRC}" cuckaroom_cpu_avx2_29 "-mavx2 -DNSIPHASH=8 -DEDGEBITS=29 -DSAVEEDGES")
+endif()
+
+### AR CUDA TARGETS #########################################
+
+set (AR2_CUDA_SRC cuckoo/src/cuckaroom/kernel.cuh cuckoo/src/cuckaroom/mean.cu ${BLAKE_2B} )
+
+if (NOT SKIP_CUCKAROOM_GPU)
+  build_cuda_target("${AR2_CUDA_SRC}" cuckaroom_cuda_19 "-DXBITS=1 -DEPS_A=4 -DEPS_B=3 -DIDXSHIFT=8 -DEDGEBITS=19")
+  build_cuda_target("${AR2_CUDA_SRC}" cuckaroom_cuda_29 "-DEDGEBITS=29")
 endif()

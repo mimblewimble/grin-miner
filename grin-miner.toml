@@ -57,9 +57,9 @@ stratum_server_tls_enabled = false
 
 #miner_plugin_dir = "target/debug/plugins"
 
-###############################################################
-### CUCKAROOD (i.e. GPU-Friendly) MINER PLUGIN CONFIGURATION ###
-###############################################################
+################################################################
+### CUCKAROO* (i.e. GPU-Friendly) MINER PLUGIN CONFIGURATION ###
+################################################################
 
 # Multiple plugins can be specified, (e.g. a cpu
 # miner and a gpu miner running in parallel)
@@ -72,9 +72,9 @@ stratum_server_tls_enabled = false
 # but in CUDA plugins the device number can be set
 # corresponding to the device ID. (use nvidia-smi to find this)
 
-### CUCKAROOD CPU SOLVERS (Asic Resist, or GPU-Friendly)
+### CUCKAROO* CPU SOLVERS (Asic Resist, or GPU-Friendly)
 
-# The fastest cpu algorithm, but consumes the most memory
+# cpu mean algorithm for processors supporting sse2
 
 [[mining.miner_plugin_config]]
 plugin_name = "cuckarood_cpu_compat_29"
@@ -88,7 +88,7 @@ nthreads = 4
 #[mining.miner_plugin_config.parameters]
 #nthreads = 4
 
-# CUCKAROOD CUDA SOLVER
+# CUCKAROO* CUDA SOLVER
 #
 # CUDA plugins are not built by default. To build:
 #1) Ensure the latest cuda toolkit is installed
@@ -101,13 +101,15 @@ nthreads = 4
 # instance of each plugin.  device 0 is used by default
 #
 
-# currently requires 5GB GPU memory
+# currently requires 6GB GPU memory
 #[[mining.miner_plugin_config]]
-#plugin_name = "cuckarood_cuda_29"
+#plugin_name = "cuckaroom_cuda_29"
+# or, prior to 2nd hardfork: plugin_name = "cuckarood_cuda_29"
 #[mining.miner_plugin_config.parameters]
 #device = 0
 #cpuload = 1
-#ntrims = 31
+#ntrims = 399
+# or, prior to 2nd hardfork: ntrims = 31
 #genablocks = 1024
 #recoverblocks = 2048
 #recovertpb = 256
@@ -115,7 +117,7 @@ nthreads = 4
 # e.g. To enable multiple devices (copy params from above as needed)
 
 #[[mining.miner_plugin_config]]
-#plugin_name = "cuckaroo_cuda_29"
+#plugin_name = "cuckarood_cuda_29"
 #[mining.miner_plugin_config.parameters]
 #device = 1
 
@@ -123,7 +125,7 @@ nthreads = 4
 # mean OpenCL supports both NVidia and AMD
 # to install run ./install_ocl_plugins.sh script
 #[[mining.miner_plugin_config]]
-#plugin_name = "ocl_cuckaroo"
+#plugin_name = "ocl_cuckarood"
 #[mining.miner_plugin_config.parameters]
 # 0 for default, 1 for AMD, 2 for NVidia, specify if you have
 # cards from both vendors
