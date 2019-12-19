@@ -9,7 +9,7 @@ profile = []
 
 
 [dependencies]
-grin_miner_plugin = { path = "../plugin", version = "2.0.0" }
+grin_miner_plugin = { path = "../plugin", version = "3.0.0-beta.1" }
 ocl = "0.19"
 hashbrown = "0.1"
 libc = "0.2.24"
