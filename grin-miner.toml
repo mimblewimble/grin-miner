@@ -177,6 +177,19 @@ nthreads = 4
 #recoverblocks = 2048
 #recovertpb = 256
 
+#the C32 reference miner requires 20GB of memory
+#runs on the RTX Titan with 24GB
+
+#[[mining.miner_plugin_config]]
+#plugin_name = "cuckatoo_mean_cuda_rtx_32"
+#[mining.miner_plugin_config.parameters]
+#device = 0
+#cpuload = 1
+#ntrims = 31
+#genablocks = 1024
+#recoverblocks = 2048
+#recovertpb = 256
+
 #lean cuda
 #[[mining.miner_plugin_config]]
 #plugin_name = "cuckatoo_lean_cuda_31"
