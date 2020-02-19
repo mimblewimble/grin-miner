@@ -199,9 +199,11 @@ endif()
 
 ### AR CUDA TARGETS #########################################
 
-set (AR2_CUDA_SRC cuckoo/src/cuckaroom/kernel.cuh cuckoo/src/cuckaroom/mean.cu ${BLAKE_2B} )
+set (AR2_CUDA_SRC cuckoo/src/cuckaroom/meaner.cu ${BLAKE_2B} )
+set (AR2_CUDA_SRC2 cuckoo/src/cuckaroom/kernel.cuh cuckoo/src/cuckaroom/mean.cu ${BLAKE_2B} )
 
 if (NOT SKIP_CUCKAROOM_GPU)
-  build_cuda_target("${AR2_CUDA_SRC}" cuckaroom_cuda_19 "-DXBITS=1 -DEPS_A=4 -DEPS_B=3 -DIDXSHIFT=8 -DEDGEBITS=19")
   build_cuda_target("${AR2_CUDA_SRC}" cuckaroom_cuda_29 "-DEDGEBITS=29")
+  build_cuda_target("${AR2_CUDA_SRC2}" cuckaroom_old_cuda_29 "-DEDGEBITS=29")
+  build_cuda_target("${AR2_CUDA_SRC2}" cuckaroom_cuda_19 "-DXBITS=1 -DEPS_A=4 -DEPS_B=3 -DIDXSHIFT=8 -DEDGEBITS=19")
 endif()

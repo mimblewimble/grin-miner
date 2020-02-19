@@ -104,12 +104,10 @@ nthreads = 4
 # currently requires 6GB GPU memory
 #[[mining.miner_plugin_config]]
 #plugin_name = "cuckaroom_cuda_29"
-# or, prior to 2nd hardfork: plugin_name = "cuckarood_cuda_29"
 #[mining.miner_plugin_config.parameters]
 #device = 0
 #cpuload = 1
-#ntrims = 399
-# or, prior to 2nd hardfork: ntrims = 31
+#ntrims = 15
 #genablocks = 1024
 #recoverblocks = 2048
 #recovertpb = 256
