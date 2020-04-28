@@ -218,11 +218,6 @@ impl Graph {
 		Some(AdjList::new(node, &self.adj_store))
 	}
 
-	#[inline]
-	fn nodes(&self) -> impl Iterator<Item = &u32> {
-		self.adj_index.keys()
-	}
-
 	fn check_pair(&self, u: u32, _v: u32, search: &mut Search) -> Result<(), String> {
 		self.walk_graph(u, search)
 		//self.walk_graph(v, search)

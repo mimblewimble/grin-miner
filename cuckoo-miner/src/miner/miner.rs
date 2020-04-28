@@ -1,4 +1,4 @@
-// Copyright 2017 The Grin Developers
+// Copyright 2020 The Grin Developers
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -69,7 +69,7 @@ impl CuckooMiner {
 	pub fn new(configs: Vec<PluginConfig>) -> CuckooMiner {
 		let len = configs.len();
 		CuckooMiner {
-			configs: configs,
+			configs,
 			shared_data: Arc::new(RwLock::new(JobSharedData::new(len))),
 			control_txs: vec![],
 			solver_loop_txs: vec![],
@@ -139,9 +139,9 @@ impl CuckooMiner {
 			}
 			let header_pre = { shared_data.read().unwrap().pre_nonce.clone() };
 			let header_post = { shared_data.read().unwrap().post_nonce.clone() };
-			let height = { shared_data.read().unwrap().height.clone() };
-			let job_id = { shared_data.read().unwrap().job_id.clone() };
-			let target_difficulty = { shared_data.read().unwrap().difficulty.clone() };
+			let height = { shared_data.read().unwrap().height };
+			let job_id = { shared_data.read().unwrap().job_id };
+			let target_difficulty = { shared_data.read().unwrap().difficulty };
 			let header = util::get_next_header_data(&header_pre, &header_post);
 			let nonce = header.0;
 			//let sec_scaling = header.2;
@@ -174,14 +174,18 @@ impl CuckooMiner {
 							};
 							proof.to_difficulty_unscaled().to_num() >= target_difficulty
 						})
-						.map(|s| s.clone())
+						.cloned()
 						.collect();
 					for mut ss in filtered_sols.iter_mut() {
 						ss.nonce = nonce;
 						ss.id = job_id as u64;
 					}
 					solver.solutions.num_sols = filtered_sols.len() as u32;
-					for i in 0..solver.solutions.num_sols as usize {
+					for (i, _) in filtered_sols
+						.iter()
+						.enumerate()
+						.take(solver.solutions.num_sols as usize)
+					{
 						solver.solutions.sols[i] = filtered_sols[i];
 					}
 					s.solutions.push(solver.solutions.clone());
@@ -224,8 +228,7 @@ impl CuckooMiner {
 			self.solver_loop_txs.push(solver_tx);
 			self.solver_stopped_rxs.push(solver_stopped_rx);
 			thread::spawn(move || {
-				let _ =
-					CuckooMiner::solver_thread(s, i, sd, control_rx, solver_rx, solver_stopped_tx);
+				CuckooMiner::solver_thread(s, i, sd, control_rx, solver_rx, solver_stopped_tx);
 			});
 			i += 1;
 		}
@@ -252,13 +255,15 @@ impl CuckooMiner {
 		                   * be returned. */
 	) -> Result<(), CuckooMinerError> {
 		let mut sd = self.shared_data.write().unwrap();
-		let mut paused = false;
-		if height != sd.height {
+		let paused = if height != sd.height {
 			// stop/pause any existing jobs if job is for a new
 			// height
 			self.pause_solvers();
-			paused = true;
-		}
+			true
+		} else {
+			false
+		};
+
 		sd.job_id = job_id;
 		sd.height = height;
 		sd.pre_nonce = pre_nonce.to_owned();
@@ -283,7 +288,7 @@ impl CuckooMiner {
 			// let time_elapsed=Instant::now()-time_pre_lock;
 			// println!("Get_solution Time spent waiting for lock: {}",
 			// time_elapsed.as_secs()*1000 +(time_elapsed.subsec_nanos()/1_000_000)as u64);
-			if s.solutions.len() > 0 {
+			if !s.solutions.is_empty() {
 				let sol = s.solutions.pop().unwrap();
 				return Some(sol);
 			}
@@ -342,12 +347,9 @@ impl CuckooMiner {
 	pub fn wait_for_solver_shutdown(&self) {
 		for r in self.solver_stopped_rxs.iter() {
 			while let Some(message) = r.iter().next() {
-				match message {
-					ControlMessage::SolverStopped(i) => {
-						debug!(LOGGER, "Solver stopped: {}", i);
-						break;
-					}
-					_ => {}
+				if let ControlMessage::SolverStopped(i) = message {
+					debug!(LOGGER, "Solver stopped: {}", i);
+					break;
 				}
 			}
 		}

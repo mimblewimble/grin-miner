@@ -1,4 +1,4 @@
-// Copyright 2018 The Grin Developers
+// Copyright 2020 The Grin Developers
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ use std::sync::{Arc, RwLock};
 use cursive::direction::Orientation;
 use cursive::traits::*;
 use cursive::view::View;
-use cursive::views::{BoxView, Dialog, LinearLayout, StackView, TextView};
+use cursive::views::{Dialog, LinearLayout, ResizedView, StackView, TextView};
 use cursive::Cursive;
 
 use tui::constants::*;
@@ -57,21 +57,22 @@ impl MiningDeviceColumn {
 
 impl TableViewItem<MiningDeviceColumn> for SolverStats {
 	fn to_column(&self, column: MiningDeviceColumn) -> String {
-		let last_solution_time_secs = self.last_solution_time as f64 / 1000000000.0;
+		let last_solution_time_secs = self.last_solution_time as f64 / 1_000_000_000.0;
 		match column {
 			MiningDeviceColumn::Plugin => self.get_plugin_name(),
-			MiningDeviceColumn::DeviceId => format!("{}", self.device_id).to_owned(),
+			MiningDeviceColumn::DeviceId => format!("{}", self.device_id),
 			MiningDeviceColumn::DeviceName => self.get_device_name(),
-			MiningDeviceColumn::EdgeBits => format!("{}", self.edge_bits).to_owned(),
-			MiningDeviceColumn::ErrorStatus => match self.has_errored {
-				false => String::from("OK"),
-				_ => String::from("Errored"),
-			},
-			MiningDeviceColumn::LastGraphTime => {
-				String::from(format!("{}s", last_solution_time_secs))
+			MiningDeviceColumn::EdgeBits => format!("{}", self.edge_bits),
+			MiningDeviceColumn::ErrorStatus => {
+				if self.has_errored {
+					String::from("Errored")
+				} else {
+					String::from("OK")
+				}
 			}
+			MiningDeviceColumn::LastGraphTime => format!("{}s", last_solution_time_secs),
 			MiningDeviceColumn::GraphsPerSecond => {
-				String::from(format!("{:.*}", 4, 1.0 / last_solution_time_secs))
+				format!("{:.*}", 4, 1.0 / last_solution_time_secs)
 			}
 		}
 	}
@@ -80,9 +81,9 @@ impl TableViewItem<MiningDeviceColumn> for SolverStats {
 	where
 		Self: Sized,
 	{
-		let last_solution_time_secs_self = self.last_solution_time as f64 / 1000000000.0;
+		let last_solution_time_secs_self = self.last_solution_time as f64 / 1_000_000_000.0;
 		let gps_self = 1.0 / last_solution_time_secs_self;
-		let last_solution_time_secs_other = other.last_solution_time as f64 / 1000000000.0;
+		let last_solution_time_secs_other = other.last_solution_time as f64 / 1_000_000_000.0;
 		let gps_other = 1.0 / last_solution_time_secs_other;
 		match column {
 			MiningDeviceColumn::Plugin => self.plugin_name.cmp(&other.plugin_name),
@@ -125,46 +126,45 @@ impl TUIStatusListener for TUIMiningView {
 				c.width_percent(10)
 			});
 
-		let status_view =
-			LinearLayout::new(Orientation::Vertical)
-				.child(LinearLayout::new(Orientation::Horizontal).child(
-					TextView::new("Connection Status: Starting...").with_id("mining_server_status"),
-				))
-				.child(
-					LinearLayout::new(Orientation::Horizontal)
-						.child(TextView::new("Mining Status: ").with_id("mining_status")),
-				)
-				.child(
-					LinearLayout::new(Orientation::Horizontal)
-						.child(TextView::new("  ").with_id("network_info")),
-				)
-				.child(
-					LinearLayout::new(Orientation::Horizontal)
-						.child(TextView::new("  ").with_id("mining_statistics")),
-				)
-				.child(
-					LinearLayout::new(Orientation::Horizontal)
-						.child(TextView::new("Last Message Sent:  ").with_id("last_message_sent")),
-				)
-				.child(LinearLayout::new(Orientation::Horizontal).child(
-					TextView::new("Last Message Received:  ").with_id("last_message_received"),
-				));
+		let status_view = LinearLayout::new(Orientation::Vertical)
+			.child(LinearLayout::new(Orientation::Horizontal).child(
+				TextView::new("Connection Status: Starting...").with_name("mining_server_status"),
+			))
+			.child(
+				LinearLayout::new(Orientation::Horizontal)
+					.child(TextView::new("Mining Status: ").with_name("mining_status")),
+			)
+			.child(
+				LinearLayout::new(Orientation::Horizontal)
+					.child(TextView::new("  ").with_name("network_info")),
+			)
+			.child(
+				LinearLayout::new(Orientation::Horizontal)
+					.child(TextView::new("  ").with_name("mining_statistics")),
+			)
+			.child(
+				LinearLayout::new(Orientation::Horizontal)
+					.child(TextView::new("Last Message Sent:  ").with_name("last_message_sent")),
+			)
+			.child(LinearLayout::new(Orientation::Horizontal).child(
+				TextView::new("Last Message Received:  ").with_name("last_message_received"),
+			));
 
 		let mining_device_view = LinearLayout::new(Orientation::Vertical)
 			.child(status_view)
-			.child(BoxView::with_full_screen(
-				Dialog::around(table_view.with_id(TABLE_MINING_STATUS).min_size((50, 20)))
+			.child(ResizedView::with_full_screen(
+				Dialog::around(table_view.with_name(TABLE_MINING_STATUS).min_size((50, 20)))
 					.title("Mining Devices"),
 			))
-			.with_id("mining_device_view");
+			.with_name("mining_device_view");
 
 		let view_stack = StackView::new()
 			.layer(mining_device_view)
-			.with_id("mining_stack_view");
+			.with_name("mining_stack_view");
 
 		let mining_view = LinearLayout::new(Orientation::Vertical).child(view_stack);
 
-		Box::new(mining_view.with_id(VIEW_MINING))
+		Box::new(mining_view.with_name(VIEW_MINING))
 	}
 
 	/// update
@@ -174,7 +174,7 @@ impl TUIStatusListener for TUIMiningView {
 			(stats.client_stats.clone(), stats.mining_stats.clone())
 		};
 
-		c.call_on_id("mining_server_status", |t: &mut TextView| {
+		c.call_on_name("mining_server_status", |t: &mut TextView| {
 			t.set_content(client_stats.connection_status.clone());
 		});
 
@@ -209,17 +209,17 @@ impl TUIStatusListener for TUIMiningView {
 		};
 
 		// device
-		c.call_on_id("mining_status", |t: &mut TextView| {
+		c.call_on_name("mining_status", |t: &mut TextView| {
 			t.set_content(basic_mining_status);
 		});
-		c.call_on_id("network_info", |t: &mut TextView| {
+		c.call_on_name("network_info", |t: &mut TextView| {
 			t.set_content(basic_network_info);
 		});
 
-		c.call_on_id("last_message_sent", |t: &mut TextView| {
+		c.call_on_name("last_message_sent", |t: &mut TextView| {
 			t.set_content(client_stats.last_message_sent.clone());
 		});
-		c.call_on_id("last_message_received", |t: &mut TextView| {
+		c.call_on_name("last_message_received", |t: &mut TextView| {
 			t.set_content(client_stats.last_message_received.clone());
 		});
 
@@ -232,12 +232,12 @@ impl TUIStatusListener for TUIMiningView {
 				mining_stats.solution_stats.num_staled,
 				mining_stats.solution_stats.num_blocks_found,
 			);
-			c.call_on_id("mining_statistics", |t: &mut TextView| {
+			c.call_on_name("mining_statistics", |t: &mut TextView| {
 				t.set_content(sol_stat);
 			});
 		}
 
-		let _ = c.call_on_id(
+		let _ = c.call_on_name(
 			TABLE_MINING_STATUS,
 			|t: &mut TableView<SolverStats, MiningDeviceColumn>| {
 				t.set_items(mining_stats.device_stats);

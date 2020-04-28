@@ -1,4 +1,4 @@
-// Copyright 2017 The Grin Developers
+// Copyright 2020 The Grin Developers
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,8 +15,8 @@
 //! Miner types
 use std::sync::{Arc, RwLock};
 
+use error::CuckooMinerError;
 use plugin::{SolverSolutions, SolverStats};
-use CuckooMinerError;
 use {PluginConfig, PluginLibrary};
 
 pub type JobSharedDataType = Arc<RwLock<JobSharedData>>;
@@ -40,7 +40,7 @@ impl SolverInstance {
 		let l = PluginLibrary::new(&config.file)?;
 		Ok(SolverInstance {
 			lib: l,
-			config: config,
+			config,
 			stats: SolverStats::default(),
 			solutions: SolverSolutions::default(),
 		})

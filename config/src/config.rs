@@ -1,4 +1,4 @@
-// Copyright 2018 The Grin Developers
+// Copyright 2020 The Grin Developers
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -30,8 +30,8 @@ extern crate dirs;
 /// The default file name to use when trying to derive
 /// the config file location
 
-const CONFIG_FILE_NAME: &'static str = "grin-miner.toml";
-const GRIN_HOME: &'static str = ".grin";
+const CONFIG_FILE_NAME: &str = "grin-miner.toml";
+const GRIN_HOME: &str = ".grin";
 
 /// resolve a read parameter to a solver param, (or not if it isn't found)
 fn resolve_param(config: &mut PluginConfig, name: &str, value: u32) {
@@ -193,21 +193,20 @@ impl GlobalConfig {
 		}
 
 		// No attempt at a config file, just return defaults
-		if let None = return_value.config_file_path {
+		if return_value.config_file_path.is_none() {
 			return Ok(return_value);
 		}
 
 		// Config file path is given but not valid
 		if !return_value.config_file_path.as_mut().unwrap().exists() {
-			return Err(ConfigError::FileNotFoundError(String::from(
+			return Err(ConfigError::FileNotFoundError(
 				return_value
 					.config_file_path
-					.as_mut()
 					.unwrap()
 					.to_str()
 					.unwrap()
-					.clone(),
-			)));
+					.to_string(),
+			));
 		}
 
 		// Try to parse the config file if it exists
@@ -228,21 +227,12 @@ impl GlobalConfig {
 				// file was flattened a bit
 				self.using_config_file = true;
 				self.members = Some(gc);
-				return Ok(self);
+				Ok(self)
 			}
-			Err(e) => {
-				return Err(ConfigError::ParseError(
-					String::from(
-						self.config_file_path
-							.as_mut()
-							.unwrap()
-							.to_str()
-							.unwrap()
-							.clone(),
-					),
-					String::from(format!("{}", e)),
-				));
-			}
+			Err(e) => Err(ConfigError::ParseError(
+				self.config_file_path.unwrap().to_str().unwrap().to_string(),
+				format!("{}", e),
+			)),
 		}
 	}
 
@@ -251,13 +241,8 @@ impl GlobalConfig {
 		let encoded: Result<String, toml::ser::Error> =
 			toml::to_string(self.members.as_mut().unwrap());
 		match encoded {
-			Ok(enc) => return Ok(enc),
-			Err(e) => {
-				return Err(ConfigError::SerializationError(String::from(format!(
-					"{}",
-					e
-				))));
-			}
+			Ok(enc) => Ok(enc),
+			Err(e) => Err(ConfigError::SerializationError(format!("{}", e))),
 		}
 	}
 }

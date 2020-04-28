@@ -1,4 +1,4 @@
-// Copyright 2017 The Grin Developers
+// Copyright 2020 The Grin Developers
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ use util::LOGGER;
 
 use libloading;
 
-use error::error::CuckooMinerError;
+use error::CuckooMinerError;
 
 /// Struct to hold instances of loaded plugins
 
@@ -49,8 +49,9 @@ impl PluginLibrary {
 		let result = libloading::Library::new(lib_full_path);
 
 		if let Err(e) = result {
-			return Err(CuckooMinerError::PluginNotFoundError(String::from(
-				format!("{} - {:?}", lib_full_path, e),
+			return Err(CuckooMinerError::PluginNotFoundError(format!(
+				"{} - {:?}",
+				lib_full_path, e
 			)));
 		}
 
@@ -99,7 +100,7 @@ impl PluginLibrary {
 				loaded_library: Arc::new(Mutex::new(loaded_library)),
 			};
 
-			return Ok(ret_val);
+			Ok(ret_val)
 		}
 	}
 

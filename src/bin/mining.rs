@@ -1,4 +1,4 @@
-// Copyright 2018 The Grin Developers
+// Copyright 2020 The Grin Developers
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -47,13 +47,13 @@ impl Controller {
 		let (tx, rx) = mpsc::channel::<types::MinerMessage>();
 		Ok(Controller {
 			_config: config,
-			rx: rx,
-			tx: tx,
+			rx,
+			tx,
 			client_tx: None,
 			current_height: 0,
 			current_job_id: 0,
 			current_target_diff: 0,
-			stats: stats,
+			stats,
 		})
 	}
 
@@ -132,12 +132,9 @@ impl Controller {
 		let mut sps_total = 0.0;
 		let mut i = 0;
 		for s in stats.clone() {
-			let last_solution_time_secs = s.last_solution_time as f64 / 1000000000.0;
+			let last_solution_time_secs = s.last_solution_time as f64 / 1_000_000_000.0;
 			let last_hashes_per_sec = 1.0 / last_solution_time_secs;
-			let status = match s.has_errored {
-				false => "OK",
-				_ => "ERRORED",
-			};
+			let status = if s.has_errored { "ERRORED" } else { "OK" };
 			if !s.has_errored {
 				debug!(
 					LOGGER,
