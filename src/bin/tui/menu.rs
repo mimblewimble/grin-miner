@@ -1,4 +1,4 @@
-// Copyright 2018 The Grin Developers
+// Copyright 2020 The Grin Developers
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,11 +16,11 @@
 
 use cursive::align::HAlign;
 use cursive::direction::Orientation;
-use cursive::event::{EventResult, Key};
+use cursive::event::Key;
 use cursive::view::Identifiable;
 use cursive::view::View;
 use cursive::views::{
-	BoxView, LinearLayout, OnEventView, SelectView, StackView, TextView, ViewRef,
+	LinearLayout, OnEventView, ResizedView, SelectView, StackView, TextView, ViewRef,
 };
 use cursive::Cursive;
 
@@ -28,7 +28,7 @@ use tui::constants::*;
 
 /// Create menu
 pub fn create() -> Box<dyn View> {
-	let mut main_menu = SelectView::new().h_align(HAlign::Left).with_id(MAIN_MENU);
+	let mut main_menu = SelectView::new().h_align(HAlign::Left).with_name(MAIN_MENU);
 	main_menu.get_mut().add_item("Mining", VIEW_MINING);
 	main_menu.get_mut().add_item("Version Info", VIEW_VERSION);
 	let change_view = |s: &mut Cursive, v: &&str| {
@@ -36,8 +36,8 @@ pub fn create() -> Box<dyn View> {
 			return;
 		}
 
-		let _ = s.call_on_id(ROOT_STACK, |sv: &mut StackView| {
-			let pos = sv.find_layer_from_id(v).unwrap();
+		let _ = s.call_on_name(ROOT_STACK, |sv: &mut StackView| {
+			let pos = sv.find_layer_from_name(v).unwrap();
 			sv.move_to_front(pos);
 		});
 	};
@@ -45,26 +45,23 @@ pub fn create() -> Box<dyn View> {
 	main_menu.get_mut().set_on_select(change_view);
 	let main_menu = OnEventView::new(main_menu)
 		.on_pre_event('j', move |c| {
-			let mut s: ViewRef<SelectView<&str>> = c.find_id(MAIN_MENU).unwrap();
+			let mut s: ViewRef<SelectView<&str>> = c.find_name(MAIN_MENU).unwrap();
 			s.select_down(1)(c);
-			Some(EventResult::Consumed(None));
 		})
 		.on_pre_event('k', move |c| {
-			let mut s: ViewRef<SelectView<&str>> = c.find_id(MAIN_MENU).unwrap();
+			let mut s: ViewRef<SelectView<&str>> = c.find_name(MAIN_MENU).unwrap();
 			s.select_up(1)(c);
-			Some(EventResult::Consumed(None));
 		})
 		.on_pre_event(Key::Tab, move |c| {
-			let mut s: ViewRef<SelectView<&str>> = c.find_id(MAIN_MENU).unwrap();
+			let mut s: ViewRef<SelectView<&str>> = c.find_name(MAIN_MENU).unwrap();
 			if s.selected_id().unwrap() == s.len() - 1 {
 				s.set_selection(0)(c);
 			} else {
 				s.select_down(1)(c);
 			}
-			Some(EventResult::Consumed(None));
 		});
 	let main_menu = LinearLayout::new(Orientation::Vertical)
-		.child(BoxView::with_full_height(main_menu))
+		.child(ResizedView::with_full_height(main_menu))
 		.child(TextView::new("------------------"))
 		.child(TextView::new("Tab/Arrow : Cycle "))
 		.child(TextView::new("Enter     : Select"))

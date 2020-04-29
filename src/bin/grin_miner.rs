@@ -1,4 +1,4 @@
-// Copyright 2018 The Grin Developers
+// Copyright 2020 The Grin Developers
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -59,16 +59,14 @@ pub fn info_strings() -> (String, String, String) {
 			built_info::GIT_VERSION.map_or_else(|| "".to_owned(), |v| format!(" (git {})", v)),
 			built_info::TARGET,
 			built_info::RUSTC_VERSION
-		)
-		.to_string(),
+		),
 		format!(
 			"Built with profile \"{}\", features \"{}\" on {}.",
 			built_info::PROFILE,
 			built_info::FEATURES_STR,
 			built_info::BUILT_TIME_UTC
-		)
-		.to_string(),
-		format!("Dependencies:\n {}", built_info::DEPENDENCIES_STR).to_string(),
+		),
+		format!("Dependencies:\n {}", built_info::DEPENDENCIES_STR),
 	)
 }
 
@@ -151,7 +149,7 @@ fn main() {
 		&mining_config.stratum_server_addr,
 		mining_config.stratum_server_login.clone(),
 		mining_config.stratum_server_password.clone(),
-		mining_config.stratum_server_tls_enabled.clone(),
+		mining_config.stratum_server_tls_enabled,
 		mc.tx.clone(),
 		stats.clone(),
 	)
@@ -189,12 +187,7 @@ fn main() {
 
 	if mining_config.run_tui {
 		#[cfg(feature = "tui")]
-		with_tui::start_tui(
-			stats.clone(),
-			cc.tx.clone(),
-			mc.tx.clone(),
-			tui_stopped.clone(),
-		);
+		with_tui::start_tui(stats, cc.tx.clone(), mc.tx.clone(), tui_stopped.clone());
 
 		#[cfg(not(feature = "tui"))]
 		warn!(LOGGER, "Grin-miner was built with TUI support disabled!");

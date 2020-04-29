@@ -1,4 +1,4 @@
-// Copyright 2018 The Grin Developers
+// Copyright 2020 The Grin Developers
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
@@ -46,7 +46,7 @@ lazy_static! {
 
 	/// And a static reference to the logger itself, accessible from all crates
 	pub static ref LOGGER: Logger = {
-		let was_init = WAS_INIT.lock().unwrap().clone();
+		let was_init = *WAS_INIT.lock().unwrap();
 		let config = LOGGING_CONFIG.lock().unwrap();
 		let slog_level_stdout = convert_log_level(&config.stdout_log_level);
 		let slog_level_file = convert_log_level(&config.file_log_level);
@@ -84,8 +84,7 @@ lazy_static! {
 		//Compose file and terminal drains
 		let composite_drain = Duplicate::new(terminal_drain, file_drain_final).fuse();
 
-		let log = Logger::root(composite_drain, o!());
-		log
+		Logger::root(composite_drain, o!())
 	};
 }
 
@@ -93,7 +92,7 @@ lazy_static! {
 pub fn init_logger(config: Option<LoggingConfig>) {
 	if let Some(c) = config {
 		let mut config_ref = LOGGING_CONFIG.lock().unwrap();
-		*config_ref = c.clone();
+		*config_ref = c;
 		// Logger configuration successfully injected into LOGGING_CONFIG...
 		let mut was_init_ref = WAS_INIT.lock().unwrap();
 		*was_init_ref = true;
@@ -148,7 +147,7 @@ fn send_panic_to_log() {
 			),
 		}
 		//also print to stderr
-		let tui_running = TUI_RUNNING.lock().unwrap().clone();
+		let tui_running = *TUI_RUNNING.lock().unwrap();
 		if !tui_running {
 			eprintln!(
 				"Thread '{}' panicked with message:\n\"{}\"\nSee grin.log for further details.",

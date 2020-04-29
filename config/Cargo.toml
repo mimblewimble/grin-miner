@@ -8,11 +8,10 @@ repository = "https://github.com/mimblewimble/grin-miner"
 workspace = ".."
 
 [dependencies]
+cuckoo_miner = { path = "../cuckoo-miner", version = "3.0.0-beta.1" }
+dirs = "2"
+grin_miner_util = { path = "../util", version = "3.0.0-beta.1" }
 serde = "1"
 serde_derive = "1"
-toml = "0.4"
-dirs = "1.0"
-
-cuckoo_miner = { path = "../cuckoo-miner", version = "3.0.0-beta.1" }
-slog = { version = "~2.1", features = ["max_level_trace", "release_max_level_trace"] }
-grin_miner_util = { path = "../util", version = "3.0.0-beta.1" }
+slog = { version = "2", features = ["max_level_trace", "release_max_level_trace"] }
+toml = "0.5"
