@@ -1,4 +1,4 @@
-// Copyright 2018 The Grin Developers
+// Copyright 2020 The Grin Developers
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,15 +15,12 @@
 //! Build hooks to spit out version+build time info
 
 extern crate built;
-use std::env;
 
 fn main() {
 	let mut opts = built::Options::default();
 	opts.set_dependencies(true);
-	built::write_built_file_with_opts(
-		&opts,
-		env!("CARGO_MANIFEST_DIR"),
-		format!("{}{}", env::var("OUT_DIR").unwrap(), "/built.rs"),
-	)
-	.expect("Failed to acquire build-time information");
+	let manifest_location = std::env::var("CARGO_MANIFEST_DIR").unwrap();
+	let dst = std::path::Path::new(&std::env::var("OUT_DIR").unwrap()).join("built.rs");
+	built::write_built_file_with_opts(&opts, manifest_location.as_ref(), &dst)
+		.expect("Failed to acquire build-time information");
 }

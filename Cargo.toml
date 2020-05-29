@@ -23,13 +23,13 @@ path = "src/bin/grin_miner.rs"
 
 [dependencies]
 backtrace = "0.3"
-bufstream = "~0.1"
+bufstream = "0.1"
 native-tls = "0.2"
 serde = "1"
 serde_derive = "1"
 serde_json = "1"
-slog = { version = "~2.1", features = ["max_level_trace", "release_max_level_trace"] }
-term = "0.4"
+slog = { version = "2", features = ["max_level_trace", "release_max_level_trace"] }
+term = "0.6"
 time = "0.1"
 
 grin_miner_util = { path = "./util", version = "3.0.0-beta.1" }
@@ -41,14 +41,12 @@ cuckoo_miner = { path = "./cuckoo-miner", version = "3.0.0-beta.1" }
 ocl_cuckatoo = { path = "./ocl_cuckatoo", version = "1.0.2", optional = true}
 ocl_cuckaroo = { path = "./ocl_cuckaroo", version = "1.0.2", optional = true}
 
-[target.'cfg(windows)'.dependencies]
-cursive = { version = "0.12.0", default-features = false, optional = true, features = ["pancurses-backend"] }
-[target.'cfg(windows)'.dependencies.pancurses]
-version = "0.16.0"
-features = ["win32"]
-[target.'cfg(unix)'.dependencies]
-cursive = { version = "0.12.0", optional = true }
+[dependencies.cursive]
+version = "0.14"
+default-features = false
+features = ["pancurses-backend"]
+optional = true
 
 
 [build-dependencies]
-built = "0.2"
+built = { version= "0.4", features = ["git2","chrono"] }

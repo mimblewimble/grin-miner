@@ -1,4 +1,4 @@
-// Copyright 2018 The Grin Developers
+// Copyright 2020 The Grin Developers
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -98,7 +98,7 @@ impl From<io::Error> for ConfigError {
 	fn from(error: io::Error) -> ConfigError {
 		ConfigError::FileIOError(
 			String::from(""),
-			String::from(format!("Error loading config file: {}", error)),
+			format!("Error loading config file: {}", error),
 		)
 	}
 }

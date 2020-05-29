@@ -1,4 +1,4 @@
-// Copyright 2017 The Grin Developers
+// Copyright 2020 The Grin Developers
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,13 +12,57 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-//! Simple crate which just contains cuckoo-miner's error enum, used by
-//! all other internal crates.
+//! Common error type used by all cuckoo-miner modules, as well as any exernal
+//! consumers of the cuckoo-miner crate.
 
-#![deny(non_upper_case_globals)]
-#![deny(non_camel_case_types)]
-#![deny(non_snake_case)]
-#![deny(unused_mut)]
-#![warn(missing_docs)]
+use std::io;
+use std::string;
 
-pub mod error;
+/// #Description
+///
+/// Top level enum for all errors that the cuckoo-miner crate can return.
+///
+
+#[derive(Debug)]
+pub enum CuckooMinerError {
+	/// Occurs when trying to call a plugin function when a
+	/// mining plugin is not loaded.
+	PluginNotLoadedError(String),
+
+	/// Occurs when trying to load plugin function that doesn't exist
+	PluginSymbolNotFoundError(String),
+
+	/// Occurs when attempting to load a plugin that doesn't exist
+	PluginNotFoundError(String),
+
+	/// Occurs when trying to load a plugin directory that doesn't
+	/// contain any plugins
+	NoPluginsFoundError(String),
+
+	/// Unexpected return code from a plugin
+	UnexpectedResultError(u32),
+
+	/// Error setting a parameter
+	ParameterError(String),
+
+	/// IO Error
+	PluginIOError(String),
+
+	/// Plugin processing can't start
+	PluginProcessingError(String),
+
+	/// Error getting stats or stats not implemented
+	StatsError(String),
+}
+
+impl From<io::Error> for CuckooMinerError {
+	fn from(error: io::Error) -> Self {
+		CuckooMinerError::PluginIOError(format!("Error loading plugin: {}", error))
+	}
+}
+
+impl From<string::FromUtf8Error> for CuckooMinerError {
+	fn from(error: string::FromUtf8Error) -> Self {
+		CuckooMinerError::PluginIOError(format!("Error loading plugin description: {}", error))
+	}
+}

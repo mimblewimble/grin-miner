@@ -1,4 +1,4 @@
-// Copyright 2018 The Grin Developers
+// Copyright 2020 The Grin Developers
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -74,8 +74,8 @@ impl Stream {
 					let connector = TlsConnector::new().map_err(|e| {
 						Error::ConnectionError(format!("Can't create TLS connector: {:?}", e))
 					})?;
-					let url_port: Vec<&str> = server_url.split(":").collect();
-					let splitted_url: Vec<&str> = url_port[0].split(".").collect();
+					let url_port: Vec<&str> = server_url.split(':').collect();
+					let splitted_url: Vec<&str> = url_port[0].split('.').collect();
 					let base_host = format!(
 						"{}.{}",
 						splitted_url[splitted_url.len() - 2],
@@ -89,7 +89,7 @@ impl Stream {
 					})?;
 					self.tls_stream = Some(BufStream::new(stream));
 				} else {
-					let _ = conn.set_nonblocking(true).map_err(|e| {
+					conn.set_nonblocking(true).map_err(|e| {
 						Error::ConnectionError(format!("Can't switch to nonblocking mode: {:?}", e))
 					})?;
 					self.stream = Some(BufStream::new(conn));
@@ -172,7 +172,7 @@ pub struct Controller {
 	stats: Arc<RwLock<stats::Stats>>,
 }
 
-fn invlalid_error_response() -> types::RpcError {
+fn invalid_error_response() -> types::RpcError {
 	types::RpcError {
 		code: 0,
 		message: "Invalid error response received".to_owned(),
@@ -192,15 +192,15 @@ impl Controller {
 		Ok(Controller {
 			_id: 0,
 			server_url: server_url.to_string(),
-			server_login: server_login,
-			server_password: server_password,
-			server_tls_enabled: server_tls_enabled,
+			server_login,
+			server_password,
+			server_tls_enabled,
 			stream: None,
-			tx: tx,
-			rx: rx,
-			miner_tx: miner_tx,
+			tx,
+			rx,
+			miner_tx,
 			last_request_id: 0,
-			stats: stats,
+			stats,
 		})
 	}
 
@@ -214,7 +214,7 @@ impl Controller {
 	}
 
 	fn read_message(&mut self) -> Result<Option<String>, Error> {
-		if let None = self.stream {
+		if self.stream.is_none() {
 			return Err(Error::ConnectionError("broken pipe".to_string()));
 		}
 		let mut line = String::new();
@@ -224,28 +224,26 @@ impl Controller {
 				if line == "" {
 					return Err(Error::ConnectionError("broken pipe".to_string()));
 				}
-				return Ok(Some(line));
+				Ok(Some(line))
 			}
 			Err(ref e) if e.kind() == ErrorKind::BrokenPipe => {
-				return Err(Error::ConnectionError("broken pipe".to_string()));
+				Err(Error::ConnectionError("broken pipe".to_string()))
 			}
-			Err(ref e) if e.kind() == ErrorKind::WouldBlock => {
-				return Ok(None);
-			}
+			Err(ref e) if e.kind() == ErrorKind::WouldBlock => Ok(None),
 			Err(e) => {
 				error!(LOGGER, "Communication error with stratum server: {}", e);
-				return Err(Error::ConnectionError("broken pipe".to_string()));
+				Err(Error::ConnectionError("broken pipe".to_string()))
 			}
 		}
 	}
 
 	fn send_message(&mut self, message: &str) -> Result<(), Error> {
-		if let None = self.stream {
+		if self.stream.is_none() {
 			return Err(Error::ConnectionError(String::from("No server connection")));
 		}
 		debug!(LOGGER, "sending request: {}", message);
 		let _ = self.stream.as_mut().unwrap().write(message.as_bytes());
-		let _ = self.stream.as_mut().unwrap().write("\n".as_bytes());
+		let _ = self.stream.as_mut().unwrap().write(b"\n");
 		let _ = self.stream.as_mut().unwrap().flush();
 		Ok(())
 	}
@@ -260,7 +258,7 @@ impl Controller {
 		let req_str = serde_json::to_string(&req)?;
 		{
 			let mut stats = self.stats.write()?;
-			stats.client_stats.last_message_sent = format!("Last Message Sent: Get New Job");
+			stats.client_stats.last_message_sent = "Last Message Sent: Get New Job".to_string();
 		}
 		self.send_message(&req_str)
 	}
@@ -269,14 +267,14 @@ impl Controller {
 		// only send the login request if a login string is configured
 		let login_str = match self.server_login.clone() {
 			None => "".to_string(),
-			Some(server_login) => server_login.clone(),
+			Some(server_login) => server_login,
 		};
 		if login_str == "" {
 			return Ok(());
 		}
 		let password_str = match self.server_password.clone() {
 			None => "".to_string(),
-			Some(server_password) => server_password.clone(),
+			Some(server_password) => server_password,
 		};
 		let params = types::LoginParams {
 			login: login_str,
@@ -292,7 +290,7 @@ impl Controller {
 		let req_str = serde_json::to_string(&req)?;
 		{
 			let mut stats = self.stats.write()?;
-			stats.client_stats.last_message_sent = format!("Last Message Sent: Login");
+			stats.client_stats.last_message_sent = "Last Message Sent: Login".to_string();
 		}
 		self.send_message(&req_str)
 	}
@@ -317,11 +315,11 @@ impl Controller {
 		pow: Vec<u64>,
 	) -> Result<(), Error> {
 		let params_in = types::SubmitParams {
-			height: height,
-			job_id: job_id,
-			edge_bits: edge_bits,
-			nonce: nonce,
-			pow: pow,
+			height,
+			job_id,
+			edge_bits,
+			nonce,
+			pow,
 		};
 		let params = serde_json::to_string(&params_in)?;
 		let req = types::RpcRequest {
@@ -396,7 +394,7 @@ impl Controller {
 						st.accepted, st.rejected, st.stale
 					);
 				} else {
-					let err = res.error.unwrap_or_else(|| invlalid_error_response());
+					let err = res.error.unwrap_or_else(invalid_error_response);
 					let mut stats = self.stats.write()?;
 					stats.client_stats.last_message_received =
 						format!("Last Message Received: Failed to get status: {:?}", err);
@@ -421,7 +419,7 @@ impl Controller {
 					);
 					self.send_miner_job(job)
 				} else {
-					let err = res.error.unwrap_or_else(|| invlalid_error_response());
+					let err = res.error.unwrap_or_else(invalid_error_response);
 					let mut stats = self.stats.write()?;
 					stats.client_stats.last_message_received = format!(
 						"Last Message Received: Failed to get job template: {:?}",
@@ -437,17 +435,17 @@ impl Controller {
 					info!(LOGGER, "Share Accepted!!");
 					let mut stats = self.stats.write()?;
 					stats.client_stats.last_message_received =
-						format!("Last Message Received: Share Accepted!!");
+						"Last Message Received: Share Accepted!!".to_string();
 					stats.mining_stats.solution_stats.num_shares_accepted += 1;
 					let result = serde_json::to_string(&result)?;
 					if result.contains("blockfound") {
 						info!(LOGGER, "Block Found!!");
 						stats.client_stats.last_message_received =
-							format!("Last Message Received: Block Found!!");
+							"Last Message Received: Block Found!!".to_string();
 						stats.mining_stats.solution_stats.num_blocks_found += 1;
 					}
 				} else {
-					let err = res.error.unwrap_or_else(|| invlalid_error_response());
+					let err = res.error.unwrap_or_else(invalid_error_response);
 					let mut stats = self.stats.write()?;
 					stats.client_stats.last_message_received = format!(
 						"Last Message Received: Failed to submit a solution: {:?}",
@@ -468,7 +466,7 @@ impl Controller {
 					// Nothing to do for keepalive "ok"
 					// dont update last_message_received with good keepalive response
 				} else {
-					let err = res.error.unwrap_or_else(|| invlalid_error_response());
+					let err = res.error.unwrap_or_else(invalid_error_response);
 					let mut stats = self.stats.write()?;
 					stats.client_stats.last_message_received = format!(
 						"Last Message Received: Failed to request keepalive: {:?}",
@@ -485,7 +483,7 @@ impl Controller {
 					// dont update last_message_received with good login response
 				} else {
 					// This is a fatal error
-					let err = res.error.unwrap_or_else(|| invlalid_error_response());
+					let err = res.error.unwrap_or_else(invalid_error_response);
 					let mut stats = self.stats.write()?;
 					stats.client_stats.last_message_received =
 						format!("Last Message Received: Failed to log in: {:?}", err);
@@ -519,13 +517,13 @@ impl Controller {
 		let mut was_disconnected = true;
 		loop {
 			// Check our connection status, and try to correct if possible
-			if let None = self.stream {
+			if self.stream.is_none() {
 				if !was_disconnected {
 					let _ = self.send_miner_stop();
 				}
 				was_disconnected = true;
 				if time::get_time().sec > next_server_retry {
-					if let Err(_) = self.try_connect() {
+					if self.try_connect().is_err() {
 						let status = format!("Connection Status: Can't establish server connection to {}. Will retry every {} seconds",
 							self.server_url,
 							server_retry_interval);
@@ -544,7 +542,7 @@ impl Controller {
 						stats.client_stats.connection_status = status;
 					}
 					next_server_retry = time::get_time().sec + server_retry_interval;
-					if let None = self.stream {
+					if self.stream.is_none() {
 						thread::sleep(std::time::Duration::from_secs(1));
 						continue;
 					}
@@ -572,7 +570,7 @@ impl Controller {
 									// Deserialize to see what type of object it is
 									if let Ok(v) = serde_json::from_str::<serde_json::Value>(&m) {
 										// Is this a response or request?
-										if v["method"] == String::from("job") {
+										if v["method"] == "job" {
 											// this is a request
 											match serde_json::from_str::<types::RpcRequest>(&m) {
 												Err(e) => error!(

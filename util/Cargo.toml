@@ -10,10 +10,10 @@ workspace = ".."
 [dependencies]
 backtrace = "0.3"
 byteorder = "1"
-lazy_static = "0.2"
-rand = "0.3"
+lazy_static = "1"
+rand = "0.7"
 serde = "1"
 serde_derive = "1"
-slog = { version = "~2.1", features = ["max_level_trace", "release_max_level_trace"] }
-slog-term = "2.1"
-slog-async = "2.1"
+slog = { version = "2", features = ["max_level_trace", "release_max_level_trace"] }
+slog-term = "2"
+slog-async = "2"

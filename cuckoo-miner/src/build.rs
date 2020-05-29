@@ -1,4 +1,4 @@
-// Copyright 2017 The Grin Developers
+// Copyright 2020 The Grin Developers
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,8 +16,6 @@
 
 extern crate cmake;
 extern crate fs_extra;
-
-mod sanity;
 
 use cmake::Config;
 use fs_extra::dir::*;

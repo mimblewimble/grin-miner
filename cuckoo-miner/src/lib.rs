@@ -1,4 +1,4 @@
-// Copyright 2018 The Grin Developers
+// Copyright 2020 The Grin Developers
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -56,5 +56,5 @@ mod miner;
 
 pub use config::types::PluginConfig;
 pub use cuckoo_sys::ffi::PluginLibrary;
-pub use error::error::CuckooMinerError;
+pub use error::CuckooMinerError;
 pub use miner::miner::CuckooMiner;

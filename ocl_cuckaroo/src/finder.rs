@@ -166,11 +166,6 @@ impl Graph {
 		Some(AdjList::new(node, &self.adj_store))
 	}
 
-	#[inline]
-	fn nodes(&self) -> impl Iterator<Item = &u32> {
-		self.adj_index.keys()
-	}
-
 	fn walk_graph(&self, current: u32, target: u32, search: &mut Search) -> Result<(), String> {
 		if search.path.len() > 41 {
 			return Ok(());

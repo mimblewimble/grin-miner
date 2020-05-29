@@ -1,4 +1,4 @@
-// Copyright 2018 The Grin Developers
+// Copyright 2020 The Grin Developers
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ use cursive::theme::PaletteColor::*;
 use cursive::theme::{BaseColor, BorderStyle, Color, Theme};
 use cursive::traits::*;
 use cursive::utils::markup::StyledString;
-use cursive::views::{LinearLayout, Panel, StackView, TextView, ViewBox};
+use cursive::views::{BoxedView, LinearLayout, Panel, StackView, TextView};
 use cursive::Cursive;
 
 use tui::constants::*;
@@ -63,9 +63,9 @@ impl UI {
 		let (ui_tx, ui_rx) = mpsc::channel::<UIMessage>();
 		let mut grin_ui = UI {
 			cursive: Cursive::default(),
-			ui_tx: ui_tx,
-			ui_rx: ui_rx,
-			controller_tx: controller_tx,
+			ui_tx,
+			ui_rx,
+			controller_tx,
 		};
 
 		// Create UI objects, etc
@@ -77,7 +77,7 @@ impl UI {
 		let root_stack = StackView::new()
 			.layer(version_view)
 			.layer(mining_view)
-			.with_id(ROOT_STACK);
+			.with_name(ROOT_STACK);
 
 		let mut title_string = StyledString::new();
 		title_string.append(StyledString::styled(
@@ -89,7 +89,7 @@ impl UI {
 			.child(Panel::new(TextView::new(title_string)))
 			.child(
 				LinearLayout::new(Orientation::Horizontal)
-					.child(Panel::new(ViewBox::new(main_menu)))
+					.child(Panel::new(BoxedView::new(main_menu)))
 					.child(Panel::new(root_stack)),
 			);
 
@@ -156,8 +156,8 @@ impl Controller {
 	pub fn new() -> Result<Controller, String> {
 		let (tx, rx) = mpsc::channel::<ControllerMessage>();
 		Ok(Controller {
-			rx: rx,
-			ui: UI::new(tx.clone()),
+			rx,
+			ui: UI::new(tx),
 		})
 	}
 	/// Run the controller
@@ -165,7 +165,7 @@ impl Controller {
 		let stat_update_interval = 1;
 		let mut next_stat_update = time::get_time().sec + stat_update_interval;
 		while self.ui.step() {
-			while let Some(message) = self.rx.try_iter().next() {
+			if let Some(message) = self.rx.try_iter().next() {
 				match message {
 					ControllerMessage::Shutdown => {
 						self.ui.stop();
