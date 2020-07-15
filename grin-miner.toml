@@ -102,7 +102,7 @@ stratum_server_tls_enabled = false
 #
 
 # currently requires 6GB GPU memory
-#[[mining.miner_plugin_config]]
+[[mining.miner_plugin_config]]
 plugin_name = "cuckarooz_cuda_29"
 [mining.miner_plugin_config.parameters]
 device = 0
