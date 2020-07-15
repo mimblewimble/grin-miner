@@ -1,6 +1,6 @@
 [package]
 name = "cuckoo_miner"
-version = "3.0.0-beta.1"
+version = "4.0.0"
 authors = ["yeastplume"]
 license = "MIT/Apache-2.0/BSD-3-Clause"
 description = "Rust bindings to John Tromp's Cuckoo Cycle Implementations"
@@ -21,8 +21,8 @@ build-cuda-plugins = []
 byteorder = "1"
 blake2-rfc = "0.2"
 glob = "0.3"
-grin_miner_util = { path = "../util", version = "3.0.0-beta.1" }
-grin_miner_plugin = { path = "../plugin", version = "3.0.0-beta.1" }
+grin_miner_util = { path = "../util", version = "4.0.0" }
+grin_miner_plugin = { path = "../plugin", version = "4.0.0" }
 libc = "0.2"
 libloading = "0.6"
 serde = "1"
