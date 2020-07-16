@@ -143,7 +143,7 @@ impl Controller {
 							i,
 					s.device_id,
 					s.get_device_name(),
-					if s.edge_bits < 30 { "rood" } else { "too" },
+					if s.edge_bits < 30 { "rooz" } else { "too" },
 					s.edge_bits,
 					status,
 					last_solution_time_secs,
