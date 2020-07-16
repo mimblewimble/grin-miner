@@ -17,7 +17,9 @@ set (SKIP_CUCKATOO_GPU $ENV{SKIP_CUCKATOO_GPU})
 set (SKIP_CUCKAROO_GPU $ENV{SKIP_CUCKAROO_GPU})
 set (SKIP_CUCKAROOD_GPU $ENV{SKIP_CUCKAROOD_GPU})
 set (SKIP_CUCKAROOM_CPU "1")
-set (SKIP_CUCKAROOM_GPU $ENV{SKIP_CUCKAROOD_GPU})
+set (SKIP_CUCKAROOM_GPU $ENV{SKIP_CUCKAROOM_GPU})
+set (SKIP_CUCKAROOZ_CPU "1")
+set (SKIP_CUCKAROOZ_GPU $ENV{SKIP_CUCKAROOZ_GPU})
 
 #blake2b prerequisite
 set (BLAKE_2B "cuckoo/src/crypto/blake2b-ref.c")
@@ -206,4 +208,38 @@ if (NOT SKIP_CUCKAROOM_GPU)
   build_cuda_target("${AR2_CUDA_SRC}" cuckaroom_cuda_29 "-DEDGEBITS=29")
   build_cuda_target("${AR2_CUDA_SRC2}" cuckaroom_old_cuda_29 "-DEDGEBITS=29")
   build_cuda_target("${AR2_CUDA_SRC2}" cuckaroom_cuda_19 "-DXBITS=1 -DEPS_A=4 -DEPS_B=3 -DIDXSHIFT=8 -DEDGEBITS=19")
+endif()
+
+##################################################################################
+### CUCKAROOZ (Asic Resistant)  ##################################################
+##################################################################################
+
+### AR CPU BUILDING  #########################################
+
+set (AR2_CPU_SRC
+			cuckoo/src/cuckarooz/cuckarooz.hpp
+			cuckoo/src/cuckarooz/bitmap.hpp
+			cuckoo/src/cuckarooz/graph.hpp
+			cuckoo/src/threads/barrier.hpp
+			cuckoo/src/crypto/siphash.hpp
+			cuckoo/src/crypto/siphashxN.h
+			cuckoo/src/cuckarooz/mean.hpp
+			cuckoo/src/cuckarooz/mean.cpp
+			${BLAKE_2B})
+
+### AR CPU TARGETS #########################################
+
+if (NOT SKIP_CUCKAROOZ_CPU)
+  build_cpu_target("${AR2_CPU_SRC}" cuckarooz_cpu_compat_19 "-mno-avx2 -DXBITS=2 -DNSIPHASH=4 -DEDGEBITS=19 -DSAVEEDGES")
+  build_cpu_target("${AR2_CPU_SRC}" cuckarooz_cpu_avx2_19 "-mavx2 -DXBITS=2 -DNSIPHASH=8 -DEDGEBITS=19 -DSAVEEDGES")
+  build_cpu_target("${AR2_CPU_SRC}" cuckarooz_cpu_compat_29 "-mno-avx2 -DNSIPHASH=4 -DEDGEBITS=29 -DSAVEEDGES")
+  build_cpu_target("${AR2_CPU_SRC}" cuckarooz_cpu_avx2_29 "-mavx2 -DNSIPHASH=8 -DEDGEBITS=29 -DSAVEEDGES")
+endif()
+
+### AR CUDA TARGETS #########################################
+
+set (AR2_CUDA_SRC cuckoo/src/cuckarooz/mean.cu ${BLAKE_2B} )
+
+if (NOT SKIP_CUCKAROOZ_GPU)
+  build_cuda_target("${AR2_CUDA_SRC}" cuckarooz_cuda_29 "-DEDGEBITS=29")
 endif()

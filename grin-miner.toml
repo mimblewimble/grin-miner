@@ -76,10 +76,10 @@ stratum_server_tls_enabled = false
 
 # cpu mean algorithm for processors supporting sse2
 
-[[mining.miner_plugin_config]]
-plugin_name = "cuckarood_cpu_compat_29"
-[mining.miner_plugin_config.parameters]
-nthreads = 4
+#[[mining.miner_plugin_config]]
+#plugin_name = "cuckarood_cpu_compat_29"
+#[mining.miner_plugin_config.parameters]
+#nthreads = 4
 
 # As above, but for processors supporting avx2
 
@@ -102,10 +102,10 @@ nthreads = 4
 #
 
 # currently requires 6GB GPU memory
-#[[mining.miner_plugin_config]]
-#plugin_name = "cuckaroom_cuda_29"
-#[mining.miner_plugin_config.parameters]
-#device = 0
+[[mining.miner_plugin_config]]
+plugin_name = "cuckarooz_cuda_29"
+[mining.miner_plugin_config.parameters]
+device = 0
 #cpuload = 1
 #ntrims = 15
 #genablocks = 1024
@@ -115,7 +115,7 @@ nthreads = 4
 # e.g. To enable multiple devices (copy params from above as needed)
 
 #[[mining.miner_plugin_config]]
-#plugin_name = "cuckarood_cuda_29"
+#plugin_name = "cuckarooz_cuda_29"
 #[mining.miner_plugin_config.parameters]
 #device = 1
 
